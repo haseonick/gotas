@@ -528,6 +528,9 @@
     </a>
 
     <div class="header-actions">
+      <div class="sound-widget" id="notifBtn" onclick="requestNotificationPermission()" title="Activar/Desactivar avisos cuando llegue una nueva carta">
+        🔕 Avisos: Off
+      </div>
       <div class="user-badge" onclick="openProfileModal()" title="Configurar tu perfil y avatar">
         <span id="userAvatarHeader">🐺</span>
         <span id="userNameHeader" style="font-weight:600;">Viajero</span>
@@ -547,6 +550,7 @@
   <div class="app-container">
     <aside class="sidebar">
       <button class="nav-btn active" onclick="switchTab('tab-gotas', this)">💧 Gotas Globales</button>
+      <button class="nav-btn" onclick="switchTab('tab-buzon', this)">📬 Mi Buzón de Ecos</button>
       <button class="nav-btn" onclick="switchTab('tab-diario', this)">📖 Mi Diario Privado</button>
       <button class="nav-btn" onclick="switchTab('tab-dilemas', this)">✨ Dilemas del Día</button>
       <button class="nav-btn" onclick="switchTab('tab-silencio', this)">🎨 Historia Colectiva</button>
@@ -587,51 +591,169 @@
         <div id="journalList" style="margin-top:20px; display:flex; flex-direction:column; gap:10px;"></div>
       </section>
 
-      <!-- Tab 3: Dilemas con Selección Persistente -->
+      <!-- Tab 3: Dilemas del Día (Múltiples Secciones Temáticas) -->
       <section id="tab-dilemas" class="view-card">
-        <h2>✨ Dilema del Día</h2>
-        <p style="margin:14px 0; font-size:0.95rem; line-height:1.5;">
-          Si pudieras vivir en una biblioteca infinita donde nunca pasa el tiempo o en una cabaña frente al mar con café ilimitado... ¿cuál elegirías?
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <h2>✨ Dilemas & Rompehielos del Día</h2>
+          <span style="font-size:0.8rem; color:var(--accent-soft);">Votaciones Globales</span>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:20px;">
+          Dilemas curiosos organizados por temáticas para conectar y descubrir afinidades sin la incomodidad del small talk.
         </p>
 
-        <div class="dilemma-container">
-          <div class="dilemma-card" id="dilemmaOptA" onclick="voteDilemma('A')">
-            <div>
-              <div class="dilemma-badge" id="badgeA">Opción A</div>
-              <h4 style="color:#fff; font-size:0.95rem; margin-bottom:6px;">📚 La Biblioteca Infinita</h4>
-              <p style="font-size:0.82rem; color:var(--text-muted);">Tiempo detenido, millones de historias y conocimiento sin fin.</p>
-            </div>
-            <div>
-              <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-top:12px;">
-                <span id="voteLabelA" style="color:var(--text-muted);">Votar por esta opción</span>
-                <strong id="votePctA" style="color:var(--accent-cyan);">62%</strong>
-              </div>
-              <div class="dilemma-pct-bar">
-                <div class="dilemma-pct-fill" id="fillA" style="width: 62%;"></div>
-              </div>
-            </div>
+        <!-- SECCIÓN 1: Dilema de Estilo de Vida & Calma -->
+        <div style="background:rgba(11,19,43,0.5); border:1px solid var(--border-color); border-radius:16px; padding:18px; margin-bottom:20px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <span style="font-size:1.2rem;">🌿</span>
+            <h3 style="font-size:1rem; color:#fff;">1. Refugio Ideal</h3>
           </div>
+          <p style="font-size:0.88rem; color:#e2e8f0; line-height:1.4; margin-bottom:12px;">
+            ¿Dónde preferirías pasar un mes completo de retiro y tranquilidad absoluta?
+          </p>
 
-          <div class="dilemma-card" id="dilemmaOptB" onclick="voteDilemma('B')">
-            <div>
-              <div class="dilemma-badge" id="badgeB">Opción B</div>
-              <h4 style="color:#fff; font-size:0.95rem; margin-bottom:6px;">🌊 La Cabaña frente al Mar</h4>
-              <p style="font-size:0.82rem; color:var(--text-muted);">Sonido de olas, brisa serena y café cálido ilimitado.</p>
-            </div>
-            <div>
-              <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-top:12px;">
-                <span id="voteLabelB" style="color:var(--text-muted);">Votar por esta opción</span>
-                <strong id="votePctB" style="color:var(--accent-cyan);">38%</strong>
+          <div class="dilemma-container">
+            <div class="dilemma-card" id="dilemmaCard_1_A" onclick="voteDilemmaItem(1, 'A', 64, 36)">
+              <div>
+                <div class="dilemma-badge" id="badge_1_A">Opción A</div>
+                <h4 style="color:#fff; font-size:0.92rem; margin-bottom:4px;">🌲 Cabaña en el Bosque Lluvioso</h4>
+                <p style="font-size:0.78rem; color:var(--text-muted);">Sonido de lluvia en el tejado, chimenea y biblioteca rústica.</p>
               </div>
-              <div class="dilemma-pct-bar">
-                <div class="dilemma-pct-fill" id="fillB" style="width: 38%;"></div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.78rem; margin-top:10px;">
+                  <span id="label_1_A" style="color:var(--text-muted);">Votar</span>
+                  <strong id="pct_1_A" style="color:var(--accent-cyan);">64%</strong>
+                </div>
+                <div class="dilemma-pct-bar"><div class="dilemma-pct-fill" id="fill_1_A" style="width: 64%;"></div></div>
+              </div>
+            </div>
+
+            <div class="dilemma-card" id="dilemmaCard_1_B" onclick="voteDilemmaItem(1, 'B', 64, 36)">
+              <div>
+                <div class="dilemma-badge" id="badge_1_B">Opción B</div>
+                <h4 style="color:#fff; font-size:0.92rem; margin-bottom:4px;">🌊 Casa Faro frente al Océano</h4>
+                <p style="font-size:0.78rem; color:var(--text-muted);">Vistas panorámicas, atardeceres dorados y brisa marina constante.</p>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.78rem; margin-top:10px;">
+                  <span id="label_1_B" style="color:var(--text-muted);">Votar</span>
+                  <strong id="pct_1_B" style="color:var(--accent-cyan);">36%</strong>
+                </div>
+                <div class="dilemma-pct-bar"><div class="dilemma-pct-fill" id="fill_1_B" style="width: 36%;"></div></div>
               </div>
             </div>
           </div>
         </div>
 
-        <div id="dilemmaFeedbackMsg" style="font-size:0.82rem; color:var(--accent-soft); text-align:center; margin-top:12px; display:none;">
-          ✨ ¡Tu elección ha quedado guardada! Compartes afinidad con otros viajeros del mundo.
+        <!-- SECCIÓN 2: Dilema de Gaming & Historias -->
+        <div style="background:rgba(11,19,43,0.5); border:1px solid var(--border-color); border-radius:16px; padding:18px; margin-bottom:20px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <span style="font-size:1.2rem;">🎮</span>
+            <h3 style="font-size:1rem; color:#fff;">2. Pasatiempos & Narrativa</h3>
+          </div>
+          <p style="font-size:0.88rem; color:#e2e8f0; line-height:1.4; margin-bottom:12px;">
+            Si un misterioso artefacto te diera un superpoder sobre tus obras favoritas:
+          </p>
+
+          <div class="dilemma-container">
+            <div class="dilemma-card" id="dilemmaCard_2_A" onclick="voteDilemmaItem(2, 'A', 52, 48)">
+              <div>
+                <div class="dilemma-badge" id="badge_2_A">Opción A</div>
+                <h4 style="color:#fff; font-size:0.92rem; margin-bottom:4px;">🧠 Amnesia Selectiva de Obras</h4>
+                <p style="font-size:0.78rem; color:var(--text-muted);">Poder borrar de tu memoria tu juego/libro/serie favorita para volver a vivirlo por primera vez.</p>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.78rem; margin-top:10px;">
+                  <span id="label_2_A" style="color:var(--text-muted);">Votar</span>
+                  <strong id="pct_2_A" style="color:var(--accent-cyan);">52%</strong>
+                </div>
+                <div class="dilemma-pct-bar"><div class="dilemma-pct-fill" id="fill_2_A" style="width: 52%;"></div></div>
+              </div>
+            </div>
+
+            <div class="dilemma-card" id="dilemmaCard_2_B" onclick="voteDilemmaItem(2, 'B', 52, 48)">
+              <div>
+                <div class="dilemma-badge" id="badge_2_B">Opción B</div>
+                <h4 style="color:#fff; font-size:0.92rem; margin-bottom:4px;">⏳ Tiempo Detenido para Jugar/Leer</h4>
+                <p style="font-size:0.78rem; color:var(--text-muted);">Poder pausar el mundo 3 horas diarias exclusivas para tus pasatiempos sin que nadie te interrumpa.</p>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.78rem; margin-top:10px;">
+                  <span id="label_2_B" style="color:var(--text-muted);">Votar</span>
+                  <strong id="pct_2_B" style="color:var(--accent-cyan);">48%</strong>
+                </div>
+                <div class="dilemma-pct-bar"><div class="dilemma-pct-fill" id="fill_2_B" style="width: 48%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 3: Dilema de Hábitos & Energía Social -->
+        <div style="background:rgba(11,19,43,0.5); border:1px solid var(--border-color); border-radius:16px; padding:18px; margin-bottom:20px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <span style="font-size:1.2rem;">🔋</span>
+            <h3 style="font-size:1rem; color:#fff;">3. Batería Social & Rutinas</h3>
+          </div>
+          <p style="font-size:0.88rem; color:#e2e8f0; line-height:1.4; margin-bottom:12px;">
+            ¿Qué habilidad te resultaría más útil para tu día a día?
+          </p>
+
+          <div class="dilemma-container">
+            <div class="dilemma-card" id="dilemmaCard_3_A" onclick="voteDilemmaItem(3, 'A', 58, 42)">
+              <div>
+                <div class="dilemma-badge" id="badge_3_A">Opción A</div>
+                <h4 style="color:#fff; font-size:0.92rem; margin-bottom:4px;">🛡️ Escudo de Invisibilidad Social</h4>
+                <p style="font-size:0.78rem; color:var(--text-muted);">Poder salir a cualquier lugar público sin que nadie te hable ni te mire, con total paz.</p>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.78rem; margin-top:10px;">
+                  <span id="label_3_A" style="color:var(--text-muted);">Votar</span>
+                  <strong id="pct_3_A" style="color:var(--accent-cyan);">58%</strong>
+                </div>
+                <div class="dilemma-pct-bar"><div class="dilemma-pct-fill" id="fill_3_A" style="width: 58%;"></div></div>
+              </div>
+            </div>
+
+            <div class="dilemma-card" id="dilemmaCard_3_B" onclick="voteDilemmaItem(3, 'B', 58, 42)">
+              <div>
+                <div class="dilemma-badge" id="badge_3_B">Opción B</div>
+                <h4 style="color:#fff; font-size:0.92rem; margin-bottom:4px;">⚡ Recarga Instantánea de Energía</h4>
+                <p style="font-size:0.78rem; color:var(--text-muted);">Poder recuperar el 100% de tu batería física y mental con solo cerrar los ojos 5 minutos.</p>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.78rem; margin-top:10px;">
+                  <span id="label_3_B" style="color:var(--text-muted);">Votar</span>
+                  <strong id="pct_3_B" style="color:var(--accent-cyan);">42%</strong>
+                </div>
+                <div class="dilemma-pct-bar"><div class="dilemma-pct-fill" id="fill_3_B" style="width: 42%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 4: Pregunta Abierta de Madrugada (En Vivo) -->
+        <div style="background:rgba(11,19,43,0.5); border:1px solid var(--border-color); border-radius:16px; padding:18px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:1.2rem;">🌙</span>
+              <h3 style="font-size:1rem; color:#fff;">4. Reflexión Nocturna (En Vivo)</h3>
+            </div>
+            <span style="font-size:0.75rem; color:var(--accent-cyan);">Sincronización en Tiempo Real</span>
+          </div>
+          <p style="font-size:0.88rem; color:#e2e8f0; line-height:1.4;">
+            "¿Cuál es ese pequeño placer cotidiano que te da paz pero casi nadie a tu alrededor conoce?"
+          </p>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <input type="text" id="openDilemmaInput" placeholder="Escribe tu reflexión sin prisa..." style="flex:1; background:#0b132b; border:1px solid var(--border-color); border-radius:10px; padding:10px 14px; color:#fff; font-size:0.88rem;">
+            <button class="btn-primary" onclick="submitOpenDilemmaAnswer()">Compartir</button>
+          </div>
+          
+          <!-- Lista de Reflexiones en Vivo -->
+          <div style="margin-top:16px;">
+            <div style="font-size:0.78rem; font-weight:700; color:var(--accent-soft); margin-bottom:8px;">Ecos compartidos por otros viajeros:</div>
+            <div id="reflectionsList" style="display:flex; flex-direction:column; gap:8px; max-height:160px; overflow-y:auto;">
+              <div style="font-size:0.78rem; color:var(--text-muted); text-align:center;">Cargando reflexiones...</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -833,6 +955,8 @@
         initDilemmaVote();
         loadSavedJournal();
         updateSavedDropsCount();
+        updateNotificationUI();
+        initRealtimeNotifications();
       }
     });
 
@@ -924,6 +1048,8 @@
       initDilemmaVote();
       loadSavedJournal();
       updateSavedDropsCount();
+        updateNotificationUI();
+        initRealtimeNotifications();
     }
 
     // --- CARGA DE GOTAS Y FILTRO GUARDADAS ---
@@ -1038,20 +1164,31 @@
         localStorage.setItem('gotas_saved_drop_ids', JSON.stringify(savedIds));
       }
       updateSavedDropsCount();
+        updateNotificationUI();
+        initRealtimeNotifications();
       alert('🔖 Carta guardada en tu lista de "Gotas Guardadas" para leer y responder cuando tengas energía social.');
       closeModal('letterModal');
     }
 
-    // Enviar Respuesta a la Gota
+    // Enviar Respuesta a la Gota y guardar en Mi Buzón
     async function sendReply() {
       const text = document.getElementById('replyText').value.trim();
       if (!text) { alert('Por favor escribe tu respuesta.'); return; }
+
+      const replyObj = {
+        drop_id: currentOpenDrop ? currentOpenDrop.id : null,
+        drop_topic: currentOpenDrop ? currentOpenDrop.topic : 'Carta',
+        drop_author: currentOpenDrop ? currentOpenDrop.author : 'Viajero',
+        author: `${currentAvatar || '🐺'} ${currentUsername || 'Viajero'}`,
+        content: text,
+        created_at: new Date().toISOString()
+      };
 
       if (supabaseClient && currentOpenDrop && currentOpenDrop.id) {
         try {
           await supabaseClient.from('drop_replies').insert({
             drop_id: currentOpenDrop.id,
-            author: `${currentAvatar || '🐺'} ${currentUsername || 'Viajero'}`,
+            author: replyObj.author,
             content: text
           });
         } catch (e) {
@@ -1059,7 +1196,12 @@
         }
       }
 
-      alert('✨ Tu respuesta ha sido enviada al autor de la gota con calma.');
+      // Guardar en el historial local de respuestas enviadas
+      const localSent = JSON.parse(localStorage.getItem('gotas_my_sent_replies') || '[]');
+      localSent.unshift(replyObj);
+      localStorage.setItem('gotas_my_sent_replies', JSON.stringify(localSent));
+
+      alert('✨ Tu respuesta ha sido enviada al autor y registrada en "Mi Buzón de Ecos".');
       document.getElementById('replyText').value = '';
       if (currentOpenDrop) {
         loadRepliesForCurrentDrop(currentOpenDrop.id);
@@ -1183,44 +1325,63 @@
       loadLiveDrops();
     }
 
-    // --- DILEMAS PERSISTENTES ---
+    // --- GESTIÓN DE MÚLTIPLES SECCIONES DE DILEMAS PERSISTENTES ---
+    const dilemmaDefaults = {
+      1: { pctA: 64, pctB: 36 },
+      2: { pctA: 52, pctB: 48 },
+      3: { pctA: 58, pctB: 42 }
+    };
+
     function initDilemmaVote() {
-      const savedVote = localStorage.getItem('gotas_dilemma_choice');
-      if (savedVote === 'A') applyDilemmaUI('A');
-      else if (savedVote === 'B') applyDilemmaUI('B');
+      [1, 2, 3].forEach(id => {
+        const saved = localStorage.getItem(`gotas_dilemma_choice_${id}`);
+        if (saved) {
+          applyDilemmaUI(id, saved, dilemmaDefaults[id].pctA, dilemmaDefaults[id].pctB);
+        }
+      });
     }
 
-    function voteDilemma(choice) {
-      localStorage.setItem('gotas_dilemma_choice', choice);
-      applyDilemmaUI(choice);
+    function voteDilemmaItem(id, choice, pctA, pctB) {
+      localStorage.setItem(`gotas_dilemma_choice_${id}`, choice);
+      applyDilemmaUI(id, choice, pctA, pctB);
     }
 
-    function applyDilemmaUI(choice) {
-      const cardA = document.getElementById('dilemmaOptA');
-      const cardB = document.getElementById('dilemmaOptB');
-      const badgeA = document.getElementById('badgeA');
-      const badgeB = document.getElementById('badgeB');
-      const labelA = document.getElementById('voteLabelA');
-      const labelB = document.getElementById('voteLabelB');
-      const feedback = document.getElementById('dilemmaFeedbackMsg');
+    function applyDilemmaUI(id, choice, pctA, pctB) {
+      const cardA = document.getElementById(`dilemmaCard_${id}_A`);
+      const cardB = document.getElementById(`dilemmaCard_${id}_B`);
+      const badgeA = document.getElementById(`badge_${id}_A`);
+      const badgeB = document.getElementById(`badge_${id}_B`);
+      const labelA = document.getElementById(`label_${id}_A`);
+      const labelB = document.getElementById(`label_${id}_B`);
+
+      if (!cardA || !cardB) return;
 
       if (choice === 'A') {
         cardA.classList.add('selected');
         cardB.classList.remove('selected');
-        badgeA.innerHTML = 'Opción A <span style="color:#06d6a0;">✓ Tu elección</span>';
-        badgeB.innerText = 'Opción B';
-        labelA.innerHTML = '<strong style="color:var(--accent-cyan);">✓ Seleccionado</strong>';
-        labelB.innerText = 'Cambiar a esta opción';
+        if (badgeA) badgeA.innerHTML = 'Opción A <span style="color:#06d6a0;">✓ Tu elección</span>';
+        if (badgeB) badgeB.innerText = 'Opción B';
+        if (labelA) labelA.innerHTML = '<strong style="color:var(--accent-cyan);">✓ Seleccionado</strong>';
+        if (labelB) labelB.innerText = 'Votar';
       } else if (choice === 'B') {
         cardB.classList.add('selected');
         cardA.classList.remove('selected');
-        badgeB.innerHTML = 'Opción B <span style="color:#06d6a0;">✓ Tu elección</span>';
-        badgeA.innerText = 'Opción A';
-        labelB.innerHTML = '<strong style="color:var(--accent-cyan);">✓ Seleccionado</strong>';
-        labelA.innerText = 'Cambiar a esta opción';
+        if (badgeB) badgeB.innerHTML = 'Opción B <span style="color:#06d6a0;">✓ Tu elección</span>';
+        if (badgeA) badgeA.innerText = 'Opción A';
+        if (labelB) labelB.innerHTML = '<strong style="color:var(--accent-cyan);">✓ Seleccionado</strong>';
+        if (labelA) labelA.innerText = 'Votar';
       }
+    }
 
-      if (feedback) feedback.style.display = 'block';
+    function submitOpenDilemmaAnswer() {
+      const inp = document.getElementById('openDilemmaInput');
+      const val = inp.value.trim();
+      if (!val) {
+        alert('Por favor escribe tu reflexión.');
+        return;
+      }
+      document.getElementById('openDilemmaFeedback').style.display = 'block';
+      inp.value = '';
     }
 
     // Modales y Sonido
@@ -1278,6 +1439,8 @@
             initDilemmaVote();
             loadSavedJournal();
             updateSavedDropsCount();
+        updateNotificationUI();
+        initRealtimeNotifications();
             alert(`✨ ¡Bienvenido de vuelta, ${currentUsername}!`);
             return;
           }
@@ -1349,6 +1512,183 @@
       document.getElementById(tabId).classList.add('active-view');
       btn.classList.add('active');
     }
+
+    // --- SISTEMA DE NOTIFICACIONES SUAVES (WEB & MÓVIL) ---
+    function requestNotificationPermission() {
+      if (!("Notification" in window)) {
+        alert("Este navegador no soporta notificaciones de escritorio.");
+        return;
+      }
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          localStorage.setItem('gotas_notifications_enabled', 'true');
+          updateNotificationUI();
+          showSlowNotification('🕊️ Notificaciones Suaves Activadas', 'Te avisaremos con calma cuando llegue una nueva carta o respuesta.');
+        } else {
+          localStorage.setItem('gotas_notifications_enabled', 'false');
+          updateNotificationUI();
+        }
+      });
+    }
+
+    function updateNotificationUI() {
+      const isEnabled = localStorage.getItem('gotas_notifications_enabled') === 'true' && Notification.permission === 'granted';
+      const btn = document.getElementById('notifBtn');
+      if (btn) {
+        btn.innerHTML = isEnabled ? '🔔 Avisos: On' : '🔕 Avisos: Off';
+        btn.style.borderColor = isEnabled ? 'var(--accent-cyan)' : 'var(--border-color)';
+      }
+    }
+
+    function showSlowNotification(title, body) {
+      if (localStorage.getItem('gotas_notifications_enabled') === 'true' && Notification.permission === 'granted') {
+        try {
+          new Notification(title, {
+            body: body,
+            icon: 'https://haseonick.github.io/gotas/logo.svg',
+            badge: 'https://haseonick.github.io/gotas/logo.svg'
+          });
+        } catch (e) {}
+      }
+    }
+
+    function initRealtimeNotifications() {
+      if (supabaseClient) {
+        supabaseClient
+          .channel('public:drops')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'drops' }, payload => {
+            const newDrop = payload.new;
+            if (newDrop.author !== currentUsername) {
+              showSlowNotification('💧 Nueva Gota en el Océano', `${newDrop.author || 'Un viajero'} compartió: "${newDrop.topic}"`);
+              loadLiveDrops();
+            }
+          })
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'drop_replies' }, payload => {
+            const newReply = payload.new;
+            if (!newReply.author.includes(currentUsername)) {
+              showSlowNotification('✉️ Nueva Respuesta Lenta', `${newReply.author || 'Un viajero'} respondió a una carta.`);
+            }
+          })
+          .subscribe();
+      }
+    }
+
+
+    // --- LÓGICA DE MI BUZÓN DE ECOS ---
+    let currentBuzonTab = 'sent';
+
+    function filterBuzonView(tab) {
+      currentBuzonTab = tab;
+      document.getElementById('pillSentReplies').className = 'filter-pill' + (tab === 'sent' ? ' active' : '');
+      document.getElementById('pillMyDrops').className = 'filter-pill' + (tab === 'mydrops' ? ' active' : '');
+      document.getElementById('buzonSentContainer').style.display = tab === 'sent' ? 'flex' : 'none';
+      document.getElementById('buzonMyDropsContainer').style.display = tab === 'mydrops' ? 'flex' : 'none';
+      if (tab === 'sent') loadSentReplies();
+      if (tab === 'mydrops') loadMyDrops();
+    }
+
+    async function loadSentReplies() {
+      const container = document.getElementById('buzonSentContainer');
+      container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted);">Consultando tus respuestas...</div>';
+
+      // 1. Cargar respuestas guardadas localmente
+      const localSent = JSON.parse(localStorage.getItem('gotas_my_sent_replies') || '[]');
+
+      // 2. Cargar respuestas de Supabase si está disponible
+      let serverSent = [];
+      if (supabaseClient) {
+        try {
+          const { data } = await supabaseClient
+            .from('drop_replies')
+            .select('*, drops(topic, author, content)')
+            .ilike('author', `%${currentUsername}%`)
+            .order('created_at', { ascending: false });
+          if (data) serverSent = data;
+        } catch (e) {}
+      }
+
+      // Combinar y desduplicar
+      const combined = [...serverSent, ...localSent];
+      if (combined.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:30px; color:var(--text-muted); background:rgba(11,19,43,0.5); border-radius:12px;">
+            <div style="font-size:1.8rem; margin-bottom:8px;">📨</div>
+            <strong>Aún no has enviado respuestas lentas.</strong>
+            <p style="font-size:0.82rem; margin-top:4px;">Abre cualquier carta en "Gotas Globales" y escribe tu reflexión para verla registrada aquí.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      combined.forEach(rep => {
+        const dropInfo = rep.drops || { topic: rep.drop_topic || 'Carta de viajero', author: rep.drop_author || 'Un viajero' };
+        const card = document.createElement('div');
+        card.style.background = 'rgba(11,19,43,0.7)';
+        card.style.border = '1px solid var(--border-color)';
+        card.style.borderRadius = '12px';
+        card.style.padding = '14px 16px';
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:0.75rem; color:var(--accent-cyan); font-weight:700;">Respondido a: ${dropInfo.author || 'Viajero'} · [${dropInfo.topic || 'Tema'}]</span>
+            <span style="font-size:0.72rem; color:var(--text-muted);">${rep.created_at ? new Date(rep.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : 'Reciente'}</span>
+          </div>
+          <div style="background:#0b132b; border-left:3px solid var(--accent-cyan); padding:10px 12px; border-radius:6px; margin-bottom:6px;">
+            <p style="font-size:0.88rem; color:#fff; line-height:1.4;">"${rep.content}"</p>
+          </div>
+          <div style="font-size:0.72rem; color:var(--text-muted);">Enviado como: ${rep.author || currentUsername}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function loadMyDrops() {
+      const container = document.getElementById('buzonMyDropsContainer');
+      container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted);">Cargando tus cartas publicadas...</div>';
+
+      let myDrops = [];
+      if (supabaseClient) {
+        try {
+          const { data } = await supabaseClient
+            .from('drops')
+            .select('*')
+            .eq('author', currentUsername)
+            .order('created_at', { ascending: false });
+          if (data) myDrops = data;
+        } catch (e) {}
+      }
+
+      if (myDrops.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:30px; color:var(--text-muted); background:rgba(11,19,43,0.5); border-radius:12px;">
+            <div style="font-size:1.8rem; margin-bottom:8px;">🌊</div>
+            <strong>No has publicado cartas en el océano aún.</strong>
+            <p style="font-size:0.82rem; margin-top:4px;">Pulsa "+ Enviar Gota" en la pestaña principal para compartir tu primer pensamiento con el mundo.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      myDrops.forEach(drop => {
+        const card = document.createElement('div');
+        card.className = 'letter-card';
+        card.onclick = () => openLetter(drop);
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="letter-topic">${drop.topic}</span>
+            <span style="font-size:0.8rem; color:var(--accent-soft);">Toca para ver respuestas</span>
+          </div>
+          <p style="font-size:0.88rem; font-style:italic; margin:8px 0;">"${drop.content}"</p>
+          <div style="font-size:0.75rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+            <span>Publicado por ti (${currentAvatar} ${currentUsername})</span>
+            <span style="color:var(--accent-cyan);">Abrir carta →</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
   </script>
 </body>
 </html>
