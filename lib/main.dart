@@ -52,8 +52,8 @@ class MainNavigationShell extends StatefulWidget {
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
   String _socialBattery = '☕ Tranquilo (60%)';
+  bool _isPlusMember = false;
 
-  // Datos locales de respaldo por si el dispositivo está sin conexión
   final List<Map<String, dynamic>> _fallbackDrops = [
     {
       'id': 1,
@@ -120,6 +120,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.stars, color: Color(0xFFFFD166)),
+            tooltip: 'Gotas Plus',
+            onPressed: _showPlusModal,
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
             child: ActionChip(
@@ -181,7 +186,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Sin presión de inmediatez: toca una gota para leer y responder cuando tu energía lo permita.',
+                  'Sin presión de inmediatez: lee y responde cuando tu energía lo permita.',
                   style: TextStyle(fontSize: 13, color: Color(0xFF90E0EF)),
                 ),
               ),
@@ -190,7 +195,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ),
         const SizedBox(height: 20),
         const Text(
-          'Gotas que llegaron a ti (En Vivo)',
+          'Gotas que llegaron a ti',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
@@ -201,17 +206,10 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               .stream(primaryKey: ['id'])
               .order('created_at', ascending: false),
           builder: (context, snapshot) {
-            if (snapshot.hasError) {
+            if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
               return _buildDropsList(_fallbackDrops);
             }
-            if (!snapshot.hasData) {
-              return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
-            }
-            final drops = snapshot.data!;
-            if (drops.isEmpty) {
-              return const Center(child: Text('No hay gotas aún. ¡Sé el primero en enviar una!'));
-            }
-            return _buildDropsList(drops);
+            return _buildDropsList(snapshot.data!);
           },
         ),
 
@@ -340,7 +338,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('✨ Tu respuesta ha sido enviada como una gota lenta. Llegará con calma.'),
+                          content: Text('✨ Tu respuesta ha sido enviada como una gota lenta.'),
                           backgroundColor: Color(0xFF0077B6),
                         ),
                       );
@@ -380,7 +378,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           children: [
             const Text('🌊 Lanzar una Gota al Océano', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
             const SizedBox(height: 6),
-            const Text('Escribe un pensamiento o pregunta sobre lo que te gusta. Llegará a personas con afinidad en todo el mundo.', style: TextStyle(fontSize: 12, color: Colors.white60)),
+            const Text('Escribe un pensamiento o pregunta sobre lo que te gusta. Llegará a personas afines en todo el mundo.', style: TextStyle(fontSize: 12, color: Colors.white60)),
             const SizedBox(height: 14),
             TextField(
               controller: topicController,
@@ -434,7 +432,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('🌊 Tu gota ha sido lanzada al océano global en vivo.'),
+                          content: Text('🌊 Tu gota ha sido lanzada al océano global.'),
                           backgroundColor: Color(0xFF0077B6),
                         ),
                       );
@@ -457,7 +455,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       children: [
         const Text('✨ Rompehielos del Día', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 6),
-        const Text('Dilemas colectivos para conectar sin la presión de iniciar una conversación desde cero.', style: TextStyle(fontSize: 13, color: Colors.white60)),
+        const Text('Dilemas colectivos para conectar sin la presión del small talk.', style: TextStyle(fontSize: 13, color: Colors.white60)),
         const SizedBox(height: 16),
         Card(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0x2648CAE4))),
@@ -484,7 +482,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('📚 Votaste por la Biblioteca Infinita (62% votaron igual)')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('📚 Votaste por la Biblioteca Infinita (62% coinciden)')));
                   },
                   child: const Align(alignment: Alignment.centerLeft, child: Text('📚 La Biblioteca Infinita (62%)')),
                 ),
@@ -496,7 +494,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🌊 Votaste por la Cabaña en el Mar (38% votaron igual)')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🌊 Votaste por la Cabaña en el Mar (38% coinciden)')));
                   },
                   child: const Align(alignment: Alignment.centerLeft, child: Text('🌊 La Cabaña en el Mar (38%)')),
                 ),
@@ -718,27 +716,101 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // 5. PÁGINA: PERFIL Y ESPACIO SEGURO
+  // 5. PÁGINA: PERFIL, ESPACIO SEGURO Y BOUTIQUE DE SELLOS
   Widget _buildProfilePage() {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         const Text('🌱 Mi Espacio Seguro', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 6),
-        const Text('Configura tus intereses y límites de interacción.', style: TextStyle(fontSize: 13, color: Colors.white60)),
+        const Text('Configura tu identidad anónima, temas y ventajas exclusivas.', style: TextStyle(fontSize: 13, color: Colors.white60)),
         const SizedBox(height: 20),
-        const Center(
-          child: CircleAvatar(
-            radius: 36,
-            backgroundColor: Color(0x3348CAE4),
-            child: Text('🐺', style: TextStyle(fontSize: 36)),
+        Center(
+          child: Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              const CircleAvatar(
+                radius: 38,
+                backgroundColor: Color(0x3348CAE4),
+                child: Text('🐺', style: TextStyle(fontSize: 38)),
+              ),
+              if (_isPlusMember)
+                const CircleAvatar(
+                  radius: 12,
+                  backgroundColor: Color(0xFFFFD166),
+                  child: Text('✨', style: TextStyle(fontSize: 12)),
+                )
+            ],
           ),
         ),
         const SizedBox(height: 12),
-        const Center(
-          child: Text('CaminanteSilencioso', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('CaminanteSilencioso', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              if (_isPlusMember)
+                Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(color: const Color(0xFFFFD166), borderRadius: BorderRadius.circular(8)),
+                  child: const Text('PLUS', style: TextStyle(fontSize: 10, color: Colors.black, fontWeight: FontWeight.bold)),
+                )
+            ],
+          ),
         ),
         const SizedBox(height: 20),
+
+        // Banner Gotas Plus en Perfil
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0x33FFD166), Color(0x1A0077B6)]),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0x66FFD166)),
+          ),
+          child: Row(
+            children: [
+              const Text('👑', style: TextStyle(fontSize: 28)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text('Gotas Plus ($1.99/mes)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFFFD166))),
+                    SizedBox(height: 4),
+                    Text('Traducción ilimitada, sellos exclusivos y filtros globales avanzados.', style: TextStyle(fontSize: 11, color: Colors.white70)),
+                  ],
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFD166),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: _showPlusModal,
+                child: const Text('Ver Plan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              )
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+        const Text('Colección de Sellos del Mundo', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF90E0EF))),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildStampItem('🗼', 'Tokio', 'Desbloqueado'),
+            _buildStampItem('🌸', 'Kioto', 'Desbloqueado'),
+            _buildStampItem('☕', 'Buenos Aires', 'Gotas Plus'),
+            _buildStampItem('🍁', 'Montreal', 'Gotas Plus'),
+          ],
+        ),
+
+        const SizedBox(height: 24),
         const Text('Mis Temas de Interés', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF90E0EF))),
         const SizedBox(height: 8),
         Wrap(
@@ -774,6 +846,121 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           ),
         )
       ],
+    );
+  }
+
+  Widget _buildStampItem(String emoji, String title, String status) {
+    final isLocked = status == 'Gotas Plus';
+    return Column(
+      children: [
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C2541),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isLocked ? Colors.white24 : const Color(0xFF48CAE4)),
+          ),
+          child: Center(child: Text(emoji, style: const TextStyle(fontSize: 26))),
+        ),
+        const SizedBox(height: 4),
+        Text(title, style: const TextStyle(fontSize: 11)),
+        Text(status, style: TextStyle(fontSize: 9, color: isLocked ? const Color(0xFFFFD166) : const Color(0xFF48CAE4))),
+      ],
+    );
+  }
+
+  void _showPlusModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1C2541),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 50,
+                height: 5,
+                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: const [
+                Text('👑', style: TextStyle(fontSize: 28)),
+                SizedBox(width: 10),
+                Text('Membresía Gotas Plus', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFFFD166))),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text('Apoya el proyecto independiente y desbloquea funciones exclusivas:', style: TextStyle(fontSize: 13, color: Colors.white70)),
+            const SizedBox(height: 16),
+            _buildPlusFeature('🌍 Traducciones automáticas ilimitadas de cartas'),
+            _buildPlusFeature('🎨 Colección completa de sellos y papeles de carta'),
+            _buildPlusFeature('🔍 Filtros de afinidad por país e idioma de práctica'),
+            _buildPlusFeature('✨ Insignia dorada de apoyo a la comunidad'),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0B132B),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFFD166)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Text('Plan Mensual', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text('\$1.99 USD / mes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFFFD166))),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFD166),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                onPressed: () {
+                  setState(() => _isPlusMember = true);
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✨ ¡Bienvenido a Gotas Plus! Funciones exclusivas desbloqueadas.'),
+                      backgroundColor: Color(0xFF0077B6),
+                    ),
+                  );
+                },
+                child: const Text('Suscribirme a Gotas Plus', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlusFeature(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10.0),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle, color: Color(0xFF48CAE4), size: 18),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 13, color: Colors.white))),
+        ],
+      ),
     );
   }
 
