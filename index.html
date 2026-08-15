@@ -44,13 +44,10 @@
       flex-direction: column;
     }
 
-    /* PANTALLA DE BIENVENIDA / REGISTRO INICIAL OBLIGATORIO */
+    /* PANTALLA INICIAL OBLIGATORIA (ONBOARDING) */
     #onboardingGate {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      top: 0; left: 0; width: 100vw; height: 100vh;
       background: radial-gradient(circle at 50% 20%, #1c2541 0%, #0b132b 80%, #050814 100%);
       z-index: 99999;
       display: none;
@@ -299,6 +296,29 @@
       font-size: 0.85rem;
     }
 
+    /* Sub-tabs para Gotas (Todas vs Guardadas) */
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .filter-pill {
+      background: rgba(28, 37, 65, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-pill.active {
+      background: rgba(72, 202, 228, 0.2);
+      border-color: var(--accent-cyan);
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
     /* Dilemma Cards */
     .dilemma-container {
       display: grid;
@@ -383,6 +403,23 @@
       transform: scale(1.08);
     }
 
+    /* Respuestas en el modal de carta */
+    .replies-list {
+      max-height: 150px;
+      overflow-y: auto;
+      margin: 10px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .reply-item {
+      background: rgba(11, 19, 43, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.82rem;
+    }
+
     .modal-backdrop {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(5, 8, 20, 0.85); backdrop-filter: blur(8px);
@@ -391,7 +428,7 @@
     .modal-backdrop.show { display: flex; }
     .modal-box {
       background: #1c2541; border: 1px solid var(--accent-cyan);
-      border-radius: var(--radius-lg); max-width: 480px; width: 100%; padding: 24px; position: relative;
+      border-radius: var(--radius-lg); max-width: 500px; width: 100%; padding: 24px; position: relative;
     }
     .modal-close {
       position: absolute; top: 14px; right: 14px; background: transparent;
@@ -401,10 +438,7 @@
 </head>
 <body>
 
-  <!-- =========================================================
-       1. PANTALLA INICIAL OBLIGATORIA (ONBOARDING GATE)
-       Entrada anónima en 5 segundos o recuperación con correo
-       ========================================================= -->
+  <!-- 1. PANTALLA INICIAL OBLIGATORIA (ONBOARDING) -->
   <div id="onboardingGate">
     <div class="onboarding-card">
       <div class="welcome-logo">
@@ -429,7 +463,6 @@
         Crea tu identidad anónima de viajero en 5 segundos.
       </p>
 
-      <!-- Vista previa en tiempo real -->
       <div class="profile-live-preview">
         <div class="preview-avatar-circle" id="previewAvatar">🐺</div>
         <div style="text-align:left;">
@@ -438,7 +471,6 @@
         </div>
       </div>
 
-      <!-- Paso 1: Elegir Avatar -->
       <div style="text-align:left; margin-bottom:14px;">
         <label style="font-size:0.82rem; font-weight:700; color:var(--accent-soft); text-transform:uppercase; letter-spacing:0.5px;">
           1. Elige tu Avatar:
@@ -446,7 +478,6 @@
         <div class="avatar-grid" id="onboardingAvatarGrid"></div>
       </div>
 
-      <!-- Paso 2: Nombre de Usuario -->
       <div style="text-align:left; margin-bottom:20px;">
         <label style="font-size:0.82rem; font-weight:700; color:var(--accent-soft); text-transform:uppercase; letter-spacing:0.5px;">
           2. Escribe tu Nombre o Apodo:
@@ -460,12 +491,10 @@
         <div id="usernameFeedback" style="font-size:0.78rem; color:#ff6b6b; margin-top:6px; display:none;"></div>
       </div>
 
-      <!-- Botón Comenzar -->
       <button class="btn-primary" style="width:100%; padding:14px; font-size:0.95rem; justify-content:center; border-radius:14px;" onclick="completeOnboarding()">
         Comenzar y Entrar al Océano 💧
       </button>
 
-      <!-- Enlace para recuperar cuenta existente con correo -->
       <div style="margin-top:14px; font-size:0.78rem;">
         <span style="color:var(--text-muted);">¿Ya tenías una cuenta respaldada? </span>
         <a href="javascript:void(0)" onclick="openRecoverAccountModal()" style="color:var(--accent-cyan); text-decoration:underline;">Recuperar con correo</a>
@@ -527,12 +556,18 @@
 
     <main class="main-content">
       
-      <!-- Tab 1: Gotas -->
+      <!-- Tab 1: Gotas (Con filtro Todas vs Guardadas) -->
       <section id="tab-gotas" class="view-card active-view">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h2>💧 Gotas del Mundo (En Vivo)</h2>
+          <h2>💧 Gotas del Mundo</h2>
           <button class="btn-primary" onclick="openNewDropModal()">+ Enviar Gota</button>
         </div>
+
+        <div class="filter-pills">
+          <div class="filter-pill active" id="pillAllDrops" onclick="filterDropsView('all')">🌊 Todas las Gotas</div>
+          <div class="filter-pill" id="pillSavedDrops" onclick="filterDropsView('saved')">🔖 Gotas Guardadas (<span id="savedCount">0</span>)</div>
+        </div>
+
         <div class="calm-banner">
           <span>🕊️ Sincronizado en tiempo real entre la Web y la App móvil.</span>
         </div>
@@ -541,13 +576,13 @@
         </div>
       </section>
 
-      <!-- Tab 2: Diario -->
+      <!-- Tab 2: Diario Privado (Persistente) -->
       <section id="tab-diario" class="view-card">
         <h2>📖 Mi Diario de Gotas Privadas</h2>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">Un espacio seguro que se guarda en tu navegador.</p>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">Un espacio seguro que se guarda de forma permanente en tu navegador.</p>
         <textarea id="journalInput" rows="4" placeholder="¿Qué momento tranquilo tuviste hoy?..." style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:12px; padding:12px; color:#fff; font-family:inherit; margin-bottom:10px;"></textarea>
         <div style="display:flex; justify-content:flex-end;">
-          <button class="btn-primary" onclick="saveJournalEntry()">Guardar</button>
+          <button class="btn-primary" onclick="saveJournalEntry()">Guardar en mi Diario</button>
         </div>
         <div id="journalList" style="margin-top:20px; display:flex; flex-direction:column; gap:10px;"></div>
       </section>
@@ -600,19 +635,19 @@
         </div>
       </section>
 
-      <!-- Tab 4: Historia Colectiva -->
+      <!-- Tab 4: Historia Colectiva (Acumulativa) -->
       <section id="tab-silencio" class="view-card">
         <h2>🎨 Creación en Silencio (En Vivo)</h2>
-        <div id="storyContainer" style="background:rgba(11,19,43,0.7); border:1px solid var(--border-color); border-radius:12px; padding:14px; margin:14px 0; line-height:1.6; font-size:0.9rem;">
+        <div id="storyContainer" style="background:rgba(11,19,43,0.7); border:1px solid var(--border-color); border-radius:12px; padding:16px; margin:14px 0; line-height:1.7; font-size:0.92rem;">
           Cargando historia colectiva...
         </div>
         <div style="display:flex; gap:8px;">
-          <input type="text" id="storyInput" placeholder="Agrega una frase al relato..." style="flex:1; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:20px; padding:8px 14px; color:#fff;">
+          <input type="text" id="storyInput" placeholder="Agrega la siguiente frase al relato..." style="flex:1; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:20px; padding:10px 16px; color:#fff;">
           <button class="btn-primary" onclick="addStory()">Agregar</button>
         </div>
       </section>
 
-      <!-- Tab 5: Mi Espacio Seguro (Perfil y Respaldo de Cuenta) -->
+      <!-- Tab 5: Mi Espacio Seguro -->
       <section id="tab-perfil" class="view-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <h2>🌱 Mi Espacio Seguro</h2>
@@ -620,16 +655,14 @@
         </div>
         <p style="font-size:0.85rem; color:var(--text-muted); margin:6px 0 18px;">Gestiona tu perfil y el respaldo de tu cuenta.</p>
 
-        <!-- Tarjeta de Identidad -->
         <div style="background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:16px; padding:18px; display:flex; align-items:center; gap:16px; margin-bottom:20px;">
           <div class="preview-avatar-circle" id="profileTabAvatar" style="width:60px; height:60px; font-size:2rem;">🐺</div>
           <div>
             <div style="font-size:1.15rem; font-weight:bold; color:#fff;" id="profileTabUsername">Viajero</div>
-            <div style="font-size:0.8rem; color:var(--accent-cyan); margin-top:2px;">Cuenta Anónima Activa</div>
+            <div style="font-size:0.8rem; color:var(--accent-cyan); margin-top:2px;">Cuenta Activa en este Dispositivo</div>
           </div>
         </div>
 
-        <!-- Apartado de Respaldo Opcional con Correo -->
         <div style="background:linear-gradient(135deg, rgba(0, 119, 182, 0.2), rgba(72, 202, 228, 0.1)); border:1px solid var(--border-color); border-radius:16px; padding:20px;">
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
             <span style="font-size:1.3rem;">🛡️</span>
@@ -659,16 +692,58 @@
     </main>
   </div>
 
-  <!-- Modales -->
+  <!-- Modal: Leer Carta, Ver Respuestas y Guardar para Después -->
+  <div class="modal-backdrop" id="letterModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('letterModal')">&times;</button>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div class="preview-avatar-circle" id="modalAvatar" style="width:38px; height:38px; font-size:1.3rem;">🐺</div>
+          <div>
+            <h3 id="modalAuthor" style="color:#fff; font-size:1rem; margin:0;">Autor</h3>
+            <div id="modalLocation" style="font-size:0.75rem; color:var(--text-muted);">Ubicación</div>
+          </div>
+        </div>
+        <span class="letter-topic" id="modalTopic" style="margin:0;">Tema</span>
+      </div>
+
+      <div style="background:#0b132b; border:1px solid var(--border-color); border-radius:12px; padding:14px; margin:14px 0;">
+        <p id="modalContent" style="font-size:0.92rem; color:#e2e8f0; line-height:1.5; font-style:italic; margin:0;"></p>
+      </div>
+
+      <!-- Respuestas Recibidas en esta Gota -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:0.8rem; font-weight:700; color:var(--accent-soft); margin-bottom:6px;">💬 Respuestas Lentas Recibidas:</div>
+        <div class="replies-list" id="modalRepliesList">
+          <div style="font-size:0.78rem; color:var(--text-muted); text-align:center; padding:8px;">Cargando respuestas...</div>
+        </div>
+      </div>
+
+      <!-- Cuadro de Respuesta -->
+      <div>
+        <label style="display:block; margin-bottom:6px; font-size:0.82rem; color:var(--accent-soft);">Tu respuesta (sin prisa):</label>
+        <textarea id="replyText" rows="3" placeholder="Escribe tu reflexión con calma..." style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:10px; color:#fff; font-family:inherit; margin-bottom:12px;"></textarea>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <button class="btn-secondary" onclick="saveCurrentDropForLater()" title="Guarda esta carta para responder más tarde cuando recargues energía">
+            🔖 Guardar para después
+          </button>
+          <button class="btn-primary" onclick="sendReply()">
+            Enviar Respuesta
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Otros Modales -->
   <div class="modal-backdrop" id="recoverModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('recoverModal')">&times;</button>
-      <h3 style="color:#fff; margin-bottom:6px;">🔄 Recuperar Cuenta Existente</h3>
-      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:14px;">Ingresa el correo electrónico con el que respaldaste tu cuenta:</p>
+      <h3 style="color:#fff; margin-bottom:6px;">🔄 Recuperar Cuenta</h3>
       <input type="email" id="recoverEmailInput" placeholder="tu-correo@ejemplo.com" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; color:#fff; margin-bottom:14px;">
       <div style="display:flex; justify-content:flex-end; gap:8px;">
         <button class="btn-secondary" onclick="closeModal('recoverModal')">Cancelar</button>
-        <button class="btn-primary" onclick="recoverAccount()">Recuperar Mi Cuenta</button>
+        <button class="btn-primary" onclick="recoverAccount()">Recuperar Cuenta</button>
       </div>
     </div>
   </div>
@@ -677,17 +752,13 @@
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('profileModal')">&times;</button>
       <h3 style="color:#fff; margin-bottom:6px;">🌱 Mi Identidad de Viajero</h3>
-      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:14px;">Cambia tu avatar y apodo:</p>
-
       <label style="font-size:0.85rem; color:var(--accent-soft);">1. Elige tu Avatar:</label>
       <div class="avatar-grid" id="editAvatarGrid"></div>
-
       <label style="font-size:0.85rem; color:var(--accent-soft); margin-top:10px; display:block;">2. Nombre de Usuario:</label>
       <div style="display:flex; gap:8px; margin-top:4px; margin-bottom:16px;">
         <input type="text" id="editUsernameInput" placeholder="Tu alias..." style="flex:1; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff;">
         <button class="btn-secondary" onclick="generateEditRandomName()">🎲 Aleatorio</button>
       </div>
-
       <div style="display:flex; justify-content:flex-end;">
         <button class="btn-primary" onclick="saveEditedProfile()">Guardar Cambios</button>
       </div>
@@ -698,27 +769,11 @@
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('newDropModal')">&times;</button>
       <h3 style="color:#fff; margin-bottom:8px;">🌊 Enviar una Gota al Océano</h3>
-      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">Se compartirá al instante con usuarios en la Web y en la App Móvil.</p>
-      <input type="text" id="newDropTopic" placeholder="Tema (Ej. Hábitos, Videojuegos, Lectura)" style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; margin-bottom:14px;">
-      <textarea id="newDropContent" rows="4" placeholder="Comparte tu reflexión con tranquilidad..." style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:8px; padding:10px; color:#fff; font-family:inherit; margin-bottom:16px;"></textarea>
+      <input type="text" id="newDropTopic" placeholder="Tema (Ej. Hábitos, Videojuegos, Lectura)" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; margin-bottom:14px;">
+      <textarea id="newDropContent" rows="4" placeholder="Comparte tu reflexión con tranquilidad..." style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:10px; color:#fff; font-family:inherit; margin-bottom:16px;"></textarea>
       <div style="display:flex; justify-content:flex-end; gap:10px;">
         <button class="btn-secondary" onclick="closeModal('newDropModal')">Cancelar</button>
         <button class="btn-primary" onclick="publishNewDrop()">Lanzar al Mundo</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="letterModal">
-    <div class="modal-box">
-      <button class="modal-close" onclick="closeModal('letterModal')">&times;</button>
-      <h3 id="modalAuthor" style="color:#fff;">Autor</h3>
-      <div id="modalLocation" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">Ubicación</div>
-      <span class="letter-topic" id="modalTopic">Tema</span>
-      <p id="modalContent" style="margin:14px 0; font-size:0.9rem; color:#e2e8f0; line-height:1.5;"></p>
-      <textarea id="replyText" rows="3" placeholder="Escribe tu respuesta con calma..." style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:8px; padding:10px; color:#fff; font-family:inherit; margin-bottom:12px;"></textarea>
-      <div style="display:flex; justify-content:flex-end; gap:10px;">
-        <button class="btn-secondary" onclick="closeModal('letterModal')">Guardar</button>
-        <button class="btn-primary" onclick="sendReply()">Enviar Respuesta</button>
       </div>
     </div>
   </div>
@@ -757,20 +812,14 @@
 
     const avatarsList = ['🐺', '🦊', '🦉', '🐱', '🐇', '🐼', '🦥', '🐸', '🐢', '🦌', '🦔', '🐧', '🌿', '🌸', '🌙', '🌊', '🌧️', '🍄', '☕', '🕯️', '🔮', '🪐', '🌌', '🎨'];
 
-    function getOrCreateDeviceId() {
-      let id = localStorage.getItem('gotas_device_uuid');
-      if (!id) {
-        id = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('gotas_device_uuid', id);
-      }
-      return id;
-    }
-
-    const deviceId = getOrCreateDeviceId();
     let chosenAvatar = '🐺';
     let currentAvatar = localStorage.getItem('gotas_user_avatar');
     let currentUsername = localStorage.getItem('gotas_user_name');
     const isRegistered = localStorage.getItem('gotas_user_registered') === 'true';
+
+    let currentOpenDrop = null;
+    let allGlobalDrops = [];
+    let currentDropsFilter = 'all';
 
     document.addEventListener('DOMContentLoaded', () => {
       if (!isRegistered || !currentUsername) {
@@ -782,8 +831,19 @@
         loadLiveDrops();
         loadLiveStory();
         initDilemmaVote();
+        loadSavedJournal();
+        updateSavedDropsCount();
       }
     });
+
+    function updateHeaderProfile() {
+      document.getElementById('userAvatarHeader').innerText = currentAvatar || '🐺';
+      document.getElementById('userNameHeader').innerText = currentUsername || 'Viajero';
+      const pAvatar = document.getElementById('profileTabAvatar');
+      const pUser = document.getElementById('profileTabUsername');
+      if (pAvatar) pAvatar.innerText = currentAvatar || '🐺';
+      if (pUser) pUser.innerText = currentUsername || 'Viajero';
+    }
 
     function renderOnboardingAvatars() {
       const grid = document.getElementById('onboardingAvatarGrid');
@@ -862,87 +922,272 @@
       loadLiveDrops();
       loadLiveStory();
       initDilemmaVote();
+      loadSavedJournal();
+      updateSavedDropsCount();
     }
 
-    function updateHeaderProfile() {
-      document.getElementById('userAvatarHeader').innerText = currentAvatar || '🐺';
-      document.getElementById('userNameHeader').innerText = currentUsername || 'Viajero';
-      const pAvatar = document.getElementById('profileTabAvatar');
-      const pUser = document.getElementById('profileTabUsername');
-      if (pAvatar) pAvatar.innerText = currentAvatar || '🐺';
-      if (pUser) pUser.innerText = currentUsername || 'Viajero';
+    // --- CARGA DE GOTAS Y FILTRO GUARDADAS ---
+    async function loadLiveDrops() {
+      if (supabaseClient) {
+        try {
+          const { data } = await supabaseClient.from('drops').select('*').order('created_at', { ascending: false });
+          if (data && data.length > 0) {
+            allGlobalDrops = data;
+            renderDropsView();
+            return;
+          }
+        } catch (e) {}
+      }
+      allGlobalDrops = [
+        { id: 1, author: 'Yuki', location: '🇯🇵 Kioto', avatar: '🦊', topic: 'Videojuegos & Paz', content: 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?' },
+        { id: 2, author: 'Mateo', location: '🇦🇷 Buenos Aires', avatar: '🦉', topic: 'Rutina en Solitario', content: 'Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba. ¿Prefieres entrenar a solas o con música?' }
+      ];
+      renderDropsView();
     }
 
-    // Respaldo de cuenta opcional con correo
-    async function saveBackupEmail() {
-      const email = document.getElementById('backupEmailInput').value.trim();
-      const feedback = document.getElementById('backupFeedback');
-      if (!email || !email.includes('@')) {
-        alert('Por favor ingresa un correo válido.');
+    function filterDropsView(type) {
+      currentDropsFilter = type;
+      document.getElementById('pillAllDrops').className = 'filter-pill' + (type === 'all' ? ' active' : '');
+      document.getElementById('pillSavedDrops').className = 'filter-pill' + (type === 'saved' ? ' active' : '');
+      renderDropsView();
+    }
+
+    function renderDropsView() {
+      const grid = document.getElementById('dropsGrid');
+      grid.innerHTML = '';
+
+      let list = allGlobalDrops;
+      if (currentDropsFilter === 'saved') {
+        const savedIds = JSON.parse(localStorage.getItem('gotas_saved_drop_ids') || '[]');
+        list = allGlobalDrops.filter(d => savedIds.includes(d.id));
+        if (list.length === 0) {
+          grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px; color:var(--text-muted);">No tienes cartas guardadas aún. Abre cualquier gota y pulsa <strong>"🔖 Guardar para después"</strong> para leerla con calma cuando recargues energía.</div>';
+          return;
+        }
+      }
+
+      list.forEach(drop => {
+        const card = document.createElement('div');
+        card.className = 'letter-card';
+        card.onclick = () => openLetter(drop);
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="letter-topic">${drop.topic}</span>
+            <span style="font-size:1.1rem;">${drop.avatar || '💧'}</span>
+          </div>
+          <p style="font-size:0.85rem; font-style:italic; line-height:1.4;">"${drop.content.substring(0, 85)}..."</p>
+          <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+            <span>${drop.author || 'Anónimo'} · ${drop.location || 'Mundo'}</span>
+            <span style="color:var(--accent-cyan);">Leer →</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function updateSavedDropsCount() {
+      const savedIds = JSON.parse(localStorage.getItem('gotas_saved_drop_ids') || '[]');
+      const el = document.getElementById('savedCount');
+      if (el) el.innerText = savedIds.length;
+    }
+
+    // --- ABRIR CARTA Y GESTIONAR RESPUESTAS ---
+    async function openLetter(drop) {
+      currentOpenDrop = drop;
+      document.getElementById('modalAuthor').innerText = drop.author || 'Anónimo';
+      document.getElementById('modalAvatar').innerText = drop.avatar || '💧';
+      document.getElementById('modalLocation').innerText = drop.location || 'Mundo';
+      document.getElementById('modalTopic').innerText = drop.topic;
+      document.getElementById('modalContent').innerText = `"${drop.content}"`;
+      document.getElementById('replyText').value = '';
+
+      // Cargar respuestas de esta gota
+      loadRepliesForCurrentDrop(drop.id);
+      document.getElementById('letterModal').classList.add('show');
+    }
+
+    async function loadRepliesForCurrentDrop(dropId) {
+      const listEl = document.getElementById('modalRepliesList');
+      listEl.innerHTML = '<div style="font-size:0.78rem; color:var(--text-muted); text-align:center;">Cargando respuestas...</div>';
+
+      if (supabaseClient && dropId) {
+        try {
+          const { data } = await supabaseClient.from('drop_replies').select('*').eq('drop_id', dropId).order('created_at', { ascending: true });
+          if (data && data.length > 0) {
+            listEl.innerHTML = '';
+            data.forEach(rep => {
+              const item = document.createElement('div');
+              item.className = 'reply-item';
+              item.innerHTML = `<strong>${rep.author || 'Viajero'}:</strong> ${rep.content}`;
+              listEl.appendChild(item);
+            });
+            return;
+          }
+        } catch (e) {}
+      }
+
+      listEl.innerHTML = '<div style="font-size:0.78rem; color:var(--text-muted); text-align:center; padding:6px;">Aún no hay respuestas en esta gota. ¡Sé el primero en responder con calma!</div>';
+    }
+
+    // Guardar para después (Favoritos)
+    function saveCurrentDropForLater() {
+      if (!currentOpenDrop) return;
+      const savedIds = JSON.parse(localStorage.getItem('gotas_saved_drop_ids') || '[]');
+      if (!savedIds.includes(currentOpenDrop.id)) {
+        savedIds.push(currentOpenDrop.id);
+        localStorage.setItem('gotas_saved_drop_ids', JSON.stringify(savedIds));
+      }
+      updateSavedDropsCount();
+      alert('🔖 Carta guardada en tu lista de "Gotas Guardadas" para leer y responder cuando tengas energía social.');
+      closeModal('letterModal');
+    }
+
+    // Enviar Respuesta a la Gota
+    async function sendReply() {
+      const text = document.getElementById('replyText').value.trim();
+      if (!text) { alert('Por favor escribe tu respuesta.'); return; }
+
+      if (supabaseClient && currentOpenDrop && currentOpenDrop.id) {
+        try {
+          await supabaseClient.from('drop_replies').insert({
+            drop_id: currentOpenDrop.id,
+            author: `${currentAvatar || '🐺'} ${currentUsername || 'Viajero'}`,
+            content: text
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      alert('✨ Tu respuesta ha sido enviada al autor de la gota con calma.');
+      document.getElementById('replyText').value = '';
+      if (currentOpenDrop) {
+        loadRepliesForCurrentDrop(currentOpenDrop.id);
+      }
+    }
+
+    // --- DIARIO PRIVADO PERSISTENTE ---
+    function loadSavedJournal() {
+      const list = document.getElementById('journalList');
+      const saved = JSON.parse(localStorage.getItem('gotas_private_journal') || '[]');
+      list.innerHTML = '';
+      if (saved.length === 0) {
+        list.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:12px;">Aún no tienes notas privadas. Escribe tu primera reflexión arriba.</div>';
         return;
       }
-
-      if (supabaseClient) {
-        try {
-          await supabaseClient.from('profiles').upsert({
-            username: currentUsername,
-            avatar: currentAvatar,
-            email: email
-          }, { onConflict: 'username' });
-
-          localStorage.setItem('gotas_backup_email', email);
-          feedback.innerText = `✨ Cuenta vinculada exitosamente a ${email}. Ahora puedes recuperarla en cualquier dispositivo.`;
-          feedback.style.display = 'block';
-          alert('🛡️ Respaldo exitoso.');
-        } catch (e) {
-          alert('No se pudo guardar el respaldo. Intenta de nuevo.');
-        }
-      }
+      saved.forEach((entry, idx) => {
+        const div = document.createElement('div');
+        div.style.background = 'rgba(11,19,43,0.6)';
+        div.style.padding = '12px 14px';
+        div.style.borderRadius = '12px';
+        div.style.border = '1px solid var(--border-color)';
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.alignItems = 'flex-start';
+        div.style.gap = '10px';
+        div.innerHTML = `
+          <div style="flex:1;">
+            <div style="font-size:0.75rem; color:var(--accent-cyan); margin-bottom:4px;">${entry.date || 'Nota guardada'}</div>
+            <p style="font-size:0.88rem; line-height:1.4; color:#fff;">${entry.text}</p>
+          </div>
+          <button onclick="deleteJournalEntry(${idx})" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:0.9rem;" title="Eliminar nota">✕</button>
+        `;
+        list.appendChild(div);
+      });
     }
 
-    function openRecoverAccountModal() {
-      document.getElementById('recoverModal').classList.add('show');
+    function saveJournalEntry() {
+      const val = document.getElementById('journalInput').value.trim();
+      if (!val) { alert('Por favor escribe tu reflexión antes de guardar.'); return; }
+      const saved = JSON.parse(localStorage.getItem('gotas_private_journal') || '[]');
+      const dateStr = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      saved.unshift({ text: val, date: dateStr });
+      localStorage.setItem('gotas_private_journal', JSON.stringify(saved));
+      document.getElementById('journalInput').value = '';
+      loadSavedJournal();
     }
 
-    async function recoverAccount() {
-      const email = document.getElementById('recoverEmailInput').value.trim();
-      if (!email) return;
+    function deleteJournalEntry(idx) {
+      const saved = JSON.parse(localStorage.getItem('gotas_private_journal') || '[]');
+      saved.splice(idx, 1);
+      localStorage.setItem('gotas_private_journal', JSON.stringify(saved));
+      loadSavedJournal();
+    }
 
+    // --- HISTORIA COLECTIVA ACUMULATIVA ---
+    const PROLOGUE_STORY = 'Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.';
+
+    async function loadLiveStory() {
+      const container = document.getElementById('storyContainer');
       if (supabaseClient) {
         try {
-          const { data, error } = await supabaseClient.from('profiles').select('*').eq('email', email).maybeSingle();
-          if (data) {
-            currentUsername = data.username;
-            currentAvatar = data.avatar || '🐺';
-            localStorage.setItem('gotas_user_registered', 'true');
-            localStorage.setItem('gotas_user_name', currentUsername);
-            localStorage.setItem('gotas_user_avatar', currentAvatar);
-            localStorage.setItem('gotas_backup_email', email);
-
-            closeModal('recoverModal');
-            document.getElementById('onboardingGate').style.display = 'none';
-            updateHeaderProfile();
-            loadLiveDrops();
-            loadLiveStory();
-            initDilemmaVote();
-            alert(`✨ ¡Bienvenido de vuelta, ${currentUsername}! Tu cuenta ha sido recuperada.`);
+          const { data } = await supabaseClient.from('story_sentences').select('author, sentence, created_at').order('created_at', { ascending: true });
+          if (data && data.length > 0) {
+            const hasPrologue = data.some(d => d.sentence && d.sentence.includes('pequeño conejo plateado'));
+            let htmlOutput = '';
+            if (!hasPrologue) {
+              htmlOutput += `<span style="color:#caf0f8;">${PROLOGUE_STORY}</span>`;
+            }
+            data.forEach(item => {
+              const txt = item.sentence.startsWith(' ') ? item.sentence : ' ' + item.sentence;
+              htmlOutput += `<span style="display:inline; color:#fff;" title="Por: ${item.author || 'Viajero'}">${txt}</span>`;
+            });
+            container.innerHTML = htmlOutput;
             return;
-          } else {
-            alert('No se encontró ninguna cuenta vinculada a este correo.');
           }
-        } catch (e) {
-          alert('Error al conectar con el servidor.');
-        }
+        } catch (e) {}
       }
+      container.innerHTML = `<span style="color:#caf0f8;">${PROLOGUE_STORY}</span>`;
     }
 
+    async function addStory() {
+      const inp = document.getElementById('storyInput');
+      const text = inp.value.trim();
+      if (!text) { alert('Escribe una frase para continuar el relato.'); return; }
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('story_sentences').insert({
+            author: `${currentAvatar || '🐺'} ${currentUsername || 'Viajero'}`,
+            sentence: ` ${text}`
+          });
+        } catch (e) {}
+      }
+
+      inp.value = '';
+      alert('✨ Tu frase ha sido añadida a la historia colectiva.');
+      await loadLiveStory();
+    }
+
+    async function publishNewDrop() {
+      const topic = document.getElementById('newDropTopic').value.trim();
+      const content = document.getElementById('newDropContent').value.trim();
+      if (!content) { alert('Por favor escribe el contenido de tu gota.'); return; }
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('drops').insert({
+            author: currentUsername,
+            avatar: currentAvatar,
+            location: 'Tu rincón seguro',
+            topic: topic || 'Pensamiento libre',
+            content: content
+          });
+        } catch (e) {}
+      }
+
+      closeModal('newDropModal');
+      document.getElementById('newDropTopic').value = '';
+      document.getElementById('newDropContent').value = '';
+      alert('🌊 ¡Tu gota ha sido lanzada al océano y compartida en vivo!');
+      loadLiveDrops();
+    }
+
+    // --- DILEMAS PERSISTENTES ---
     function initDilemmaVote() {
       const savedVote = localStorage.getItem('gotas_dilemma_choice');
-      if (savedVote === 'A') {
-        applyDilemmaUI('A');
-      } else if (savedVote === 'B') {
-        applyDilemmaUI('B');
-      }
+      if (savedVote === 'A') applyDilemmaUI('A');
+      else if (savedVote === 'B') applyDilemmaUI('B');
     }
 
     function voteDilemma(choice) {
@@ -978,6 +1223,10 @@
       if (feedback) feedback.style.display = 'block';
     }
 
+    // Modales y Sonido
+    function openNewDropModal() { document.getElementById('newDropModal').classList.add('show'); }
+    function toggleBatteryModal() { document.getElementById('batteryModal').classList.add('show'); }
+    function openBinanceModal() { document.getElementById('binanceModal').classList.add('show'); }
     function openProfileModal() {
       document.getElementById('editUsernameInput').value = currentUsername;
       const grid = document.getElementById('editAvatarGrid');
@@ -995,26 +1244,11 @@
       });
       document.getElementById('profileModal').classList.add('show');
     }
-
-    function generateEditRandomName() {
-      document.getElementById('editUsernameInput').value = getRandomPoeticName();
-    }
+    function generateEditRandomName() { document.getElementById('editUsernameInput').value = getRandomPoeticName(); }
 
     async function saveEditedProfile() {
       const name = document.getElementById('editUsernameInput').value.trim();
       if (!name) return;
-
-      if (supabaseClient && name !== localStorage.getItem('gotas_user_name')) {
-        try {
-          const { data } = await supabaseClient.from('profiles').select('username').eq('username', name).maybeSingle();
-          if (data) {
-            alert('⚠️ Este nombre ya fue elegido por otro viajero. Elige otro.');
-            return;
-          }
-          await supabaseClient.from('profiles').upsert({ username: name, avatar: currentAvatar }, { onConflict: 'username' });
-        } catch (e) {}
-      }
-
       currentUsername = name;
       localStorage.setItem('gotas_user_name', currentUsername);
       localStorage.setItem('gotas_user_avatar', currentAvatar);
@@ -1023,167 +1257,54 @@
       alert(`✨ Identidad actualizada: ${currentAvatar} ${currentUsername}`);
     }
 
-    async function loadLiveDrops() {
-      const grid = document.getElementById('dropsGrid');
+    function openRecoverAccountModal() { document.getElementById('recoverModal').classList.add('show'); }
+    async function recoverAccount() {
+      const email = document.getElementById('recoverEmailInput').value.trim();
+      if (!email) return;
       if (supabaseClient) {
         try {
-          const { data } = await supabaseClient.from('drops').select('*').order('created_at', { ascending: false });
-          if (data && data.length > 0) {
-            grid.innerHTML = '';
-            data.forEach(drop => {
-              const card = document.createElement('div');
-              card.className = 'letter-card';
-              card.onclick = () => openLetter(drop.author || 'Anónimo', drop.location || 'Mundo', drop.topic, drop.content);
-              card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <span class="letter-topic">${drop.topic}</span>
-                  <span style="font-size:0.95rem;">${drop.avatar || '💧'}</span>
-                </div>
-                <p style="font-size:0.85rem; font-style:italic;">"${drop.content.substring(0, 80)}..."</p>
-                <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted);">${drop.author || 'Anónimo'} · ${drop.location || 'Mundo'}</div>
-              `;
-              grid.appendChild(card);
-            });
+          const { data } = await supabaseClient.from('profiles').select('*').eq('email', email).maybeSingle();
+          if (data) {
+            currentUsername = data.username;
+            currentAvatar = data.avatar || '🐺';
+            localStorage.setItem('gotas_user_registered', 'true');
+            localStorage.setItem('gotas_user_name', currentUsername);
+            localStorage.setItem('gotas_user_avatar', currentAvatar);
+            closeModal('recoverModal');
+            document.getElementById('onboardingGate').style.display = 'none';
+            updateHeaderProfile();
+            loadLiveDrops();
+            loadLiveStory();
+            initDilemmaVote();
+            loadSavedJournal();
+            updateSavedDropsCount();
+            alert(`✨ ¡Bienvenido de vuelta, ${currentUsername}!`);
             return;
           }
         } catch (e) {}
       }
-      grid.innerHTML = `
-        <div class="letter-card" onclick="openLetter('Yuki', '🇯🇵 Kioto', 'Videojuegos & Paz', 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?')">
-          <span class="letter-topic">Videojuegos & Paz</span>
-          <p style="font-size:0.85rem; font-style:italic;">"Me gusta construir granjas en Minecraft mientras escucho lluvia..."</p>
-          <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted);">Yuki · 🇯🇵 Kioto</div>
-        </div>
-      `;
+      alert('No se encontró ninguna cuenta vinculada a este correo.');
     }
 
-    const PROLOGUE_STORY = 'Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.';
-
-    async function loadLiveStory() {
-      const container = document.getElementById('storyContainer');
-      let combinedSentences = [];
-
+    async function saveBackupEmail() {
+      const email = document.getElementById('backupEmailInput').value.trim();
+      const feedback = document.getElementById('backupFeedback');
+      if (!email || !email.includes('@')) { alert('Por favor ingresa un correo válido.'); return; }
       if (supabaseClient) {
         try {
-          const { data, error } = await supabaseClient
-            .from('story_sentences')
-            .select('author, sentence, created_at')
-            .order('created_at', { ascending: true });
-
-          if (data && data.length > 0) {
-            // Verificar si el prólogo ya está en los datos de la base de datos
-            const hasPrologue = data.some(d => d.sentence && d.sentence.includes('pequeño conejo plateado'));
-            
-            let htmlOutput = '';
-            if (!hasPrologue) {
-              htmlOutput += `<span class="story-fragment" title="Prólogo">${PROLOGUE_STORY}</span>`;
-            }
-
-            data.forEach(item => {
-              const txt = item.sentence.startsWith(' ') ? item.sentence : ' ' + item.sentence;
-              const authorName = item.author || 'Viajero Anónimo';
-              htmlOutput += `<span class="story-fragment" title="Por: ${authorName}" style="display:inline; padding:1px 3px; border-radius:4px; transition:background 0.2s;">${txt}</span>`;
-            });
-
-            container.innerHTML = htmlOutput;
-            return;
-          }
-        } catch (e) {
-          console.error("Error cargando historia:", e);
-        }
+          await supabaseClient.from('profiles').upsert({ username: currentUsername, avatar: currentAvatar, email: email }, { onConflict: 'username' });
+          feedback.innerText = `✨ Cuenta vinculada exitosamente a ${email}.`;
+          feedback.style.display = 'block';
+          alert('🛡️ Respaldo exitoso.');
+        } catch (e) {}
       }
-
-      container.innerHTML = `<span class="story-fragment" title="Prólogo">${PROLOGUE_STORY}</span>`;
     }
 
-    async function publishNewDrop() {
-      const topic = document.getElementById('newDropTopic').value.trim();
-      const content = document.getElementById('newDropContent').value.trim();
-      if (!content) { alert('Por favor escribe el contenido de tu gota.'); return; }
-
-      if (supabaseClient) {
-        try {
-          await supabaseClient.from('drops').insert({
-            author: currentUsername,
-            avatar: currentAvatar,
-            location: 'Tu rincón seguro',
-            topic: topic || 'Pensamiento libre',
-            content: content
-          });
-        } catch (e) {
-          console.error(e);
-        }
-      }
-
-      closeModal('newDropModal');
-      document.getElementById('newDropTopic').value = '';
-      document.getElementById('newDropContent').value = '';
-      alert('🌊 ¡Tu gota ha sido lanzada al océano y compartida en vivo!');
-      loadLiveDrops();
-    }
-
-    async function addStory() {
-      const inp = document.getElementById('storyInput');
-      const text = inp.value.trim();
-      if (!text) {
-        alert('Escribe una frase para continuar el relato.');
-        return;
-      }
-
-      if (supabaseClient) {
-        try {
-          await supabaseClient.from('story_sentences').insert({
-            author: `${currentAvatar || '🐺'} ${currentUsername || 'Viajero'}`,
-            sentence: ` ${text}`
-          });
-        } catch (e) {
-          console.error("Error guardando frase:", e);
-        }
-      }
-
-      inp.value = '';
-      alert('✨ Tu frase ha sido añadida a la historia colectiva.');
-      await loadLiveStory();
-    }
-
-    function openNewDropModal() { document.getElementById('newDropModal').classList.add('show'); }
-    function openLetter(author, location, topic, content) {
-      document.getElementById('modalAuthor').innerText = author;
-      document.getElementById('modalLocation').innerText = location;
-      document.getElementById('modalTopic').innerText = topic;
-      document.getElementById('modalContent').innerText = `"${content}"`;
-      document.getElementById('replyText').value = '';
-      document.getElementById('letterModal').classList.add('show');
-    }
-    function toggleBatteryModal() { document.getElementById('batteryModal').classList.add('show'); }
-    function openBinanceModal() { document.getElementById('binanceModal').classList.add('show'); }
     function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); }
-
     function setBattery(icon, text) {
       document.getElementById('batteryIcon').innerText = icon;
       document.getElementById('batteryText').innerText = text;
       closeModal('batteryModal');
-    }
-
-    function sendReply() {
-      const text = document.getElementById('replyText').value.trim();
-      if (!text) return;
-      alert('✨ Tu respuesta ha sido enviada con calma.');
-      closeModal('letterModal');
-    }
-
-    function saveJournalEntry() {
-      const val = document.getElementById('journalInput').value.trim();
-      if (!val) return;
-      const list = document.getElementById('journalList');
-      const div = document.createElement('div');
-      div.style.background = 'rgba(11,19,43,0.6)';
-      div.style.padding = '12px';
-      div.style.borderRadius = '10px';
-      div.style.border = '1px solid var(--border-color)';
-      div.innerHTML = `<p style="font-size:0.88rem;">${val}</p>`;
-      list.prepend(div);
-      document.getElementById('journalInput').value = '';
     }
 
     let audioCtx = null;
