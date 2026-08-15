@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -55,6 +56,25 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   String _socialBattery = '☕ Tranquilo (60%)';
   bool _isPlusMember = false;
 
+  // Datos del Usuario Actual (Personalizables)
+  String _myUsername = 'CaminanteSilencioso';
+  String _myAvatar = '🐺';
+  List<String> _myInterests = ['#Videojuegos', '#Calistenia', '#Lectura & Manhwas', '#Programación'];
+  String _myRhythm = 'Moderado (Respuestas cada 1 o 2 días)';
+
+  // Catálogo de Avatares Ilustrados
+  final List<String> _availableAvatars = [
+    '🐺', '🦊', '🦉', '🐱', '🐇', '🐼', '🦥', '🐸',
+    '🐢', '🦌', '🦔', '🐧', '🌿', '🌸', '🌙', '🌊',
+    '🌧️', '🍄', '☕', '🕯️', '🔮', '🪐', '🌌', '🎨'
+  ];
+
+  final List<String> _allAvailableInterests = [
+    '#Videojuegos', '#Calistenia', '#Lectura & Manhwas', '#Programación',
+    '#Mascotas', '#Música Lofi', '#Anime', '#Escritura', '#Arte',
+    '#Filosofía', '#Café & Té', '#Astronomía', '#Jardinería', '#Cocina'
+  ];
+
   final List<Map<String, dynamic>> _fallbackDrops = [
     {
       'id': 1,
@@ -92,6 +112,22 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       'isMe': 'true',
     }
   ];
+
+  // Generador de nombres aleatorios poéticos / tranquilos
+  String _generateRandomName() {
+    final sustantivos = [
+      'Caminante', 'Zorro', 'Búho', 'Gato', 'Conejo', 'Lobo',
+      'Viajero', 'Eco', 'Bruma', 'Nómada', 'Lector', 'Panda',
+      'Erizo', 'Ciervo', 'Rana', 'Pingüino', 'Tortuga', 'Sombra'
+    ];
+    final adjetivos = [
+      'Silencioso', 'Sereno', 'Tranquilo', 'Nocturno', 'Calmo', 'Lofi',
+      'Pacífico', 'Suave', 'Astral', 'Zen', 'Pensativo', 'Solitario',
+      'Otoñal', 'Lunar', 'Místico', 'Flotante', 'Curioso', 'Luminoso'
+    ];
+    final rand = math.Random();
+    return '${sustantivos[rand.nextInt(sustantivos.length)]}${adjetivos[rand.nextInt(adjetivos.length)]}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -195,9 +231,21 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           ),
         ),
         const SizedBox(height: 20),
-        const Text(
-          'Gotas que llegaron a ti',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Gotas que llegaron a ti',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Row(
+              children: [
+                CircleAvatar(radius: 12, backgroundColor: const Color(0x3348CAE4), child: Text(_myAvatar, style: const TextStyle(fontSize: 12))),
+                const SizedBox(width: 6),
+                Text(_myUsername, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+              ],
+            )
+          ],
         ),
         const SizedBox(height: 12),
 
@@ -297,7 +345,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Tu respuesta (sin prisa):', style: TextStyle(fontSize: 13, color: Color(0xFF90E0EF))),
+            Text('Tu respuesta como $_myAvatar $_myUsername (sin prisa):', style: const TextStyle(fontSize: 13, color: Color(0xFF90E0EF))),
             const SizedBox(height: 8),
             TextField(
               controller: replyController,
@@ -332,7 +380,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                           await Supabase.instance.client.from('drop_replies').insert({
                             'drop_id': drop['id'],
                             'content': text,
-                            'author': 'Caminante',
+                            'author': '$_myAvatar $_myUsername',
                           });
                         }
                       } catch (_) {}
@@ -377,9 +425,19 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('🌊 Lanzar una Gota al Océano', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
-            const SizedBox(height: 6),
-            const Text('Escribe un pensamiento o pregunta sobre lo que te gusta. Llegará a personas afines en todo el mundo.', style: TextStyle(fontSize: 12, color: Colors.white60)),
+            Row(
+              children: [
+                CircleAvatar(backgroundColor: const Color(0x3348CAE4), child: Text(_myAvatar)),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('🌊 Lanzar una Gota al Océano', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
+                    Text('Firmado como $_myUsername', style: const TextStyle(fontSize: 11, color: Colors.white60)),
+                  ],
+                )
+              ],
+            ),
             const SizedBox(height: 14),
             TextField(
               controller: topicController,
@@ -423,9 +481,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     if (content.isNotEmpty) {
                       try {
                         await Supabase.instance.client.from('drops').insert({
-                          'author': 'Caminante',
+                          'author': _myUsername,
                           'location': 'Tu rincón seguro',
-                          'avatar': '🐺',
+                          'avatar': _myAvatar,
                           'topic': topic.isNotEmpty ? topic : 'Pensamiento libre',
                           'content': content,
                         });
@@ -552,7 +610,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               child: TextField(
                 controller: sentenceController,
                 decoration: InputDecoration(
-                  hintText: 'Agrega la siguiente frase...',
+                  hintText: 'Agrega la siguiente frase como $_myAvatar $_myUsername...',
                   hintStyle: const TextStyle(fontSize: 13, color: Colors.white38),
                   filled: true,
                   fillColor: const Color(0xFF1C2541),
@@ -569,7 +627,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 if (txt.isNotEmpty) {
                   try {
                     await Supabase.instance.client.from('story_sentences').insert({
-                      'author': 'Caminante',
+                      'author': '$_myAvatar $_myUsername',
                       'sentence': ' $txt',
                     });
                   } catch (_) {}
@@ -617,7 +675,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 onPressed: () {
                   setState(() {
                     _chatMessages.add({
-                      'sender': 'Tú',
+                      'sender': _myUsername,
                       'text': '🪫 [Pausa Social]: Me quedé sin batería social por ahora. ¡Seguimos charlando después con calma!',
                       'isMe': 'true',
                     });
@@ -687,7 +745,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   if (txt.isNotEmpty) {
                     setState(() {
                       _chatMessages.add({
-                        'sender': 'Tú',
+                        'sender': _myUsername,
                         'text': txt,
                         'isMe': 'true',
                       });
@@ -717,52 +775,86 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // 5. PÁGINA: PERFIL, ESPACIO SEGURO Y APOYO AL PROYECTO
+  // 5. PÁGINA: PERFIL, ESPACIO SEGURO Y CONFIGURACIÓN DE IDENTIDAD
   Widget _buildProfilePage() {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text('🌱 Mi Espacio Seguro', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 6),
-        const Text('Configura tu identidad anónima, temas y ventajas exclusivas.', style: TextStyle(fontSize: 13, color: Colors.white60)),
-        const SizedBox(height: 20),
-        Center(
-          child: Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              const CircleAvatar(
-                radius: 38,
-                backgroundColor: Color(0x3348CAE4),
-                child: Text('🐺', style: TextStyle(fontSize: 38)),
-              ),
-              if (_isPlusMember)
-                const CircleAvatar(
-                  radius: 12,
-                  backgroundColor: Color(0xFFFFD166),
-                  child: Text('✨', style: TextStyle(fontSize: 12)),
-                )
-            ],
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('🌱 Mi Espacio Seguro', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: const Color(0xFF48CAE4)),
+              icon: const Icon(Icons.edit, size: 16),
+              label: const Text('Editar Identidad'),
+              onPressed: _openProfileEditorModal,
+            )
+          ],
+        ),
+        const SizedBox(height: 4),
+        const Text('Configura tu avatar anónimo, temas y límites de interacción.', style: TextStyle(fontSize: 13, color: Colors.white60)),
+        const SizedBox(height: 18),
+        
+        // Tarjeta de Identidad Actual
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0x3348CAE4))),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    CircleAvatar(
+                      radius: 36,
+                      backgroundColor: const Color(0x3348CAE4),
+                      child: Text(_myAvatar, style: const TextStyle(fontSize: 36)),
+                    ),
+                    if (_isPlusMember)
+                      const CircleAvatar(
+                        radius: 12,
+                        backgroundColor: Color(0xFFFFD166),
+                        child: Text('✨', style: TextStyle(fontSize: 12)),
+                      )
+                  ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _myUsername,
+                              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (_isPlusMember)
+                            Container(
+                              margin: const EdgeInsets.only(left: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(color: const Color(0xFFFFD166), borderRadius: BorderRadius.circular(8)),
+                              child: const Text('PLUS', style: TextStyle(fontSize: 9, color: Colors.black, fontWeight: FontWeight.bold)),
+                            )
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(_myRhythm, style: const TextStyle(fontSize: 11, color: Colors.white70)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 12),
-        Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('CaminanteSilencioso', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              if (_isPlusMember)
-                Container(
-                  margin: const EdgeInsets.only(left: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(color: const Color(0xFFFFD166), borderRadius: BorderRadius.circular(8)),
-                  child: const Text('PLUS', style: TextStyle(fontSize: 10, color: Colors.black, fontWeight: FontWeight.bold)),
-                )
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
 
-        // Banner Gotas Plus y Apoyo en Perfil
+        const SizedBox(height: 18),
+
+        // Banner Apoyo al Proyecto en Perfil
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -812,18 +904,21 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ),
 
         const SizedBox(height: 24),
-        const Text('Mis Temas de Interés', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF90E0EF))),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Mis Temas de Interés', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF90E0EF))),
+            GestureDetector(
+              onTap: _openProfileEditorModal,
+              child: const Text('Personalizar', style: TextStyle(fontSize: 11, color: Color(0xFF48CAE4))),
+            )
+          ],
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: const [
-            Chip(backgroundColor: Color(0xFF1C2541), label: Text('#Videojuegos', style: TextStyle(fontSize: 12))),
-            Chip(backgroundColor: Color(0xFF1C2541), label: Text('#Calistenia', style: TextStyle(fontSize: 12))),
-            Chip(backgroundColor: Color(0xFF1C2541), label: Text('#Lectura & Manhwas', style: TextStyle(fontSize: 12))),
-            Chip(backgroundColor: Color(0xFF1C2541), label: Text('#Programación', style: TextStyle(fontSize: 12))),
-            Chip(backgroundColor: Color(0xFF1C2541), label: Text('#Mascotas', style: TextStyle(fontSize: 12))),
-          ],
+          children: _myInterests.map((t) => Chip(backgroundColor: const Color(0xFF1C2541), label: Text(t, style: const TextStyle(fontSize: 12)))).toList(),
         ),
         const SizedBox(height: 24),
         Container(
@@ -850,6 +945,177 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
+  // Modal Editor de Identidad (Avatares, Nombre Aleatorio e Intereses)
+  void _openProfileEditorModal() {
+    final nameController = TextEditingController(text: _myUsername);
+    String tempAvatar = _myAvatar;
+    List<String> tempInterests = List.from(_myInterests);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1C2541),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10))),
+                ),
+                const SizedBox(height: 14),
+                const Text('🌱 Personalizar Mi Identidad', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
+                const SizedBox(height: 4),
+                const Text('Elige cómo te verán los demás viajeros.', style: TextStyle(fontSize: 12, color: Colors.white60)),
+                const SizedBox(height: 16),
+
+                // 1. Selector de Avatar
+                const Text('1. Elige tu Avatar Ilustrado:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF90E0EF))),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 120,
+                  child: GridView.builder(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 6,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: _availableAvatars.length,
+                    itemBuilder: (context, idx) {
+                      final av = _availableAvatars[idx];
+                      final isSelected = tempAvatar == av;
+                      return GestureDetector(
+                        onTap: () => setModalState(() => tempAvatar = av),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0x3348CAE4) : const Color(0xFF0B132B),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: isSelected ? const Color(0xFF48CAE4) : Colors.white12, width: isSelected ? 2 : 1),
+                          ),
+                          child: Center(child: Text(av, style: const TextStyle(fontSize: 22))),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // 2. Nombre de Usuario con Botón Aleatorio
+                const Text('2. Nombre de Viajero (o genera uno anónimo):', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF90E0EF))),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: nameController,
+                        decoration: InputDecoration(
+                          hintText: 'Tu alias...',
+                          filled: true,
+                          fillColor: const Color(0xFF0B132B),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0077B6),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Text('🎲', style: TextStyle(fontSize: 16)),
+                      label: const Text('Aleatorio', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        final randomName = _generateRandomName();
+                        nameController.text = randomName;
+                      },
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // 3. Temas de Interés
+                const Text('3. Temas que te interesan:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF90E0EF))),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: _allAvailableInterests.map((interest) {
+                    final isSel = tempInterests.contains(interest);
+                    return FilterChip(
+                      selected: isSel,
+                      label: Text(interest, style: TextStyle(fontSize: 11, color: isSel ? Colors.black : Colors.white)),
+                      selectedColor: const Color(0xFF48CAE4),
+                      backgroundColor: const Color(0xFF0B132B),
+                      checkmarkColor: Colors.black,
+                      onSelected: (selected) {
+                        setModalState(() {
+                          if (selected) {
+                            tempInterests.add(interest);
+                          } else {
+                            tempInterests.remove(interest);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Botón Guardar
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF48CAE4),
+                      foregroundColor: const Color(0xFF0B132B),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    onPressed: () {
+                      final newName = nameController.text.trim();
+                      if (newName.isNotEmpty) {
+                        setState(() {
+                          _myUsername = newName;
+                          _myAvatar = tempAvatar;
+                          _myInterests = tempInterests.isNotEmpty ? tempInterests : ['#General'];
+                        });
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('✨ Identidad actualizada como $_myAvatar $_myUsername'),
+                            backgroundColor: const Color(0xFF0077B6),
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text('Guardar Mi Identidad', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildStampItem(String emoji, String title, String status) {
     final isLocked = status == 'Gotas Plus';
     return Column(
@@ -871,7 +1137,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // Modal de Métodos de Pago: Ko-fi & Binance Pay
   void _showSupportModal() {
     showModalBottomSheet(
       context: context,
@@ -942,7 +1207,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('📋 Enlace de Ko-fi copiado: https://ko-fi.com/haseonick (Ábrelo en tu navegador)'),
+                            content: Text('📋 Enlace de Ko-fi copiado: https://ko-fi.com/haseonick'),
                             backgroundColor: Color(0xFFFF5E5B),
                           ),
                         );
