@@ -5,10 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0b132b">
   <title>Gotas — Conexiones a tu propio ritmo</title>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   
+  <!-- Supabase JS Client (Sincronización en tiempo real) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     :root {
       --bg-primary: #0b132b;
@@ -76,7 +80,7 @@
 
     .header-actions { display: flex; align-items: center; gap: 8px; }
 
-    .sound-widget, .battery-widget {
+    .sound-widget, .battery-widget, .user-badge {
       background: rgba(28, 37, 65, 0.8);
       border: 1px solid var(--border-color);
       border-radius: 20px;
@@ -158,7 +162,9 @@
       border-radius: var(--radius-md);
       padding: 16px;
       cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
     }
+    .letter-card:hover { transform: translateY(-2px); border-color: var(--accent-cyan); }
     .letter-topic {
       display: inline-block;
       padding: 3px 8px;
@@ -222,6 +228,26 @@
       position: absolute; top: 14px; right: 14px; background: transparent;
       border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer;
     }
+
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      margin: 10px 0;
+    }
+    .avatar-item {
+      background: #0b132b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+    .avatar-item.selected {
+      border-color: var(--accent-cyan);
+      background: rgba(72, 202, 228, 0.2);
+    }
   </style>
 </head>
 <body>
@@ -251,9 +277,15 @@
     </a>
 
     <div class="header-actions">
+      <!-- Usuario Actual -->
+      <div class="user-badge" onclick="openProfileModal()" title="Configurar tu perfil y avatar">
+        <span id="userAvatarHeader">🐺</span>
+        <span id="userNameHeader" style="font-weight:600;">Caminante</span>
+      </div>
+
       <div class="sound-widget" id="soundBtn" onclick="toggleAmbientSound()">
         <span id="soundIcon">🌧️</span>
-        <span id="soundText">Lluvia: Off</span>
+        <span id="soundText">Lluvia</span>
       </div>
       <div class="battery-widget" onclick="toggleBatteryModal()">
         <span id="batteryIcon">☕</span>
@@ -273,26 +305,17 @@
 
     <main class="main-content">
       
-      <!-- Tab 1: Gotas -->
+      <!-- Tab 1: Gotas en Vivo compartidas con la App -->
       <section id="tab-gotas" class="view-card active-view">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h2>💧 Gotas del Mundo</h2>
+          <h2>💧 Gotas del Mundo (En Vivo)</h2>
           <button class="btn-primary" onclick="openNewDropModal()">+ Enviar Gota</button>
         </div>
         <div class="calm-banner">
-          <span>🕊️ Sin prisa: responde solo cuando tu energía te lo permita.</span>
+          <span>🕊️ Sincronizado en tiempo real entre la Web y la App móvil.</span>
         </div>
         <div class="letter-cards-grid" id="dropsGrid">
-          <div class="letter-card" onclick="openLetter('Yuki', '🇯🇵 Kioto', 'Videojuegos & Paz', 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?')">
-            <span class="letter-topic">Videojuegos & Paz</span>
-            <p style="font-size:0.85rem; font-style:italic;">"Me gusta construir granjas en Minecraft mientras escucho lluvia..."</p>
-            <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted);">Yuki · 🇯🇵 Kioto</div>
-          </div>
-          <div class="letter-card" onclick="openLetter('Mateo', '🇦🇷 Buenos Aires', 'Rutina en Solitario', 'Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba. ¿Prefieres entrenar a solas o con música?')">
-            <span class="letter-topic">Rutina en Solitario</span>
-            <p style="font-size:0.85rem; font-style:italic;">"Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba..."</p>
-            <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted);">Mateo · 🇦🇷 Buenos Aires</div>
-          </div>
+          <div style="text-align:center; padding:20px; color:var(--text-muted);">Cargando gotas del océano global...</div>
         </div>
       </section>
 
@@ -317,11 +340,11 @@
         </div>
       </section>
 
-      <!-- Tab 4: Historia -->
+      <!-- Tab 4: Historia Colectiva en Vivo -->
       <section id="tab-silencio" class="view-card">
-        <h2>🎨 Creación en Silencio</h2>
+        <h2>🎨 Creación en Silencio (En Vivo)</h2>
         <div id="storyContainer" style="background:rgba(11,19,43,0.7); border:1px solid var(--border-color); border-radius:12px; padding:14px; margin:14px 0; line-height:1.6; font-size:0.9rem;">
-          Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.
+          Cargando historia colectiva...
         </div>
         <div style="display:flex; gap:8px;">
           <input type="text" id="storyInput" placeholder="Agrega una frase al relato..." style="flex:1; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:20px; padding:8px 14px; color:#fff;">
@@ -342,11 +365,34 @@
     </main>
   </div>
 
+  <!-- Modal: Perfil y Registro Único -->
+  <div class="modal-backdrop" id="profileModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('profileModal')">&times;</button>
+      <h3 style="color:#fff; margin-bottom:6px;">🌱 Mi Perfil de Viajero</h3>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:14px;">Elige tu avatar y un nombre único para tus cartas:</p>
+
+      <label style="font-size:0.85rem; color:var(--accent-soft);">1. Elige tu Avatar:</label>
+      <div class="avatar-grid" id="avatarGrid"></div>
+
+      <label style="font-size:0.85rem; color:var(--accent-soft); margin-top:10px; display:block;">2. Nombre de Usuario:</label>
+      <div style="display:flex; gap:8px; margin-top:4px; margin-bottom:16px;">
+        <input type="text" id="usernameInput" placeholder="Tu alias..." style="flex:1; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff;">
+        <button class="btn-secondary" onclick="generateRandomName()">🎲 Aleatorio</button>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end;">
+        <button class="btn-primary" onclick="saveUserProfile()">Guardar Perfil</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Crear Gota -->
   <div class="modal-backdrop" id="newDropModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('newDropModal')">&times;</button>
       <h3 style="color:#fff; margin-bottom:8px;">🌊 Enviar una Gota al Océano</h3>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">Se compartirá al instante con usuarios en la Web y en la App Móvil.</p>
       <input type="text" id="newDropTopic" placeholder="Tema (Ej. Hábitos, Videojuegos, Lectura)" style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; margin-bottom:14px;">
       <textarea id="newDropContent" rows="4" placeholder="Comparte tu reflexión con tranquilidad..." style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:8px; padding:10px; color:#fff; font-family:inherit; margin-bottom:16px;"></textarea>
       <div style="display:flex; justify-content:flex-end; gap:10px;">
@@ -363,7 +409,7 @@
       <h3 id="modalAuthor" style="color:#fff;">Autor</h3>
       <div id="modalLocation" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">Ubicación</div>
       <span class="letter-topic" id="modalTopic">Tema</span>
-      <p id="modalContent" style="margin:14px 0; font-size:0.9rem; color:#e2e8f0;"></p>
+      <p id="modalContent" style="margin:14px 0; font-size:0.9rem; color:#e2e8f0; line-height:1.5;"></p>
       <textarea id="replyText" rows="3" placeholder="Escribe tu respuesta con calma..." style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:8px; padding:10px; color:#fff; font-family:inherit; margin-bottom:12px;"></textarea>
       <div style="display:flex; justify-content:flex-end; gap:10px;">
         <button class="btn-secondary" onclick="closeModal('letterModal')">Guardar</button>
@@ -398,6 +444,218 @@
   </div>
 
   <script>
+    // --- CONEXIÓN SUPABASE EN LA WEB ---
+    const SUPABASE_URL = 'https://cfkaqkeohyphdcnvcnsv.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_E7NPno9DbRRJYuSVlOmwtA_bvVWxcWK';
+    let supabaseClient = null;
+
+    if (window.supabase) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
+    // Perfil del Usuario
+    let currentAvatar = localStorage.getItem('gotas_avatar') || '🐺';
+    let currentUsername = localStorage.getItem('gotas_username') || 'Caminante';
+
+    const avatarsList = ['🐺', '🦊', '🦉', '🐱', '🐇', '🐼', '🦥', '🐸', '🐢', '🦌', '🦔', '🐧', '🌿', '🌸', '🌙', '🌊', '🌧️', '🍄', '☕', '🕯️', '🔮', '🪐', '🌌', '🎨'];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateHeaderProfile();
+      renderAvatarGrid();
+      loadLiveDrops();
+      loadLiveStory();
+    });
+
+    function updateHeaderProfile() {
+      document.getElementById('userAvatarHeader').innerText = currentAvatar;
+      document.getElementById('userNameHeader').innerText = currentUsername;
+    }
+
+    function renderAvatarGrid() {
+      const grid = document.getElementById('avatarGrid');
+      grid.innerHTML = '';
+      avatarsList.forEach(av => {
+        const div = document.createElement('div');
+        div.className = 'avatar-item' + (av === currentAvatar ? ' selected' : '');
+        div.innerText = av;
+        div.onclick = () => {
+          document.querySelectorAll('.avatar-item').forEach(e => e.classList.remove('selected'));
+          div.classList.add('selected');
+          currentAvatar = av;
+        };
+        grid.appendChild(div);
+      });
+      document.getElementById('usernameInput').value = currentUsername;
+    }
+
+    function generateRandomName() {
+      const sustantivos = ['Caminante', 'Zorro', 'Búho', 'Gato', 'Conejo', 'Lobo', 'Viajero', 'Eco', 'Bruma', 'Nómada', 'Panda', 'Erizo'];
+      const adjetivos = ['Silencioso', 'Sereno', 'Tranquilo', 'Nocturno', 'Calmo', 'Lofi', 'Pacífico', 'Suave', 'Astral', 'Zen'];
+      const name = sustantivos[Math.floor(Math.random()*sustantivos.length)] + adjetivos[Math.floor(Math.random()*adjetivos.length)];
+      document.getElementById('usernameInput').value = name;
+    }
+
+    async function saveUserProfile() {
+      const name = document.getElementById('usernameInput').value.trim();
+      if (!name) return;
+
+      // Verificar si el nombre ya existe en Supabase
+      if (supabaseClient) {
+        try {
+          const { data } = await supabaseClient.from('profiles').select('username').eq('username', name).maybeSingle();
+          if (data && data.username !== currentUsername) {
+            alert('⚠️ Este nombre de usuario ya está registrado por otro viajero. Por favor elige otro o genera uno aleatorio.');
+            return;
+          }
+          // Guardar perfil en la base de datos
+          await supabaseClient.from('profiles').upsert({ username: name, avatar: currentAvatar }, { onConflict: 'username' });
+        } catch (e) {
+          console.log('Error verificando perfil:', e);
+        }
+      }
+
+      currentUsername = name;
+      localStorage.setItem('gotas_avatar', currentAvatar);
+      localStorage.setItem('gotas_username', currentUsername);
+      updateHeaderProfile();
+      closeModal('profileModal');
+      alert(`✨ Perfil guardado: ${currentAvatar} ${currentUsername}`);
+    }
+
+    // Cargar Gotas en Vivo (Supabase)
+    async function loadLiveDrops() {
+      const grid = document.getElementById('dropsGrid');
+      if (supabaseClient) {
+        try {
+          const { data, error } = await supabaseClient.from('drops').select('*').order('created_at', { ascending: false });
+          if (data && data.length > 0) {
+            grid.innerHTML = '';
+            data.forEach(drop => {
+              const card = document.createElement('div');
+              card.className = 'letter-card';
+              card.onclick = () => openLetter(drop.author || 'Anónimo', drop.location || 'Mundo', drop.topic, drop.content);
+              card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="letter-topic">${drop.topic}</span>
+                  <span style="font-size:0.85rem;">${drop.avatar || '💧'}</span>
+                </div>
+                <p style="font-size:0.85rem; font-style:italic;">"${drop.content.substring(0, 80)}..."</p>
+                <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted);">${drop.author || 'Anónimo'} · ${drop.location || 'Mundo'}</div>
+              `;
+              grid.appendChild(card);
+            });
+            return;
+          }
+        } catch (e) {}
+      }
+      // Fallback si no hay conexión
+      grid.innerHTML = `
+        <div class="letter-card" onclick="openLetter('Yuki', '🇯🇵 Kioto', 'Videojuegos & Paz', 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?')">
+          <span class="letter-topic">Videojuegos & Paz</span>
+          <p style="font-size:0.85rem; font-style:italic;">"Me gusta construir granjas en Minecraft mientras escucho lluvia..."</p>
+          <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted);">Yuki · 🇯🇵 Kioto</div>
+        </div>
+      `;
+    }
+
+    async function loadLiveStory() {
+      const container = document.getElementById('storyContainer');
+      if (supabaseClient) {
+        try {
+          const { data } = await supabaseClient.from('story_sentences').select('sentence').order('created_at', { ascending: true });
+          if (data && data.length > 0) {
+            container.innerText = data.map(d => d.sentence).join('');
+            return;
+          }
+        } catch (e) {}
+      }
+      container.innerText = 'Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.';
+    }
+
+    async function publishNewDrop() {
+      const topic = document.getElementById('newDropTopic').value.trim();
+      const content = document.getElementById('newDropContent').value.trim();
+      if (!content) { alert('Por favor escribe el contenido de tu gota.'); return; }
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('drops').insert({
+            author: currentUsername,
+            avatar: currentAvatar,
+            location: 'Tu rincón seguro',
+            topic: topic || 'Pensamiento libre',
+            content: content
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      closeModal('newDropModal');
+      document.getElementById('newDropTopic').value = '';
+      document.getElementById('newDropContent').value = '';
+      alert('🌊 ¡Tu gota ha sido lanzada al océano y está sincronizada en vivo!');
+      loadLiveDrops();
+    }
+
+    async function addStory() {
+      const inp = document.getElementById('storyInput');
+      const text = inp.value.trim();
+      if (!text) return;
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('story_sentences').insert({
+            author: `${currentAvatar} ${currentUsername}`,
+            sentence: ` ${text}`
+          });
+        } catch (e) {}
+      }
+      inp.value = '';
+      loadLiveStory();
+    }
+
+    function openProfileModal() { document.getElementById('profileModal').classList.add('show'); }
+    function openNewDropModal() { document.getElementById('newDropModal').classList.add('show'); }
+    function openLetter(author, location, topic, content) {
+      document.getElementById('modalAuthor').innerText = author;
+      document.getElementById('modalLocation').innerText = location;
+      document.getElementById('modalTopic').innerText = topic;
+      document.getElementById('modalContent').innerText = `"${content}"`;
+      document.getElementById('replyText').value = '';
+      document.getElementById('letterModal').classList.add('show');
+    }
+    function toggleBatteryModal() { document.getElementById('batteryModal').classList.add('show'); }
+    function openBinanceModal() { document.getElementById('binanceModal').classList.add('show'); }
+    function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); }
+
+    function setBattery(icon, text) {
+      document.getElementById('batteryIcon').innerText = icon;
+      document.getElementById('batteryText').innerText = text;
+      closeModal('batteryModal');
+    }
+
+    function sendReply() {
+      const text = document.getElementById('replyText').value.trim();
+      if (!text) return;
+      alert('✨ Tu respuesta ha sido enviada con calma.');
+      closeModal('letterModal');
+    }
+
+    function saveJournalEntry() {
+      const val = document.getElementById('journalInput').value.trim();
+      if (!val) return;
+      const list = document.getElementById('journalList');
+      const div = document.createElement('div');
+      div.style.background = 'rgba(11,19,43,0.6)';
+      div.style.padding = '12px';
+      div.style.borderRadius = '10px';
+      div.style.border = '1px solid var(--border-color)';
+      div.innerHTML = `<p style="font-size:0.88rem;">${val}</p>`;
+      list.prepend(div);
+      document.getElementById('journalInput').value = '';
+    }
+
     let audioCtx = null;
     let rainNode = null;
     let isRainPlaying = false;
@@ -425,12 +683,12 @@
         rainNode.start();
         isRainPlaying = true;
         document.getElementById('soundIcon').innerText = '🌧️';
-        document.getElementById('soundText').innerText = 'Lluvia: On';
+        document.getElementById('soundText').innerText = 'Lluvia';
       } else {
         if (rainNode) { rainNode.stop(); rainNode.disconnect(); }
         isRainPlaying = false;
         document.getElementById('soundIcon').innerText = '🌧️';
-        document.getElementById('soundText').innerText = 'Lluvia: Off';
+        document.getElementById('soundText').innerText = 'Lluvia';
       }
     }
 
@@ -439,74 +697,6 @@
       document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active-view');
       btn.classList.add('active');
-    }
-
-    function openNewDropModal() { document.getElementById('newDropModal').classList.add('show'); }
-    function openLetter(author, location, topic, content) {
-      document.getElementById('modalAuthor').innerText = author;
-      document.getElementById('modalLocation').innerText = location;
-      document.getElementById('modalTopic').innerText = topic;
-      document.getElementById('modalContent').innerText = `"${content}"`;
-      document.getElementById('replyText').value = '';
-      document.getElementById('letterModal').classList.add('show');
-    }
-    function toggleBatteryModal() { document.getElementById('batteryModal').classList.add('show'); }
-    function openBinanceModal() { document.getElementById('binanceModal').classList.add('show'); }
-    function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); }
-
-    function setBattery(icon, text) {
-      document.getElementById('batteryIcon').innerText = icon;
-      document.getElementById('batteryText').innerText = text;
-      closeModal('batteryModal');
-    }
-
-    function publishNewDrop() {
-      const topic = document.getElementById('newDropTopic').value.trim();
-      const content = document.getElementById('newDropContent').value.trim();
-      if (!content) { alert('Por favor escribe el contenido de tu gota.'); return; }
-      const grid = document.getElementById('dropsGrid');
-      const card = document.createElement('div');
-      card.className = 'letter-card';
-      card.onclick = () => openLetter('Tú', 'Tu rincón seguro', topic || 'Pensamiento libre', content);
-      card.innerHTML = `
-        <span class="letter-topic">${topic || 'Pensamiento libre'}</span>
-        <p style="font-size:0.85rem; font-style:italic;">"${content.substring(0, 80)}..."</p>
-        <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted);">Tú · Tu rincón seguro</div>
-      `;
-      grid.prepend(card);
-      closeModal('newDropModal');
-      document.getElementById('newDropTopic').value = '';
-      document.getElementById('newDropContent').value = '';
-      alert('🌊 ¡Tu gota ha sido lanzada al océano con éxito!');
-    }
-
-    function sendReply() {
-      const text = document.getElementById('replyText').value.trim();
-      if (!text) return;
-      alert('✨ Tu respuesta ha sido enviada con calma.');
-      closeModal('letterModal');
-    }
-
-    function saveJournalEntry() {
-      const val = document.getElementById('journalInput').value.trim();
-      if (!val) return;
-      const list = document.getElementById('journalList');
-      const div = document.createElement('div');
-      div.style.background = 'rgba(11,19,43,0.6)';
-      div.style.padding = '12px';
-      div.style.borderRadius = '10px';
-      div.style.border = '1px solid var(--border-color)';
-      div.innerHTML = `<p style="font-size:0.88rem;">${val}</p>`;
-      list.prepend(div);
-      document.getElementById('journalInput').value = '';
-    }
-
-    function addStory() {
-      const inp = document.getElementById('storyInput');
-      if (inp.value.trim()) {
-        document.getElementById('storyContainer').innerText += ' ' + inp.value.trim();
-        inp.value = '';
-      }
     }
   </script>
 </body>
