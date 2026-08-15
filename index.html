@@ -760,8 +760,8 @@
       <!-- Tab 4: Historia Colectiva (Acumulativa) -->
       <section id="tab-silencio" class="view-card">
         <h2>🎨 Creación en Silencio (En Vivo)</h2>
-        <div id="storyContainer" style="background:rgba(11,19,43,0.7); border:1px solid var(--border-color); border-radius:12px; padding:16px; margin:14px 0; line-height:1.7; font-size:0.92rem;">
-          Cargando historia colectiva...
+        <div id="storyContainer" style="max-height:360px; overflow-y:auto; margin:14px 0; display:flex; flex-direction:column; gap:6px;">
+          <div style="text-align:center; color:var(--text-muted); padding:16px;">Cargando historia colectiva...</div>
         </div>
         <div style="display:flex; gap:8px;">
           <input type="text" id="storyInput" placeholder="Agrega la siguiente frase al relato..." style="flex:1; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:20px; padding:10px 16px; color:#fff;">
@@ -1261,25 +1261,50 @@
 
     async function loadLiveStory() {
       const container = document.getElementById('storyContainer');
+      let htmlOutput = '';
+
       if (supabaseClient) {
         try {
           const { data } = await supabaseClient.from('story_sentences').select('author, sentence, created_at').order('created_at', { ascending: true });
           if (data && data.length > 0) {
             const hasPrologue = data.some(d => d.sentence && d.sentence.includes('pequeño conejo plateado'));
-            let htmlOutput = '';
+            
+            // Línea inicial (Prólogo)
             if (!hasPrologue) {
-              htmlOutput += `<span style="color:#caf0f8;">${PROLOGUE_STORY}</span>`;
+              htmlOutput += `
+                <div style="background:rgba(0,119,182,0.25); border-left:3px solid var(--accent-cyan); border-radius:8px; padding:10px 14px; margin-bottom:10px;">
+                  <div style="font-size:0.75rem; font-weight:700; color:var(--accent-cyan); margin-bottom:3px;">📖 Inicio de la Crónica</div>
+                  <p style="font-size:0.9rem; color:#caf0f8; margin:0; line-height:1.5;">${PROLOGUE_STORY}</p>
+                </div>
+              `;
             }
-            data.forEach(item => {
-              const txt = item.sentence.startsWith(' ') ? item.sentence : ' ' + item.sentence;
-              htmlOutput += `<span style="display:inline; color:#fff;" title="Por: ${item.author || 'Viajero'}">${txt}</span>`;
+
+            // Cada nueva frase en su propia línea independiente
+            data.forEach((item, idx) => {
+              const txt = item.sentence.trim();
+              const authorName = item.author || 'Viajero Anónimo';
+              htmlOutput += `
+                <div style="background:rgba(11,19,43,0.7); border:1px solid var(--border-color); border-left:3px solid var(--accent-soft); border-radius:8px; padding:10px 14px; margin-bottom:10px;">
+                  <div style="font-size:0.75rem; font-weight:700; color:var(--accent-soft); margin-bottom:3px;">${authorName}</div>
+                  <p style="font-size:0.9rem; color:#fff; margin:0; line-height:1.5;">"${txt}"</p>
+                </div>
+              `;
             });
+
             container.innerHTML = htmlOutput;
             return;
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error(e);
+        }
       }
-      container.innerHTML = `<span style="color:#caf0f8;">${PROLOGUE_STORY}</span>`;
+
+      container.innerHTML = `
+        <div style="background:rgba(0,119,182,0.25); border-left:3px solid var(--accent-cyan); border-radius:8px; padding:10px 14px;">
+          <div style="font-size:0.75rem; font-weight:700; color:var(--accent-cyan); margin-bottom:3px;">📖 Inicio de la Crónica</div>
+          <p style="font-size:0.9rem; color:#caf0f8; margin:0; line-height:1.5;">${PROLOGUE_STORY}</p>
+        </div>
+      `;
     }
 
     async function addStory() {

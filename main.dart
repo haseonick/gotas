@@ -582,7 +582,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // 3. PÁGINA: CREACIÓN EN SILENCIO (Historias en Realtime)
+  // 3. PÁGINA: CREACIÓN EN SILENCIO (Historias en Realtime por Líneas)
   Widget _buildCoopStoryPage() {
     final sentenceController = TextEditingController();
 
@@ -591,48 +591,67 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       children: [
         const Text('🎨 Creación en Silencio', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 6),
-        const Text('Construye relatos con personas de distintos países, agregando una frase a la vez.', style: TextStyle(fontSize: 13, color: Colors.white60)),
+        const Text('Cada viajero agrega una frase que continúa en la siguiente línea.', style: TextStyle(fontSize: 13, color: Colors.white60)),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1C2541),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0x2648CAE4)),
-          ),
-          child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: Supabase.instance.client
-                .from('story_sentences')
-                .stream(primaryKey: ['id'])
-                .order('created_at', ascending: true),
-            builder: (context, snapshot) {
-              const prologue = 'Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.';
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Text(
-                  _fallbackStory.map((e) => e['sentence']).join(''),
-                  style: const TextStyle(fontSize: 14, height: 1.6, color: Colors.white),
-                );
-              }
-              final list = snapshot.data!;
-              final hasPrologue = list.any((d) => (d['sentence']?.toString() ?? '').contains('pequeño conejo plateado'));
-              final buffer = StringBuffer();
-              if (!hasPrologue) {
-                buffer.write(prologue);
-              }
-              for (var item in list) {
-                final s = item['sentence']?.toString() ?? '';
-                if (s.startsWith(' ')) {
-                  buffer.write(s);
-                } else {
-                  buffer.write(' $s');
+        StreamBuilder<List<Map<String, dynamic>>>(
+          stream: Supabase.instance.client
+              .from('story_sentences')
+              .stream(primaryKey: ['id'])
+              .order('created_at', ascending: true),
+          builder: (context, snapshot) {
+            const prologue = 'Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.';
+            final List<Widget> lines = [];
+
+            lines.add(
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0x330077B6),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF48CAE4)),
+                ),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('📖 Inicio de la Crónica', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF48CAE4))),
+                    SizedBox(height: 4),
+                    Text(prologue, style: TextStyle(fontSize: 13, height: 1.4, color: Color(0xFFCAF0F8))),
+                  ],
+                ),
+              ),
+            );
+
+            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+              for (var item in snapshot.data!) {
+                final author = item['author']?.toString() ?? 'Viajero';
+                final sentence = item['sentence']?.toString().trim() ?? '';
+                if (sentence.isNotEmpty && !sentence.contains('pequeño conejo plateado')) {
+                  lines.add(
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1C2541),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0x3348CAE4)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(author, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF90E0EF))),
+                          const SizedBox(height: 4),
+                          Text('"$sentence"', style: const TextStyle(fontSize: 13, height: 1.4, color: Colors.white)),
+                        ],
+                      ),
+                    ),
+                  );
                 }
               }
-              return Text(
-                buffer.toString(),
-                style: const TextStyle(fontSize: 14, height: 1.6, color: Colors.white),
-              );
-            },
-          ),
+            }
+
+            return Column(children: lines);
+          },
         ),
         const SizedBox(height: 16),
         Row(
