@@ -1,7 +1,3 @@
-// Flutter - Starter Component para 'Gotas'
-// Demuestra el widget del logo animado en forma de gota,
-// el selector de batería social y la tarjeta de carta asíncrona.
-
 import 'package:flutter/material.dart';
 
 void main() => runApp(const GotasApp());
@@ -23,23 +19,77 @@ class GotasApp extends StatelessWidget {
           surface: Color(0xFF1C2541),
         ),
       ),
-      home: const HomeScreen(),
+      home: const MainNavigationShell(),
     );
   }
 }
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+// Estructura de navegación con barra inferior
+class MainNavigationShell extends StatefulWidget {
+  const MainNavigationShell({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<MainNavigationShell> createState() => _MainNavigationShellState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  String socialBattery = '☕ Tranquilo (60%)';
+class _MainNavigationShellState extends State<MainNavigationShell> {
+  int _currentIndex = 0;
+  String _socialBattery = '☕ Tranquilo (60%)';
+
+  // Datos locales de ejemplo mutables para interactuar
+  final List<Map<String, String>> _drops = [
+    {
+      'author': 'Yuki',
+      'location': '🇯🇵 Kioto, Japón',
+      'avatar': '🦊',
+      'topic': 'Videojuegos & Paz',
+      'snippet': 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?',
+    },
+    {
+      'author': 'Mateo',
+      'location': '🇦🇷 Buenos Aires, Arg',
+      'avatar': '🦉',
+      'topic': 'Rutina en Solitario',
+      'snippet': 'Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba. ¿Prefieres entrenar a solas o con música?',
+    },
+    {
+      'author': 'Elena',
+      'location': '🇨🇦 Montreal, Canadá',
+      'avatar': '🌿',
+      'topic': 'Lectura de Fantasía',
+      'snippet': 'Acabo de terminar una historia sobre magia e introspección. ¿Qué tipo de historias te atrapan a ti?',
+    },
+  ];
+
+  final List<String> _storySentences = [
+    "Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.",
+    " Al girar la manecilla, el ruido de la ciudad se transformaba en el murmullo de un río sereno.",
+    " Decidió compartir el secreto con un gato que descansaba sobre el tejado.",
+  ];
+
+  final List<Map<String, String>> _chatMessages = [
+    {
+      'sender': 'Yuki',
+      'text': '¡Hola! Leí tu respuesta sobre los proyectos que requieren concentración. Me alegra saber que compartimos ese gusto.',
+      'isMe': 'false',
+    },
+    {
+      'sender': 'Tú',
+      'text': 'Totalmente. La noche tiene esa calma donde nadie te interrumpe y puedes avanzar a tu ritmo.',
+      'isMe': 'true',
+    }
+  ];
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> pages = [
+      _buildGotasPage(),
+      _buildRompehielosPage(),
+      _buildCoopStoryPage(),
+      _buildChatPage(),
+      _buildProfilePage(),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF0B132B),
@@ -59,12 +109,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16.0),
+            padding: const EdgeInsets.only(right: 12.0),
             child: ActionChip(
               backgroundColor: const Color(0xFF1C2541),
               side: const BorderSide(color: Color(0x3348CAE4)),
               label: Text(
-                socialBattery,
+                _socialBattery,
                 style: const TextStyle(fontSize: 12, color: Color(0xFF90E0EF)),
               ),
               onPressed: _showBatterySheet,
@@ -72,53 +122,593 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Banner de baja presión
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0x1A0077B6),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0x3348CAE4)),
-            ),
-            child: const Row(
+      body: pages[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (idx) => setState(() => _currentIndex = idx),
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: const Color(0xFF0B132B),
+        selectedItemColor: const Color(0xFF48CAE4),
+        unselectedItemColor: Colors.white54,
+        selectedFontSize: 11,
+        unselectedFontSize: 11,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.water_drop_outlined), activeIcon: Icon(Icons.water_drop), label: 'Gotas'),
+          BottomNavigationBarItem(icon: Icon(Icons.auto_awesome_outlined), activeIcon: Icon(Icons.auto_awesome), label: 'Dilemas'),
+          BottomNavigationBarItem(icon: Icon(Icons.brush_outlined), activeIcon: Icon(Icons.brush), label: 'Silencio'),
+          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), activeIcon: Icon(Icons.chat_bubble), label: 'Buzón'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
+        ],
+      ),
+      floatingActionButton: _currentIndex == 0
+          ? FloatingActionButton.extended(
+              onPressed: _openNewDropDialog,
+              backgroundColor: const Color(0xFF0077B6),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text('Enviar Gota', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            )
+          : null,
+    );
+  }
+
+  // 1. PÁGINA: GOTAS (Cartas Asíncronas)
+  Widget _buildGotasPage() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0x1A0077B6),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x3348CAE4)),
+          ),
+          child: const Row(
+            children: [
+              Text('🕊️', style: TextStyle(fontSize: 20)),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Sin presión de inmediatez: toca una gota para leer y responder cuando tu energía lo permita.',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF90E0EF)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          'Gotas que llegaron a ti',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        ..._drops.map((drop) => Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: GestureDetector(
+                onTap: () => _openReadAndReplyDialog(drop),
+                child: DropCard(
+                  author: drop['author']!,
+                  location: drop['location']!,
+                  avatar: drop['avatar']!,
+                  topic: drop['topic']!,
+                  snippet: drop['snippet']!,
+                ),
+              ),
+            )),
+        const SizedBox(height: 60), // Espacio para el FloatingActionButton
+      ],
+    );
+  }
+
+  // Modal para Leer y Responder una Gota
+  void _openReadAndReplyDialog(Map<String, String> drop) {
+    final replyController = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1C2541),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text('🕊️', style: TextStyle(fontSize: 20)),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Sin presión de inmediatez: lee y responde cuando tu energía lo permita.',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF90E0EF)),
+                CircleAvatar(
+                  backgroundColor: const Color(0x3348CAE4),
+                  child: Text(drop['avatar']!),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(drop['author']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(drop['location']!, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                  ],
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0x2648CAE4),
+                    borderRadius: BorderRadius.circular(10),
                   ),
+                  child: Text(drop['topic']!, style: const TextStyle(color: Color(0xFF48CAE4), fontSize: 12)),
+                )
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0B132B),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '"${drop['snippet']}"',
+                style: const TextStyle(fontSize: 14, height: 1.5, fontStyle: FontStyle.italic, color: Colors.white),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text('Tu respuesta (sin prisa):', style: TextStyle(fontSize: 13, color: Color(0xFF90E0EF))),
+            const SizedBox(height: 8),
+            TextField(
+              controller: replyController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Escribe tu reflexión con calma...',
+                hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+                filled: true,
+                fillColor: const Color(0xFF0B132B),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Guardar para después', style: TextStyle(color: Colors.white60)),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0077B6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  ),
+                  onPressed: () {
+                    if (replyController.text.trim().isNotEmpty) {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✨ Tu respuesta ha sido enviada como una gota lenta. Llegará con calma.'),
+                          backgroundColor: Color(0xFF0077B6),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Enviar Gota', style: TextStyle(color: Colors.white)),
+                )
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Modal para Crear una Nueva Gota
+  void _openNewDropDialog() {
+    final topicController = TextEditingController();
+    final contentController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1C2541),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('🌊 Lanzar una Gota al Océano', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
+            const SizedBox(height: 6),
+            const Text('Escribe un pensamiento o pregunta sobre lo que te gusta. Llegará a personas con afinidad en todo el mundo.', style: TextStyle(fontSize: 12, color: Colors.white60)),
+            const SizedBox(height: 14),
+            TextField(
+              controller: topicController,
+              decoration: InputDecoration(
+                labelText: 'Tema (Ej: Hábitos, Calistenia, Videojuegos, Lectura)',
+                labelStyle: const TextStyle(color: Color(0xFF90E0EF), fontSize: 13),
+                filled: true,
+                fillColor: const Color(0xFF0B132B),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: contentController,
+              maxLines: 4,
+              decoration: InputDecoration(
+                hintText: 'Comparte tu reflexión con tranquilidad...',
+                hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+                filled: true,
+                fillColor: const Color(0xFF0B132B),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0077B6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  ),
+                  onPressed: () {
+                    final topic = topicController.text.trim();
+                    final content = contentController.text.trim();
+                    if (content.isNotEmpty) {
+                      setState(() {
+                        _drops.insert(0, {
+                          'author': 'Tú',
+                          'location': 'Tu rincón seguro',
+                          'avatar': '🐺',
+                          'topic': topic.isNotEmpty ? topic : 'Pensamiento libre',
+                          'snippet': content,
+                        });
+                      });
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('🌊 Tu gota ha sido lanzada al océano global.'),
+                          backgroundColor: Color(0xFF0077B6),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Lanzar al Mundo', style: TextStyle(color: Colors.white)),
+                )
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 2. PÁGINA: ROMPEHIELOS Y DILEMAS
+  Widget _buildRompehielosPage() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text('✨ Rompehielos del Día', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 6),
+        const Text('Dilemas colectivos para conectar sin la presión de iniciar una conversación desde cero.', style: TextStyle(fontSize: 13, color: Colors.white60)),
+        const SizedBox(height: 16),
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0x2648CAE4))),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(color: const Color(0x2648CAE4), borderRadius: BorderRadius.circular(8)),
+                  child: const Text('Dilema Global', style: TextStyle(fontSize: 11, color: Color(0xFF48CAE4))),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Si pudieras vivir en una biblioteca infinita donde nunca pasa el tiempo o en una cabaña frente al mar con café ilimitado... ¿cuál elegirías?',
+                  style: TextStyle(fontSize: 14, height: 1.4, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 14),
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0x3348CAE4)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('📚 Votaste por la Biblioteca Infinita (62% votaron igual)')));
+                  },
+                  child: const Align(alignment: Alignment.centerLeft, child: Text('📚 La Biblioteca Infinita (62%)')),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0x3348CAE4)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🌊 Votaste por la Cabaña en el Mar (38% votaron igual)')));
+                  },
+                  child: const Align(alignment: Alignment.centerLeft, child: Text('🌊 La Cabaña en el Mar (38%)')),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          const Text(
-            'Gotas que llegaron a ti',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  // 3. PÁGINA: CREACIÓN EN SILENCIO (Historias)
+  Widget _buildCoopStoryPage() {
+    final sentenceController = TextEditingController();
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text('🎨 Creación en Silencio', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 6),
+        const Text('Construye relatos con personas de distintos países, agregando una frase a la vez.', style: TextStyle(fontSize: 13, color: Colors.white60)),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C2541),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0x2648CAE4)),
           ),
-          const SizedBox(height: 12),
-          const DropCard(
-            author: 'Yuki',
-            location: '🇯🇵 Kioto, Japón',
-            avatar: '🦊',
-            topic: 'Videojuegos & Paz',
-            snippet: 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?',
+          child: Text(
+            _storySentences.join(''),
+            style: const TextStyle(fontSize: 14, height: 1.6, color: Colors.white),
           ),
-          const SizedBox(height: 12),
-          const DropCard(
-            author: 'Mateo',
-            location: '🇦🇷 Buenos Aires, Arg',
-            avatar: '🦉',
-            topic: 'Rutina en Solitario',
-            snippet: 'Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba. ¿Prefieres entrenar a solas o con música?',
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: sentenceController,
+                decoration: InputDecoration(
+                  hintText: 'Agrega la siguiente frase...',
+                  hintStyle: const TextStyle(fontSize: 13, color: Colors.white38),
+                  filled: true,
+                  fillColor: const Color(0xFF1C2541),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.send, color: Color(0xFF48CAE4)),
+              onPressed: () {
+                final txt = sentenceController.text.trim();
+                if (txt.isNotEmpty) {
+                  setState(() {
+                    _storySentences.add(" $txt");
+                  });
+                  sentenceController.clear();
+                }
+              },
+            )
+          ],
+        )
+      ],
+    );
+  }
+
+  // 4. PÁGINA: CHAT Y BUZÓN LENTO
+  Widget _buildChatPage() {
+    final chatInputController = TextEditingController();
+
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          color: const Color(0xFF1C2541),
+          child: Row(
+            children: [
+              const CircleAvatar(backgroundColor: Color(0x3348CAE4), child: Text('🦊')),
+              const SizedBox(width: 10),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Yuki (Japón)', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Modo Asíncrono', style: TextStyle(fontSize: 11, color: Color(0xFF48CAE4))),
+                ],
+              ),
+              const Spacer(),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0x33FFB703),
+                  foregroundColor: const Color(0xFFFFB703),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                icon: const Text('🪫', style: TextStyle(fontSize: 14)),
+                label: const Text('Pausa Social', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                onPressed: () {
+                  setState(() {
+                    _chatMessages.add({
+                      'sender': 'Tú',
+                      'text': '🪫 [Pausa Social]: Me quedé sin batería social por ahora. ¡Seguimos charlando después con calma!',
+                      'isMe': 'true',
+                    });
+                  });
+                },
+              )
+            ],
           ),
-        ],
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: _chatMessages.length,
+            itemBuilder: (ctx, idx) {
+              final msg = _chatMessages[idx];
+              final isMe = msg['isMe'] == 'true';
+              return Align(
+                alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                  decoration: BoxDecoration(
+                    color: isMe ? const Color(0xFF0077B6) : const Color(0xFF1C2541),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0x1A48CAE4)),
+                  ),
+                  child: Text(msg['text']!, style: const TextStyle(fontSize: 13, height: 1.4)),
+                ),
+              );
+            },
+          ),
+        ),
+        // Pastillas de preguntas rápidas
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Row(
+            children: [
+              _buildPromptChip('🎮 ¿Qué juegas o lees últimamente?', chatInputController),
+              _buildPromptChip('🎧 ¿Qué música escuchas para relajarte?', chatInputController),
+              _buildPromptChip('✨ Me encantó tu reflexión.', chatInputController),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: chatInputController,
+                  decoration: InputDecoration(
+                    hintText: 'Escribe tu mensaje con calma...',
+                    hintStyle: const TextStyle(fontSize: 13, color: Colors.white38),
+                    filled: true,
+                    fillColor: const Color(0xFF1C2541),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.send, color: Color(0xFF48CAE4)),
+                onPressed: () {
+                  final txt = chatInputController.text.trim();
+                  if (txt.isNotEmpty) {
+                    setState(() {
+                      _chatMessages.add({
+                        'sender': 'Tú',
+                        'text': txt,
+                        'isMe': 'true',
+                      });
+                    });
+                    chatInputController.clear();
+                  }
+                },
+              )
+            ],
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildPromptChip(String text, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: ActionChip(
+        backgroundColor: const Color(0xFF1C2541),
+        side: const BorderSide(color: Color(0x3348CAE4)),
+        label: Text(text, style: const TextStyle(fontSize: 11, color: Color(0xFF90E0EF))),
+        onPressed: () {
+          controller.text = text;
+        },
       ),
+    );
+  }
+
+  // 5. PÁGINA: PERFIL Y ESPACIO SEGURO
+  Widget _buildProfilePage() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text('🌱 Mi Espacio Seguro', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 6),
+        const Text('Configura tus intereses y límites de interacción.', style: TextStyle(fontSize: 13, color: Colors.white60)),
+        const SizedBox(height: 20),
+        const Center(
+          child: CircleAvatar(
+            radius: 36,
+            backgroundColor: Color(0x3348CAE4),
+            child: Text('🐺', style: TextStyle(fontSize: 36)),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Center(
+          child: Text('CaminanteSilencioso', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        ),
+        const SizedBox(height: 20),
+        const Text('Mis Temas de Interés', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF90E0EF))),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: const [
+            Chip(backgroundColor: Color(0xFF1C2541), label: Text('#Videojuegos', style: TextStyle(fontSize: 12))),
+            Chip(backgroundColor: Color(0xFF1C2541), label: Text('#Calistenia', style: TextStyle(fontSize: 12))),
+            Chip(backgroundColor: Color(0xFF1C2541), label: Text('#Lectura & Manhwas', style: TextStyle(fontSize: 12))),
+            Chip(backgroundColor: Color(0xFF1C2541), label: Text('#Programación', style: TextStyle(fontSize: 12))),
+            Chip(backgroundColor: Color(0xFF1C2541), label: Text('#Mascotas', style: TextStyle(fontSize: 12))),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0x1A0077B6),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x3348CAE4)),
+          ),
+          child: const Row(
+            children: [
+              Text('🛡️', style: TextStyle(fontSize: 20)),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Tu perfil es anónimo. Nunca mostramos tu ubicación exacta ni fotos reales.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF90E0EF)),
+                ),
+              ),
+            ],
+          ),
+        )
+      ],
     );
   }
 
@@ -135,14 +725,13 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Ajustar Batería Social',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Ajustar Batería Social', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             ListTile(
               leading: const Text('⚡', style: TextStyle(fontSize: 24)),
               title: const Text('Alta (100%) - Con ganas de charlar'),
               onTap: () {
-                setState(() => socialBattery = '⚡ Alta (100%)');
+                setState(() => _socialBattery = '⚡ Alta (100%)');
                 Navigator.pop(ctx);
               },
             ),
@@ -150,7 +739,7 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Text('☕', style: TextStyle(fontSize: 24)),
               title: const Text('Tranquilo (60%) - Respuestas lentas'),
               onTap: () {
-                setState(() => socialBattery = '☕ Tranquilo (60%)');
+                setState(() => _socialBattery = '☕ Tranquilo (60%)');
                 Navigator.pop(ctx);
               },
             ),
@@ -158,7 +747,7 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Text('🪫', style: TextStyle(fontSize: 24)),
               title: const Text('Modo Recarga (20%) - Solo leyendo'),
               onTap: () {
-                setState(() => socialBattery = '🪫 Modo Recarga (20%)');
+                setState(() => _socialBattery = '🪫 Modo Recarga (20%)');
                 Navigator.pop(ctx);
               },
             ),
@@ -169,7 +758,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Widget Personalizado para la Gota de Agua
+// Widget del Logo de Gota
 class WaterDropIcon extends StatelessWidget {
   final double size;
   const WaterDropIcon({super.key, required this.size});
@@ -276,6 +865,16 @@ class DropCard extends StatelessWidget {
               snippet,
               style: const TextStyle(fontSize: 13, height: 1.4, color: Colors.white70),
             ),
+            const SizedBox(height: 12),
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Tocar para leer y responder →',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF48CAE4), fontWeight: FontWeight.w500),
+                ),
+              ],
+            )
           ],
         ),
       ),
