@@ -76,8 +76,10 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   final List<String> _availableAvatars = [
     '🐺', '🦊', '🦉', '🐱', '🐇', '🐼', '🦥', '🐸',
-    '🐢', '🦌', '🦔', '🐧', '🌿', '🌸', '🌙', '🌊',
-    '🌧️', '🍄', '☕', '🕯️', '🔮', '🪐', '🌌', '🎨'
+    '🐢', '🦌', '🦔', '🐧', '🦦', '🦝', '🐨', '🦋',
+    '🕊️', '🐋', '🌿', '🌸', '🌙', '🌊', '🌧️', '🍄',
+    '🌲', '🍁', '🪷', '❄️', '☕', '🕯️', '📖', '🎧',
+    '🪴', '🏮', '🔮', '🪐'
   ];
 
   @override
@@ -375,7 +377,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
-                          onPressed: () async {
+                          onPressed: () {
                             final name = nameController.text.trim();
                             if (name.length < 3) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -384,18 +386,78 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                               return;
                             }
 
-                            try {
-                              await Supabase.instance.client.from('profiles').insert({
-                                'username': name,
-                                'avatar': tempAvatar,
-                              });
-                            } catch (_) {}
+                            // Diálogo de Confirmación: ¿Estás seguro?
+                            showDialog(
+                              context: context,
+                              builder: (c) => AlertDialog(
+                                backgroundColor: const Color(0xFF1C2541),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  side: const BorderSide(color: Color(0xFF48CAE4)),
+                                ),
+                                title: Row(
+                                  children: const [
+                                    Text('🔒', style: TextStyle(fontSize: 22)),
+                                    SizedBox(width: 8),
+                                    Text('¿Estás seguro?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
+                                  ],
+                                ),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text(
+                                      'Tu nombre de viajero será definitivo y permanente. No podrás cambiarlo después para mantener la confianza en tus cartas.',
+                                      style: TextStyle(fontSize: 13, color: Colors.white70, height: 1.4),
+                                    ),
+                                    const SizedBox(height: 14),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF0B132B),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: const Color(0xFF48CAE4)),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(tempAvatar, style: const TextStyle(fontSize: 22)),
+                                          const SizedBox(width: 10),
+                                          Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(c),
+                                    child: const Text('Revisar', style: TextStyle(color: Colors.white60)),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF0077B6),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                    onPressed: () async {
+                                      Navigator.pop(c);
+                                      try {
+                                        await Supabase.instance.client.from('profiles').insert({
+                                          'username': name,
+                                          'avatar': tempAvatar,
+                                        });
+                                      } catch (_) {}
 
-                            setState(() {
-                              _myUsername = name;
-                              _myAvatar = tempAvatar;
-                              _isRegistered = true;
-                            });
+                                      setState(() {
+                                        _myUsername = name;
+                                        _myAvatar = tempAvatar;
+                                        _isRegistered = true;
+                                      });
+                                    },
+                                    child: const Text('Sí, confirmar 💧', style: TextStyle(color: Colors.white)),
+                                  )
+                                ],
+                              ),
+                            );
                           },
                           child: const Text('Comenzar y Entrar al Océano 💧', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         ),
@@ -1157,7 +1219,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   }
 
   void _openProfileEditorModal() {
-    final nameController = TextEditingController(text: _myUsername);
     String tempAvatar = _myAvatar;
 
     showModalBottomSheet(
@@ -1171,84 +1232,84 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('🌱 Editar Identidad', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text('🌱 Personalizar mi Avatar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              const Text('Puedes cambiar tu avatar ilustrado cuando desees:', style: TextStyle(fontSize: 12, color: Colors.white60)),
               const SizedBox(height: 12),
               SizedBox(
-                height: 80,
+                height: 140,
                 child: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 6, crossAxisSpacing: 6, mainAxisSpacing: 6),
                   itemCount: _availableAvatars.length,
                   itemBuilder: (cx, i) {
                     final av = _availableAvatars[i];
+                    final isSel = tempAvatar == av;
                     return GestureDetector(
                       onTap: () => setM(() => tempAvatar = av),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: tempAvatar == av ? const Color(0x3348CAE4) : const Color(0xFF0B132B),
+                          color: isSel ? const Color(0x3348CAE4) : const Color(0xFF0B132B),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: tempAvatar == av ? const Color(0xFF48CAE4) : Colors.white12),
+                          border: Border.all(color: isSel ? const Color(0xFF48CAE4) : Colors.white12, width: isSel ? 2 : 1),
                         ),
-                        child: Center(child: Text(av, style: const TextStyle(fontSize: 16))),
+                        child: Center(child: Text(av, style: const TextStyle(fontSize: 18))),
                       ),
                     );
                   },
                 ),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: nameController,
-                      decoration: InputDecoration(
-                        hintText: 'Tu alias...',
-                        filled: true,
-                        fillColor: const Color(0xFF0B132B),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0077B6)),
-                    onPressed: () {
-                      nameController.text = _generateRandomName();
-                    },
-                    child: const Text('🎲', style: TextStyle(color: Colors.white)),
-                  )
-                ],
-              ),
               const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0B132B),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Nombre de Usuario (Permanente):', style: TextStyle(fontSize: 10, color: Colors.white60)),
+                        Text(_myUsername, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0x3348CAE4),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text('🔒 Bloqueado', style: TextStyle(fontSize: 10, color: Color(0xFF48CAE4), fontWeight: FontWeight.bold)),
+                    )
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF48CAE4), foregroundColor: const Color(0xFF0B132B)),
                   onPressed: () async {
-                    final n = nameController.text.trim();
-                    if (n.isNotEmpty) {
-                      final oldN = _myUsername;
-                      try {
-                        await Supabase.instance.client.from('profiles').upsert({
-                          'username': n,
-                          'avatar': tempAvatar,
-                        }, onConflict: 'username');
+                    try {
+                      await Supabase.instance.client.from('profiles').update({
+                        'avatar': tempAvatar,
+                      }).eq('username', _myUsername);
 
-                        await Supabase.instance.client.from('drops').update({
-                          'author': n,
-                          'avatar': tempAvatar,
-                        }).eq('author', oldN);
-                      } catch (_) {}
+                      await Supabase.instance.client.from('drops').update({
+                        'avatar': tempAvatar,
+                      }).eq('author', _myUsername);
+                    } catch (_) {}
 
-                      setState(() {
-                        _myUsername = n;
-                        _myAvatar = tempAvatar;
-                      });
-                      Navigator.pop(ctx);
-                      _fetchLiveDrops();
-                    }
+                    setState(() {
+                      _myAvatar = tempAvatar;
+                    });
+                    Navigator.pop(ctx);
+                    _fetchLiveDrops();
                   },
-                  child: const Text('Guardar', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text('Guardar Avatar', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               )
             ],

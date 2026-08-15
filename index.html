@@ -491,7 +491,7 @@
         <div id="usernameFeedback" style="font-size:0.78rem; color:#ff6b6b; margin-top:6px; display:none;"></div>
       </div>
 
-      <button class="btn-primary" style="width:100%; padding:14px; font-size:0.95rem; justify-content:center; border-radius:14px;" onclick="completeOnboarding()">
+      <button class="btn-primary" style="width:100%; padding:14px; font-size:0.95rem; justify-content:center; border-radius:14px;" onclick="promptOnboardingConfirm()">
         Comenzar y Entrar al Océano 💧
       </button>
 
@@ -773,7 +773,7 @@
       <section id="tab-perfil" class="view-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <h2>🌱 Mi Espacio Seguro</h2>
-          <button class="btn-secondary" onclick="openProfileModal()">Editar Identidad</button>
+          <button class="btn-secondary" onclick="openProfileModal()">Cambiar Avatar</button>
         </div>
         <p style="font-size:0.85rem; color:var(--text-muted); margin:6px 0 18px;">Gestiona tu perfil y el respaldo de tu cuenta.</p>
 
@@ -932,7 +932,7 @@
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
 
-    const avatarsList = ['🐺', '🦊', '🦉', '🐱', '🐇', '🐼', '🦥', '🐸', '🐢', '🦌', '🦔', '🐧', '🌿', '🌸', '🌙', '🌊', '🌧️', '🍄', '☕', '🕯️', '🔮', '🪐', '🌌', '🎨'];
+    const avatarsList = ['🐺', '🦊', '🦉', '🐱', '🐇', '🐼', '🦥', '🐸', '🐢', '🦌', '🦔', '🐧', '🦦', '🦝', '🐨', '🦋', '🕊️', '🐋', '🌿', '🌸', '🌙', '🌊', '🌧️', '🍄', '🌲', '🍁', '🪷', '❄️', '☕', '🕯️', '📖', '🎧', '🪴', '🏮', '🔮', '🪐'];
 
     let chosenAvatar = '🐺';
     let currentAvatar = localStorage.getItem('gotas_user_avatar');
@@ -1782,5 +1782,27 @@
     }
 
   </script>
+
+  <!-- Modal: Confirmación de Identidad Definitiva -->
+  <div class="modal-backdrop" id="confirmIdentityModal" style="z-index: 100000;">
+    <div class="modal-box" style="text-align: center; max-width: 440px;">
+      <div style="font-size: 2.2rem; margin-bottom: 8px;">🔒</div>
+      <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 6px;">¿Estás seguro de tu identidad?</h3>
+      <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 16px;">
+        Tu nombre de viajero será <strong>definitivo y permanente</strong> para preservar la confianza y autenticidad en tus cartas. <strong>No podrás cambiarlo después.</strong>
+      </p>
+
+      <div style="background: #0b132b; border: 1.5px solid var(--accent-cyan); border-radius: 16px; padding: 14px; margin-bottom: 20px; display: inline-flex; align-items: center; gap: 12px;">
+        <span style="font-size: 2rem;" id="confirmModalAvatar">🐺</span>
+        <span style="font-size: 1.15rem; font-weight: bold; color: #fff;" id="confirmModalUsername">Viajero</span>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button class="btn-secondary" onclick="closeModal('confirmIdentityModal')">Revisar</button>
+        <button class="btn-primary" onclick="finalizeIdentityRegistration()">Sí, confirmar identidad 💧</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
