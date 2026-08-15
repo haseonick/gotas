@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0b132b">
-  <meta name="description" content="Gotas - Conexiones suaves a tu propio ritmo para personas con baja batería social.">
   <title>Gotas — Conexiones a tu propio ritmo</title>
-  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,7 +19,6 @@
       --accent-blue: #0077b6;
       --accent-soft: #90e0ef;
       --accent-gold: #ffd166;
-      --accent-binance: #f3ba2f;
       --text-main: #f8f9fa;
       --text-muted: #94a3b8;
       --border-color: rgba(144, 224, 239, 0.15);
@@ -29,7 +26,7 @@
       --radius-md: 16px;
       --radius-lg: 24px;
       --shadow-soft: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-      --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,7 +37,6 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow-x: hidden;
     }
 
     header {
@@ -68,12 +64,6 @@
       width: 36px;
       height: 36px;
       filter: drop-shadow(0 0 8px rgba(72, 202, 228, 0.4));
-      animation: gentle-float 4s ease-in-out infinite;
-    }
-
-    @keyframes gentle-float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-4px); }
     }
 
     .brand-text h1 {
@@ -84,11 +74,7 @@
       -webkit-text-fill-color: transparent;
     }
 
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
 
     .sound-widget, .battery-widget {
       background: rgba(28, 37, 65, 0.8);
@@ -101,12 +87,6 @@
       cursor: pointer;
       font-size: 0.78rem;
       color: var(--accent-soft);
-      transition: all 0.2s ease;
-    }
-
-    .sound-widget:hover, .battery-widget:hover {
-      border-color: var(--accent-cyan);
-      background: rgba(58, 80, 107, 0.6);
     }
 
     .app-container {
@@ -122,7 +102,7 @@
 
     @media (max-width: 768px) {
       .app-container { grid-template-columns: 1fr; }
-      .sidebar { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 6px; }
+      .sidebar { display: flex; overflow-x: auto; gap: 6px; }
       .nav-btn { white-space: nowrap; }
     }
 
@@ -138,10 +118,8 @@
       color: var(--text-muted);
       font-size: 0.9rem;
       cursor: pointer;
-      transition: all 0.2s;
       text-align: left;
     }
-    .nav-btn:hover { background: var(--bg-card-hover); color: var(--text-main); }
     .nav-btn.active {
       background: linear-gradient(135deg, rgba(72, 202, 228, 0.15), rgba(0, 119, 182, 0.25));
       border-color: var(--accent-cyan);
@@ -155,10 +133,8 @@
       padding: 24px;
       backdrop-filter: blur(16px);
       display: none;
-      animation: fadeIn 0.3s ease forwards;
     }
     .view-card.active-view { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
     .calm-banner {
       background: linear-gradient(135deg, rgba(0, 119, 182, 0.25), rgba(72, 202, 228, 0.1));
@@ -168,31 +144,6 @@
       margin-bottom: 20px;
       font-size: 0.85rem;
       color: var(--accent-soft);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    /* Goal Bar */
-    .goal-card {
-      background: linear-gradient(135deg, rgba(255, 209, 102, 0.12), rgba(0, 119, 182, 0.2));
-      border: 1px solid rgba(255, 209, 102, 0.3);
-      border-radius: var(--radius-md);
-      padding: 18px;
-      margin-bottom: 20px;
-    }
-    .goal-progress {
-      height: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      margin: 10px 0;
-      overflow: hidden;
-    }
-    .goal-bar {
-      height: 100%;
-      width: 25%;
-      background: linear-gradient(90deg, #ffd166, #06d6a0);
-      border-radius: 4px;
     }
 
     .letter-cards-grid {
@@ -207,9 +158,7 @@
       border-radius: var(--radius-md);
       padding: 16px;
       cursor: pointer;
-      transition: transform 0.2s, border-color 0.2s;
     }
-    .letter-card:hover { transform: translateY(-2px); border-color: var(--accent-cyan); }
     .letter-topic {
       display: inline-block;
       padding: 3px 8px;
@@ -230,31 +179,16 @@
       border: none;
       cursor: pointer;
       font-size: 0.88rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      transition: all 0.2s;
     }
-    .btn-primary:hover { box-shadow: 0 0 12px var(--accent-soft); }
-
     .btn-kofi {
       background: #ff5e5b;
       color: #ffffff;
       font-weight: 700;
       padding: 10px 18px;
       border-radius: 20px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.88rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
       text-decoration: none;
-      transition: all 0.2s;
+      font-size: 0.88rem;
     }
-    .btn-kofi:hover { box-shadow: 0 0 12px rgba(255, 94, 91, 0.5); }
-
     .btn-binance {
       background: #f3ba2f;
       color: #000000;
@@ -264,13 +198,7 @@
       border: none;
       cursor: pointer;
       font-size: 0.88rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s;
     }
-    .btn-binance:hover { box-shadow: 0 0 12px rgba(243, 186, 47, 0.5); }
-
     .btn-secondary {
       background: rgba(255, 255, 255, 0.08);
       color: #fff;
@@ -278,10 +206,8 @@
       border-radius: 20px;
       border: 1px solid var(--border-color);
       cursor: pointer;
-      font-size: 0.88rem;
     }
 
-    /* Modal */
     .modal-backdrop {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(5, 8, 20, 0.8); backdrop-filter: blur(8px);
@@ -325,11 +251,10 @@
     </a>
 
     <div class="header-actions">
-      <div class="sound-widget" id="soundBtn" onclick="toggleAmbientSound()" title="Activar sonido de lluvia relajante">
+      <div class="sound-widget" id="soundBtn" onclick="toggleAmbientSound()">
         <span id="soundIcon">🌧️</span>
         <span id="soundText">Lluvia: Off</span>
       </div>
-
       <div class="battery-widget" onclick="toggleBatteryModal()">
         <span id="batteryIcon">☕</span>
         <span id="batteryText">60%</span>
@@ -355,8 +280,7 @@
           <button class="btn-primary" onclick="openNewDropModal()">+ Enviar Gota</button>
         </div>
         <div class="calm-banner">
-          <span>🕊️</span>
-          <div>Sin prisa: responde solo cuando tu energía te lo permita.</div>
+          <span>🕊️ Sin prisa: responde solo cuando tu energía te lo permita.</span>
         </div>
         <div class="letter-cards-grid" id="dropsGrid">
           <div class="letter-card" onclick="openLetter('Yuki', '🇯🇵 Kioto', 'Videojuegos & Paz', 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?')">
@@ -372,15 +296,13 @@
         </div>
       </section>
 
-      <!-- Tab 2: Diario Privado -->
+      <!-- Tab 2: Diario -->
       <section id="tab-diario" class="view-card">
         <h2>📖 Mi Diario de Gotas Privadas</h2>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">
-          Un espacio solo para ti. Lo que escribas aquí se guarda exclusivamente en tu navegador.
-        </p>
-        <textarea id="journalInput" rows="4" placeholder="¿Qué pensamiento o momento tranquilo tuviste hoy?..." style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:12px; padding:12px; color:#fff; font-family:inherit; margin-bottom:10px;"></textarea>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">Un espacio seguro que se guarda en tu navegador.</p>
+        <textarea id="journalInput" rows="4" placeholder="¿Qué momento tranquilo tuviste hoy?..." style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:12px; padding:12px; color:#fff; font-family:inherit; margin-bottom:10px;"></textarea>
         <div style="display:flex; justify-content:flex-end;">
-          <button class="btn-primary" onclick="saveJournalEntry()">Guardar en mi Diario</button>
+          <button class="btn-primary" onclick="saveJournalEntry()">Guardar</button>
         </div>
         <div id="journalList" style="margin-top:20px; display:flex; flex-direction:column; gap:10px;"></div>
       </section>
@@ -388,20 +310,18 @@
       <!-- Tab 3: Dilemas -->
       <section id="tab-dilemas" class="view-card">
         <h2>✨ Dilema del Día</h2>
-        <p style="margin:14px 0; font-size:0.95rem;">
-          Si pudieras vivir en una biblioteca infinita donde nunca pasa el tiempo o en una cabaña frente al mar con café ilimitado... ¿cuál elegirías?
-        </p>
+        <p style="margin:14px 0;">Si pudieras vivir en una biblioteca infinita donde nunca pasa el tiempo o en una cabaña frente al mar con café ilimitado... ¿cuál elegirías?</p>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <button class="btn-secondary" onclick="alert('📚 Votaste por la Biblioteca Infinita (62% coincidieron)')">📚 Biblioteca Infinita (62%)</button>
-          <button class="btn-secondary" onclick="alert('🌊 Votaste por la Cabaña en el Mar (38% coincidieron)')">🌊 Cabaña en el Mar (38%)</button>
+          <button class="btn-secondary" onclick="alert('📚 Votaste por la Biblioteca Infinita (62%)')">📚 Biblioteca Infinita (62%)</button>
+          <button class="btn-secondary" onclick="alert('🌊 Votaste por la Cabaña en el Mar (38%)')">🌊 Cabaña en el Mar (38%)</button>
         </div>
       </section>
 
-      <!-- Tab 4: Historia Colectiva -->
+      <!-- Tab 4: Historia -->
       <section id="tab-silencio" class="view-card">
         <h2>🎨 Creación en Silencio</h2>
         <div id="storyContainer" style="background:rgba(11,19,43,0.7); border:1px solid var(--border-color); border-radius:12px; padding:14px; margin:14px 0; line-height:1.6; font-size:0.9rem;">
-          Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma. Al girar la manecilla, el ruido de la ciudad se transformaba en el murmullo de un río sereno.
+          Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.
         </div>
         <div style="display:flex; gap:8px;">
           <input type="text" id="storyInput" placeholder="Agrega una frase al relato..." style="flex:1; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:20px; padding:8px 14px; color:#fff;">
@@ -409,55 +329,70 @@
         </div>
       </section>
 
-      <!-- Tab 5: Apoyar el Proyecto (Ko-fi & Binance Pay) -->
+      <!-- Tab 5: Apoyo -->
       <section id="tab-apoyo" class="view-card">
-        <h2>💛 Apoyar el Lanzamiento de Gotas</h2>
-        <div class="goal-card">
-          <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
-            <span>Meta de registro oficial en Google Play: $25 USD</span>
-            <strong>$6 / $25 USD</strong>
-          </div>
-          <div class="goal-progress"><div class="goal-bar"></div></div>
-          <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.5;">
-            Gotas es un proyecto independiente desarrollado con dedicación para ofrecer un refugio digital tranquilo. Puedes apoyar el proyecto voluntariamente con cualquier aporte:
-          </p>
-        </div>
-
+        <h2>💛 Apoyar el Proyecto</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin:14px 0;">Apoya la publicación oficial en Google Play ($25 USD):</p>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
-          <!-- Enlace oficial a Ko-fi -->
-          <a href="https://ko-fi.com/haseonick" target="_blank" class="btn-kofi">
-            ☕ Donar en Ko-fi ($1)
-          </a>
-
-          <!-- Modal de Binance Pay -->
-          <button class="btn-binance" onclick="openBinanceModal()">
-            ⚡ Pagar con Binance Pay
-          </button>
+          <a href="https://ko-fi.com/haseonick" target="_blank" class="btn-kofi">☕ Donar en Ko-fi ($1)</a>
+          <button class="btn-binance" onclick="openBinanceModal()">⚡ Pagar con Binance Pay</button>
         </div>
       </section>
 
     </main>
   </div>
 
-  <!-- Modal Binance Pay -->
+  <!-- Modal: Crear Gota -->
+  <div class="modal-backdrop" id="newDropModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('newDropModal')">&times;</button>
+      <h3 style="color:#fff; margin-bottom:8px;">🌊 Enviar una Gota al Océano</h3>
+      <input type="text" id="newDropTopic" placeholder="Tema (Ej. Hábitos, Videojuegos, Lectura)" style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; margin-bottom:14px;">
+      <textarea id="newDropContent" rows="4" placeholder="Comparte tu reflexión con tranquilidad..." style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:8px; padding:10px; color:#fff; font-family:inherit; margin-bottom:16px;"></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button class="btn-secondary" onclick="closeModal('newDropModal')">Cancelar</button>
+        <button class="btn-primary" onclick="publishNewDrop()">Lanzar al Mundo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Leer Carta -->
+  <div class="modal-backdrop" id="letterModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('letterModal')">&times;</button>
+      <h3 id="modalAuthor" style="color:#fff;">Autor</h3>
+      <div id="modalLocation" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">Ubicación</div>
+      <span class="letter-topic" id="modalTopic">Tema</span>
+      <p id="modalContent" style="margin:14px 0; font-size:0.9rem; color:#e2e8f0;"></p>
+      <textarea id="replyText" rows="3" placeholder="Escribe tu respuesta con calma..." style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:8px; padding:10px; color:#fff; font-family:inherit; margin-bottom:12px;"></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button class="btn-secondary" onclick="closeModal('letterModal')">Guardar</button>
+        <button class="btn-primary" onclick="sendReply()">Enviar Respuesta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Batería -->
+  <div class="modal-backdrop" id="batteryModal">
+    <div class="modal-box" style="max-width:400px;">
+      <button class="modal-close" onclick="closeModal('batteryModal')">&times;</button>
+      <h3 style="color:#fff; margin-bottom:10px;">🔋 Batería Social</h3>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="btn-secondary" style="text-align:left;" onclick="setBattery('⚡', '100%')">⚡ Alta (100%)</button>
+        <button class="btn-secondary" style="text-align:left;" onclick="setBattery('☕', '60%')">☕ Tranquilo (60%)</button>
+        <button class="btn-secondary" style="text-align:left;" onclick="setBattery('🪫', '20%')">🪫 Modo Recarga (20%)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Binance -->
   <div class="modal-backdrop" id="binanceModal">
     <div class="modal-box" style="text-align:center;">
       <button class="modal-close" onclick="closeModal('binanceModal')">&times;</button>
-      <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;">
-        <span style="font-size:1.5rem;">⚡</span>
-        <h3 style="color:#f3ba2f;">Binance Pay</h3>
-      </div>
-      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">
-        Escanea desde tu app de Binance o envía directamente a mi usuario:
-      </p>
-
-      <div style="background:#0b132b; border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:14px;">
-        <div style="font-size:0.8rem; color:var(--text-muted);">Usuario de Binance Pay:</div>
-        <div style="font-size:1.1rem; font-weight:bold; color:#fff; letter-spacing:1px; margin-top:2px;">haseonick</div>
-      </div>
-
-      <div style="font-size:0.8rem; color:var(--accent-soft); line-height:1.4;">
-        Acepta USDT, BUSD y cualquier criptomoneda sin comisión de envío.
+      <h3 style="color:#f3ba2f; margin-bottom:8px;">⚡ Binance Pay</h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:14px;">Envía directamente desde tu app de Binance a:</p>
+      <div style="background:#0b132b; border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:14px; font-weight:bold; font-size:1.1rem; color:#fff;">
+        haseonick
       </div>
     </div>
   </div>
@@ -506,12 +441,50 @@
       btn.classList.add('active');
     }
 
-    function openBinanceModal() {
-      document.getElementById('binanceModal').classList.add('show');
+    function openNewDropModal() { document.getElementById('newDropModal').classList.add('show'); }
+    function openLetter(author, location, topic, content) {
+      document.getElementById('modalAuthor').innerText = author;
+      document.getElementById('modalLocation').innerText = location;
+      document.getElementById('modalTopic').innerText = topic;
+      document.getElementById('modalContent').innerText = `"${content}"`;
+      document.getElementById('replyText').value = '';
+      document.getElementById('letterModal').classList.add('show');
+    }
+    function toggleBatteryModal() { document.getElementById('batteryModal').classList.add('show'); }
+    function openBinanceModal() { document.getElementById('binanceModal').classList.add('show'); }
+    function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); }
+
+    function setBattery(icon, text) {
+      document.getElementById('batteryIcon').innerText = icon;
+      document.getElementById('batteryText').innerText = text;
+      closeModal('batteryModal');
     }
 
-    function closeModal(modalId) {
-      document.getElementById(modalId).classList.remove('show');
+    function publishNewDrop() {
+      const topic = document.getElementById('newDropTopic').value.trim();
+      const content = document.getElementById('newDropContent').value.trim();
+      if (!content) { alert('Por favor escribe el contenido de tu gota.'); return; }
+      const grid = document.getElementById('dropsGrid');
+      const card = document.createElement('div');
+      card.className = 'letter-card';
+      card.onclick = () => openLetter('Tú', 'Tu rincón seguro', topic || 'Pensamiento libre', content);
+      card.innerHTML = `
+        <span class="letter-topic">${topic || 'Pensamiento libre'}</span>
+        <p style="font-size:0.85rem; font-style:italic;">"${content.substring(0, 80)}..."</p>
+        <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted);">Tú · Tu rincón seguro</div>
+      `;
+      grid.prepend(card);
+      closeModal('newDropModal');
+      document.getElementById('newDropTopic').value = '';
+      document.getElementById('newDropContent').value = '';
+      alert('🌊 ¡Tu gota ha sido lanzada al océano con éxito!');
+    }
+
+    function sendReply() {
+      const text = document.getElementById('replyText').value.trim();
+      if (!text) return;
+      alert('✨ Tu respuesta ha sido enviada con calma.');
+      closeModal('letterModal');
     }
 
     function saveJournalEntry() {
@@ -523,7 +496,7 @@
       div.style.padding = '12px';
       div.style.borderRadius = '10px';
       div.style.border = '1px solid var(--border-color)';
-      div.innerHTML = `<div style="font-size:0.75rem; color:var(--accent-cyan); margin-bottom:4px;">${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}</div><p style="font-size:0.88rem;">${val}</p>`;
+      div.innerHTML = `<p style="font-size:0.88rem;">${val}</p>`;
       list.prepend(div);
       document.getElementById('journalInput').value = '';
     }
