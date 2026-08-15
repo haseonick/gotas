@@ -1,0 +1,101 @@
+name: Compilar APK y AAB
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Instalar Pillow para generar icono
+        run: pip install pillow
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Reconstruir configuracion Android limpia
+        run: |
+          rm -rf android
+          flutter create . --platforms=android --org com.gotas --project-name gotas_app
+
+      - name: Aplicar Logo de Gota de Agua Puro Transparente y Nombre Gotas
+        run: |
+          python3 -c "
+          from PIL import Image, ImageDraw
+          import math, os
+
+          def create_icon(size):
+              img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+              draw = ImageDraw.Draw(img)
+              top_x, top_y = size * 0.5, size * 0.06
+              cx, cy, drop_r = size * 0.5, size * 0.58, size * 0.40
+              pts = []
+              for deg in range(0, 181):
+                  rad = math.radians(deg)
+                  pts.append((cx + drop_r * math.cos(rad), cy + drop_r * math.sin(rad)))
+              draw.polygon([(top_x, top_y)] + pts + [(top_x, top_y)], fill=(0, 119, 182, 255))
+              inner_r = drop_r * 0.88
+              inner_pts = []
+              for deg in range(0, 181):
+                  rad = math.radians(deg)
+                  inner_pts.append((cx + inner_r * math.cos(rad), (cy + size*0.02) + inner_r * math.sin(rad)))
+              draw.polygon([(top_x, top_y + size*0.06)] + inner_pts + [(top_x, top_y + size*0.06)], fill=(72, 202, 228, 255))
+              draw.ellipse([size*0.36, size*0.34, size*0.52, size*0.68], fill=(202, 240, 248, 230))
+              draw.ellipse([cx - size*0.20, size*0.66, cx + size*0.20, size*0.76], outline=(202, 240, 248, 200), width=max(1, int(size*0.025)))
+              draw.ellipse([cx - size*0.11, size*0.78, cx + size*0.11, size*0.84], outline=(202, 240, 248, 160), width=max(1, int(size*0.018)))
+              return img
+
+          sizes = {'mipmap-mdpi': 48, 'mipmap-hdpi': 72, 'mipmap-xhdpi': 96, 'mipmap-xxhdpi': 144, 'mipmap-xxxhdpi': 192}
+          for folder, s in sizes.items():
+              dir_path = f'android/app/src/main/res/{folder}'
+              os.makedirs(dir_path, exist_ok=True)
+              create_icon(s).save(f'{dir_path}/ic_launcher.png')
+
+          manifest_path = 'android/app/src/main/AndroidManifest.xml'
+          with open(manifest_path, 'r') as f:
+              content = f.read()
+          content = content.replace('android:label=\"gotas_app\"', 'android:label=\"Gotas\"')
+          with open(manifest_path, 'w') as f:
+              f.write(content)
+          print('Icono puro transparente y nombre aplicados exitosamente.')
+          "
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Compilar APK
+        run: flutter build apk --release
+
+      - name: Compilar AAB para Play Store
+        run: flutter build appbundle --release
+
+      - name: Guardar APK descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gotas-Release-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Guardar AAB para Play Store
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gotas-PlayStore-AAB
+          path: build/app/outputs/bundle/release/app-release.aab

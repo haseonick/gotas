@@ -25,92 +25,6 @@ void main() async {
 class GotasApp extends StatelessWidget {
   const GotasApp({super.key});
 
-
-  // --- VERSIÓN ACTUAL DE LA APP Y VERIFICADOR DE ACTUALIZACIONES ---
-  static const String currentAppVersion = "1.0.0";
-
-  Future<void> _checkForAppUpdates() async {
-    if (supabaseUrl == 'YOUR_SUPABASE_URL') return;
-    try {
-      final data = await Supabase.instance.client
-          .from('app_config')
-          .select('value, notes, download_url')
-          .eq('key', 'latest_app_version')
-          .maybeSingle();
-
-      if (data != null && data['value'] != null) {
-        final String latestVer = data['value'].toString();
-        if (latestVer != currentAppVersion && mounted) {
-          final String notes = data['notes']?.toString() ?? 'Nuevas mejoras de rendimiento y funciones de calma.';
-          final String downloadUrl = data['download_url']?.toString() ?? 'https://github.com/haseonick/gotas/actions';
-          _showUpdateAvailableDialog(latestVer, notes, downloadUrl);
-        }
-      }
-    } catch (_) {}
-  }
-
-  void _showUpdateAvailableDialog(String newVersion, String notes, String downloadUrl) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1C2541),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFF48CAE4)),
-        ),
-        title: Row(
-          children: const [
-            Text('💧', style: TextStyle(fontSize: 22)),
-            SizedBox(width: 8),
-            Text('Actualización Disponible', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Hay una nueva versión de Gotas ($newVersion) lista para ti.', style: const TextStyle(fontSize: 13, color: Colors.white)),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0B132B),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Novedades:\n$notes',
-                style: const TextStyle(fontSize: 12, color: Colors.white70, height: 1.4),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Más tarde', style: TextStyle(color: Colors.white60)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0077B6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              Clipboard.setData(ClipboardData(text: downloadUrl));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('📋 Enlace de descarga copiado: $downloadUrl'),
-                  backgroundColor: const Color(0xFF0077B6),
-                ),
-              );
-            },
-            child: const Text('Descargar APK', style: TextStyle(color: Colors.white)),
-          )
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -140,27 +54,24 @@ class MainNavigationShell extends StatefulWidget {
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
   String _socialBattery = '☕ Tranquilo (60%)';
-  bool _isPlusMember = false;
   bool _isRegistered = false;
 
-  // Identidad del Usuario
   String _myUsername = '';
   String _myAvatar = '🐺';
-  String _deviceId = '';
 
   // Votaciones de Dilemas
   String? _dilemmaChoice1;
   String? _dilemmaChoice2;
   String? _dilemmaChoice3;
 
-  // Filtro de Gotas (Todas vs Guardadas)
   String _currentDropsFilter = 'all';
-  final List<int> _savedDropIds = [];
+  final List<dynamic> _savedDropIds = [];
 
-  // Diario Privado Local
+  // Lista local en memoria
+  List<Map<String, dynamic>> _liveDrops = [];
+  bool _isLoadingDrops = true;
+
   final List<Map<String, String>> _privateJournal = [];
-
-  // Historial de Respuestas Enviadas
   final List<Map<String, String>> _mySentReplies = [];
 
   final List<String> _availableAvatars = [
@@ -169,39 +80,48 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     '🌧️', '🍄', '☕', '🕯️', '🔮', '🪐', '🌌', '🎨'
   ];
 
-  final List<Map<String, dynamic>> _fallbackDrops = [
-    {
-      'id': 1,
-      'author': 'Yuki',
-      'location': '🇯🇵 Kioto, Japón',
-      'avatar': '🦊',
-      'topic': 'Videojuegos & Paz',
-      'content': 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?',
-    },
-    {
-      'id': 2,
-      'author': 'Mateo',
-      'location': '🇦🇷 Buenos Aires, Arg',
-      'avatar': '🦉',
-      'topic': 'Rutina en Solitario',
-      'content': 'Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba. ¿Prefieres entrenar a solas o con música?',
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
-    _initDeviceAndUser();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForAppUpdates());
+    _fetchLiveDrops();
+    _subscribeToLiveChanges();
   }
 
-  void _initDeviceAndUser() {
-    final rand = math.Random();
-    _deviceId = 'dev_${rand.nextInt(9999999)}';
-    // Por defecto iniciamos pidiendo registro si no está configurado
-    if (_myUsername.isEmpty) {
-      _isRegistered = false;
+  Future<void> _fetchLiveDrops() async {
+    setState(() => _isLoadingDrops = true);
+    try {
+      final data = await Supabase.instance.client
+          .from('drops')
+          .select()
+          .order('created_at', ascending: false);
+      if (mounted) {
+        setState(() {
+          _liveDrops = List<Map<String, dynamic>>.from(data);
+          _isLoadingDrops = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error obteniendo gotas: $e");
+      if (mounted) {
+        setState(() => _isLoadingDrops = false);
+      }
     }
+  }
+
+  void _subscribeToLiveChanges() {
+    try {
+      Supabase.instance.client
+          .channel('public:drops')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'drops',
+            callback: (payload) {
+              _fetchLiveDrops();
+            },
+          )
+          .subscribe();
+    } catch (_) {}
   }
 
   String _generateRandomName() {
@@ -216,92 +136,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     ];
     final rand = math.Random();
     return '${sustantivos[rand.nextInt(sustantivos.length)]}${adjetivos[rand.nextInt(adjetivos.length)]}';
-  }
-
-
-  // --- VERSIÓN ACTUAL DE LA APP Y VERIFICADOR DE ACTUALIZACIONES ---
-  static const String currentAppVersion = "1.0.0";
-
-  Future<void> _checkForAppUpdates() async {
-    if (supabaseUrl == 'YOUR_SUPABASE_URL') return;
-    try {
-      final data = await Supabase.instance.client
-          .from('app_config')
-          .select('value, notes, download_url')
-          .eq('key', 'latest_app_version')
-          .maybeSingle();
-
-      if (data != null && data['value'] != null) {
-        final String latestVer = data['value'].toString();
-        if (latestVer != currentAppVersion && mounted) {
-          final String notes = data['notes']?.toString() ?? 'Nuevas mejoras de rendimiento y funciones de calma.';
-          final String downloadUrl = data['download_url']?.toString() ?? 'https://github.com/haseonick/gotas/actions';
-          _showUpdateAvailableDialog(latestVer, notes, downloadUrl);
-        }
-      }
-    } catch (_) {}
-  }
-
-  void _showUpdateAvailableDialog(String newVersion, String notes, String downloadUrl) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1C2541),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFF48CAE4)),
-        ),
-        title: Row(
-          children: const [
-            Text('💧', style: TextStyle(fontSize: 22)),
-            SizedBox(width: 8),
-            Text('Actualización Disponible', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Hay una nueva versión de Gotas ($newVersion) lista para ti.', style: const TextStyle(fontSize: 13, color: Colors.white)),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0B132B),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Novedades:\n$notes',
-                style: const TextStyle(fontSize: 12, color: Colors.white70, height: 1.4),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Más tarde', style: TextStyle(color: Colors.white60)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0077B6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              Clipboard.setData(ClipboardData(text: downloadUrl));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('📋 Enlace de descarga copiado: $downloadUrl'),
-                  backgroundColor: const Color(0xFF0077B6),
-                ),
-              );
-            },
-            child: const Text('Descargar APK', style: TextStyle(color: Colors.white)),
-          )
-        ],
-      ),
-    );
   }
 
   @override
@@ -577,79 +411,74 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // --- 1. PÁGINA: GOTAS (Con filtro Todas vs Guardadas) ---
+  // --- 1. PÁGINA: GOTAS (Con pull-to-refresh y filtro) ---
   Widget _buildGotasPage() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0x1A0077B6),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0x3348CAE4)),
-          ),
-          child: const Row(
-            children: [
-              Text('🕊️', style: TextStyle(fontSize: 20)),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Sin presión de inmediatez: lee y responde cuando tu energía lo permita.',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF90E0EF)),
+    List<Map<String, dynamic>> drops = _liveDrops;
+    if (_currentDropsFilter == 'saved') {
+      drops = drops.where((d) => _savedDropIds.contains(d['id'])).toList();
+    }
+
+    return RefreshIndicator(
+      onRefresh: _fetchLiveDrops,
+      color: const Color(0xFF48CAE4),
+      backgroundColor: const Color(0xFF1C2541),
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0x1A0077B6),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0x3348CAE4)),
+            ),
+            child: const Row(
+              children: [
+                Text('🕊️', style: TextStyle(fontSize: 20)),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Sin presión de inmediatez: desliza hacia abajo para actualizar cartas.',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF90E0EF)),
+                  ),
                 ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              ChoiceChip(
+                label: const Text('🌊 Todas las Gotas'),
+                selected: _currentDropsFilter == 'all',
+                onSelected: (s) => setState(() => _currentDropsFilter = 'all'),
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: Text('🔖 Guardadas (${_savedDropIds.length})'),
+                selected: _currentDropsFilter == 'saved',
+                onSelected: (s) => setState(() => _currentDropsFilter = 'saved'),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
 
-        // Filtro Todas vs Guardadas
-        Row(
-          children: [
-            ChoiceChip(
-              label: const Text('🌊 Todas las Gotas'),
-              selected: _currentDropsFilter == 'all',
-              onSelected: (s) => setState(() => _currentDropsFilter = 'all'),
-            ),
-            const SizedBox(width: 8),
-            ChoiceChip(
-              label: Text('🔖 Guardadas (${_savedDropIds.length})'),
-              selected: _currentDropsFilter == 'saved',
-              onSelected: (s) => setState(() => _currentDropsFilter = 'saved'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        StreamBuilder<List<Map<String, dynamic>>>(
-          stream: Supabase.instance.client
-              .from('drops')
-              .stream(primaryKey: ['id'])
-              .order('created_at', ascending: false),
-          builder: (context, snapshot) {
-            List<Map<String, dynamic>> drops = _fallbackDrops;
-            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-              drops = snapshot.data!;
-            }
-
-            if (_currentDropsFilter == 'saved') {
-              drops = drops.where((d) => _savedDropIds.contains(d['id'])).toList();
-              if (drops.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.all(32.0),
-                  child: Center(
-                    child: Text(
-                      'No tienes cartas guardadas aún. Abre cualquier gota y pulsa "Guardar para después".',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white60, fontSize: 13),
-                    ),
-                  ),
-                );
-              }
-            }
-
-            return Column(
+          if (_isLoadingDrops)
+            const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
+          else if (drops.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Center(
+                child: Text(
+                  'No hay cartas en este momento. ¡Sé el primero en enviar una!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white60, fontSize: 13),
+                ),
+              ),
+            )
+          else
+            Column(
               children: drops.map((drop) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
@@ -665,12 +494,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   ),
                 );
               }).toList(),
-            );
-          },
-        ),
+            ),
 
-        const SizedBox(height: 60),
-      ],
+          const SizedBox(height: 60),
+        ],
+      ),
     );
   }
 
@@ -894,6 +722,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                         });
                       } catch (_) {}
                       Navigator.pop(ctx);
+                      _fetchLiveDrops();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('🌊 Tu gota ha sido lanzada al océano global.'),
@@ -912,7 +741,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // --- 2. PÁGINA: BUZÓN DE ECOS (Respuestas enviadas y recibidas) ---
+  // --- 2. PÁGINA: BUZÓN DE ECOS ---
   Widget _buildBuzonPage() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -969,7 +798,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         const Text('Descubre afinidades con viajeros de todo el mundo.', style: TextStyle(fontSize: 12, color: Colors.white60)),
         const SizedBox(height: 16),
 
-        // Dilema 1: Refugio
         _buildDilemmaCard(
           id: 1,
           title: '🌿 1. Refugio Ideal',
@@ -983,7 +811,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ),
         const SizedBox(height: 14),
 
-        // Dilema 2: Pasatiempos
         _buildDilemmaCard(
           id: 2,
           title: '🎮 2. Pasatiempos & Narrativa',
@@ -997,7 +824,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ),
         const SizedBox(height: 14),
 
-        // Dilema 3: Batería Social
         _buildDilemmaCard(
           id: 3,
           title: '🔋 3. Batería Social',
@@ -1189,7 +1015,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // --- 5. PÁGINA: DIARIO PRIVADO (Persistente) ---
+  // --- 5. PÁGINA: DIARIO PRIVADO ---
   Widget _buildDiarioPage() {
     final journalController = TextEditingController();
 
@@ -1398,14 +1224,28 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF48CAE4), foregroundColor: const Color(0xFF0B132B)),
-                  onPressed: () {
+                  onPressed: () async {
                     final n = nameController.text.trim();
                     if (n.isNotEmpty) {
+                      final oldN = _myUsername;
+                      try {
+                        await Supabase.instance.client.from('profiles').upsert({
+                          'username': n,
+                          'avatar': tempAvatar,
+                        }, onConflict: 'username');
+
+                        await Supabase.instance.client.from('drops').update({
+                          'author': n,
+                          'avatar': tempAvatar,
+                        }).eq('author', oldN);
+                      } catch (_) {}
+
                       setState(() {
                         _myUsername = n;
                         _myAvatar = tempAvatar;
                       });
                       Navigator.pop(ctx);
+                      _fetchLiveDrops();
                     }
                   },
                   child: const Text('Guardar', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1511,92 +1351,6 @@ class WaterDropIcon extends StatelessWidget {
   final double size;
   const WaterDropIcon({super.key, required this.size});
 
-
-  // --- VERSIÓN ACTUAL DE LA APP Y VERIFICADOR DE ACTUALIZACIONES ---
-  static const String currentAppVersion = "1.0.0";
-
-  Future<void> _checkForAppUpdates() async {
-    if (supabaseUrl == 'YOUR_SUPABASE_URL') return;
-    try {
-      final data = await Supabase.instance.client
-          .from('app_config')
-          .select('value, notes, download_url')
-          .eq('key', 'latest_app_version')
-          .maybeSingle();
-
-      if (data != null && data['value'] != null) {
-        final String latestVer = data['value'].toString();
-        if (latestVer != currentAppVersion && mounted) {
-          final String notes = data['notes']?.toString() ?? 'Nuevas mejoras de rendimiento y funciones de calma.';
-          final String downloadUrl = data['download_url']?.toString() ?? 'https://github.com/haseonick/gotas/actions';
-          _showUpdateAvailableDialog(latestVer, notes, downloadUrl);
-        }
-      }
-    } catch (_) {}
-  }
-
-  void _showUpdateAvailableDialog(String newVersion, String notes, String downloadUrl) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1C2541),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFF48CAE4)),
-        ),
-        title: Row(
-          children: const [
-            Text('💧', style: TextStyle(fontSize: 22)),
-            SizedBox(width: 8),
-            Text('Actualización Disponible', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Hay una nueva versión de Gotas ($newVersion) lista para ti.', style: const TextStyle(fontSize: 13, color: Colors.white)),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0B132B),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Novedades:\n$notes',
-                style: const TextStyle(fontSize: 12, color: Colors.white70, height: 1.4),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Más tarde', style: TextStyle(color: Colors.white60)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0077B6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              Clipboard.setData(ClipboardData(text: downloadUrl));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('📋 Enlace de descarga copiado: $downloadUrl'),
-                  backgroundColor: const Color(0xFF0077B6),
-                ),
-              );
-            },
-            child: const Text('Descargar APK', style: TextStyle(color: Colors.white)),
-          )
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
@@ -1652,92 +1406,6 @@ class DropCard extends StatelessWidget {
     required this.topic,
     required this.snippet,
   });
-
-
-  // --- VERSIÓN ACTUAL DE LA APP Y VERIFICADOR DE ACTUALIZACIONES ---
-  static const String currentAppVersion = "1.0.0";
-
-  Future<void> _checkForAppUpdates() async {
-    if (supabaseUrl == 'YOUR_SUPABASE_URL') return;
-    try {
-      final data = await Supabase.instance.client
-          .from('app_config')
-          .select('value, notes, download_url')
-          .eq('key', 'latest_app_version')
-          .maybeSingle();
-
-      if (data != null && data['value'] != null) {
-        final String latestVer = data['value'].toString();
-        if (latestVer != currentAppVersion && mounted) {
-          final String notes = data['notes']?.toString() ?? 'Nuevas mejoras de rendimiento y funciones de calma.';
-          final String downloadUrl = data['download_url']?.toString() ?? 'https://github.com/haseonick/gotas/actions';
-          _showUpdateAvailableDialog(latestVer, notes, downloadUrl);
-        }
-      }
-    } catch (_) {}
-  }
-
-  void _showUpdateAvailableDialog(String newVersion, String notes, String downloadUrl) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1C2541),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFF48CAE4)),
-        ),
-        title: Row(
-          children: const [
-            Text('💧', style: TextStyle(fontSize: 22)),
-            SizedBox(width: 8),
-            Text('Actualización Disponible', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Hay una nueva versión de Gotas ($newVersion) lista para ti.', style: const TextStyle(fontSize: 13, color: Colors.white)),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0B132B),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Novedades:\n$notes',
-                style: const TextStyle(fontSize: 12, color: Colors.white70, height: 1.4),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Más tarde', style: TextStyle(color: Colors.white60)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0077B6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              Clipboard.setData(ClipboardData(text: downloadUrl));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('📋 Enlace de descarga copiado: $downloadUrl'),
-                  backgroundColor: const Color(0xFF0077B6),
-                ),
-              );
-            },
-            child: const Text('Descargar APK', style: TextStyle(color: Colors.white)),
-          )
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
