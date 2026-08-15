@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // --- CONFIGURACIÓN DE SUPABASE EN VIVO ---
@@ -55,6 +57,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
   String _socialBattery = '☕ Tranquilo (60%)';
   bool _isRegistered = false;
+  bool _isCheckingSession = true;
 
   String _myUsername = '';
   String _myAvatar = '🐺';
@@ -65,14 +68,13 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   String? _dilemmaChoice3;
 
   String _currentDropsFilter = 'all';
-  final List<dynamic> _savedDropIds = [];
+  List<dynamic> _savedDropIds = [];
 
-  // Lista local en memoria
   List<Map<String, dynamic>> _liveDrops = [];
   bool _isLoadingDrops = true;
 
-  final List<Map<String, String>> _privateJournal = [];
-  final List<Map<String, String>> _mySentReplies = [];
+  List<Map<String, String>> _privateJournal = [];
+  List<Map<String, String>> _mySentReplies = [];
 
   final List<String> _availableAvatars = [
     '🐺', '🦊', '🦉', '🐱', '🐇', '🐼', '🦥', '🐸',
@@ -85,8 +87,61 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   void initState() {
     super.initState();
-    _fetchLiveDrops();
+    _loadSavedSession();
     _subscribeToLiveChanges();
+  }
+
+  Future<void> _loadSavedSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedUser = prefs.getString('gotas_user_name');
+      final savedAvatar = prefs.getString('gotas_user_avatar');
+      final savedReg = prefs.getBool('gotas_user_registered') ?? false;
+
+      // Cargar dilemas guardados
+      _dilemmaChoice1 = prefs.getString('gotas_dilemma_1');
+      _dilemmaChoice2 = prefs.getString('gotas_dilemma_2');
+      _dilemmaChoice3 = prefs.getString('gotas_dilemma_3');
+
+      // Cargar diario guardado
+      final journalStr = prefs.getString('gotas_journal');
+      if (journalStr != null) {
+        final List decoded = jsonDecode(journalStr);
+        _privateJournal = decoded.map((e) => Map<String, String>.from(e)).toList();
+      }
+
+      // Cargar respuestas enviadas
+      final repliesStr = prefs.getString('gotas_sent_replies');
+      if (repliesStr != null) {
+        final List decoded = jsonDecode(repliesStr);
+        _mySentReplies = decoded.map((e) => Map<String, String>.from(e)).toList();
+      }
+
+      // Cargar guardados
+      final savedDropsStr = prefs.getString('gotas_saved_drops');
+      if (savedDropsStr != null) {
+        _savedDropIds = jsonDecode(savedDropsStr);
+      }
+
+      if (mounted) {
+        setState(() {
+          if (savedUser != null && savedUser.isNotEmpty && savedReg) {
+            _myUsername = savedUser;
+            _myAvatar = savedAvatar ?? '🐺';
+            _isRegistered = true;
+          } else {
+            _isRegistered = false;
+          }
+          _isCheckingSession = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isCheckingSession = false);
+      }
+    }
+
+    _fetchLiveDrops();
   }
 
   Future<void> _fetchLiveDrops() async {
@@ -142,6 +197,14 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingSession) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF48CAE4)),
+        ),
+      );
+    }
+
     if (!_isRegistered) {
       return _buildOnboardingScreen();
     }
@@ -265,7 +328,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Vista previa
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
@@ -297,11 +359,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
                       const Align(
                         alignment: Alignment.centerLeft,
-                        child: Text('1. Elige tu Avatar:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF90E0EF))),
+                        child: Text('1. Elige tu Avatar (36 Opciones):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF90E0EF))),
                       ),
                       const SizedBox(height: 8),
                       SizedBox(
-                        height: 100,
+                        height: 110,
                         child: GridView.builder(
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 6,
@@ -386,7 +448,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                               return;
                             }
 
-                            // Diálogo de Confirmación: ¿Estás seguro?
                             showDialog(
                               context: context,
                               builder: (c) => AlertDialog(
@@ -447,11 +508,19 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                                         });
                                       } catch (_) {}
 
+                                      // Guardar de forma permanente en el teléfono
+                                      final prefs = await SharedPreferences.getInstance();
+                                      await prefs.setString('gotas_user_name', name);
+                                      await prefs.setString('gotas_user_avatar', tempAvatar);
+                                      await prefs.setBool('gotas_user_registered', true);
+
                                       setState(() {
                                         _myUsername = name;
                                         _myAvatar = tempAvatar;
                                         _isRegistered = true;
                                       });
+
+                                      _fetchLiveDrops();
                                     },
                                     child: const Text('Sí, confirmar 💧', style: TextStyle(color: Colors.white)),
                                   )
@@ -473,7 +542,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // --- 1. PÁGINA: GOTAS (Con pull-to-refresh y filtro) ---
+  // --- 1. PÁGINA: GOTAS ---
   Widget _buildGotasPage() {
     List<Map<String, dynamic>> drops = _liveDrops;
     if (_currentDropsFilter == 'saved') {
@@ -642,10 +711,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 TextButton.icon(
                   icon: const Icon(Icons.bookmark_border, size: 16, color: Colors.white70),
                   label: const Text('Guardar para después', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  onPressed: () {
+                  onPressed: () async {
                     final dropId = drop['id'];
                     if (dropId != null && !_savedDropIds.contains(dropId)) {
                       setState(() => _savedDropIds.add(dropId));
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setString('gotas_saved_drops', jsonEncode(_savedDropIds));
                     }
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -671,13 +742,18 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                         }
                       } catch (_) {}
 
+                      final replyObj = {
+                        'topic': drop['topic']?.toString() ?? 'Carta',
+                        'author': drop['author']?.toString() ?? 'Viajero',
+                        'text': text,
+                      };
+
                       setState(() {
-                        _mySentReplies.insert(0, {
-                          'topic': drop['topic']?.toString() ?? 'Carta',
-                          'author': drop['author']?.toString() ?? 'Viajero',
-                          'text': text,
-                        });
+                        _mySentReplies.insert(0, replyObj);
                       });
+
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setString('gotas_sent_replies', jsonEncode(_mySentReplies));
 
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -869,7 +945,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           optB: '🌊 Faro frente al Océano',
           pctB: 36,
           choice: _dilemmaChoice1,
-          onVote: (c) => setState(() => _dilemmaChoice1 = c),
+          onVote: (c) async {
+            setState(() => _dilemmaChoice1 = c);
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('gotas_dilemma_1', c);
+          },
         ),
         const SizedBox(height: 14),
 
@@ -882,7 +962,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           optB: '⏳ 3 Horas Diarias de Pausa Mundial',
           pctB: 48,
           choice: _dilemmaChoice2,
-          onVote: (c) => setState(() => _dilemmaChoice2 = c),
+          onVote: (c) async {
+            setState(() => _dilemmaChoice2 = c);
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('gotas_dilemma_2', c);
+          },
         ),
         const SizedBox(height: 14),
 
@@ -895,7 +979,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           optB: '⚡ Recarga Instantánea en 5 minutos',
           pctB: 42,
           choice: _dilemmaChoice3,
-          onVote: (c) => setState(() => _dilemmaChoice3 = c),
+          onVote: (c) async {
+            setState(() => _dilemmaChoice3 = c);
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('gotas_dilemma_3', c);
+          },
         ),
       ],
     );
@@ -968,7 +1056,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // --- 4. PÁGINA: CREACIÓN EN SILENCIO (Historias por Líneas) ---
+  // --- 4. PÁGINA: CREACIÓN EN SILENCIO ---
   Widget _buildCoopStoryPage() {
     final sentenceController = TextEditingController();
 
@@ -1077,7 +1165,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // --- 5. PÁGINA: DIARIO PRIVADO ---
+  // --- 5. PÁGINA: DIARIO PRIVADO (Persistente) ---
   Widget _buildDiarioPage() {
     final journalController = TextEditingController();
 
@@ -1107,7 +1195,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               backgroundColor: const Color(0xFF0077B6),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            onPressed: () {
+            onPressed: () async {
               final txt = journalController.text.trim();
               if (txt.isNotEmpty) {
                 setState(() {
@@ -1117,6 +1205,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   });
                 });
                 journalController.clear();
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('gotas_journal', jsonEncode(_privateJournal));
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✨ Guardado en tu diario personal.')));
               }
             },
@@ -1148,7 +1238,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             TextButton.icon(
               style: TextButton.styleFrom(foregroundColor: const Color(0xFF48CAE4)),
               icon: const Icon(Icons.edit, size: 16),
-              label: const Text('Editar'),
+              label: const Text('Cambiar Avatar'),
               onPressed: _openProfileEditorModal,
             )
           ],
@@ -1171,7 +1261,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   children: [
                     Text(_myUsername, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 2),
-                    const Text('Cuenta Activa en este Dispositivo', style: TextStyle(fontSize: 11, color: Color(0xFF48CAE4))),
+                    const Text('🔒 Nombre Permanente', style: TextStyle(fontSize: 11, color: Color(0xFF48CAE4))),
                   ],
                 ),
               ],
@@ -1302,6 +1392,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                         'avatar': tempAvatar,
                       }).eq('author', _myUsername);
                     } catch (_) {}
+
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString('gotas_user_avatar', tempAvatar);
 
                     setState(() {
                       _myAvatar = tempAvatar;
