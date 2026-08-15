@@ -550,7 +550,7 @@
   <div class="app-container">
     <aside class="sidebar">
       <button class="nav-btn active" onclick="switchTab('tab-gotas', this)">💧 Gotas Globales</button>
-      <button class="nav-btn" onclick="switchTab('tab-buzon', this)">📬 Mi Buzón de Ecos</button>
+      <button class="nav-btn" id="sidebarBuzonBtn" onclick="openBuzonTab(this)">📬 Mi Buzón de Ecos</button>
       <button class="nav-btn" onclick="switchTab('tab-diario', this)">📖 Mi Diario Privado</button>
       <button class="nav-btn" onclick="switchTab('tab-dilemas', this)">✨ Dilemas del Día</button>
       <button class="nav-btn" onclick="switchTab('tab-silencio', this)">🎨 Historia Colectiva</button>
@@ -1616,7 +1616,7 @@
     function initRealtimeNotifications() {
       if (supabaseClient) {
         supabaseClient
-          .channel('public:drops')
+          .channel('public:drops_and_replies')
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'drops' }, payload => {
             const newDrop = payload.new;
             if (newDrop.author !== currentUsername) {
@@ -1624,9 +1624,33 @@
               loadLiveDrops();
             }
           })
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'drop_replies' }, payload => {
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'drop_replies' }, async payload => {
             const newReply = payload.new;
-            if (!newReply.author.includes(currentUsername)) {
+            // No notificar al propio autor de la respuesta
+            if (newReply.author && newReply.author.includes(currentUsername)) return;
+
+            // Consultar si la gota a la que respondieron es del usuario actual
+            try {
+              const { data: targetDrop } = await supabaseClient
+                .from('drops')
+                .select('author, topic')
+                .eq('id', newReply.drop_id)
+                .maybeSingle();
+
+              if (targetDrop && targetDrop.author === currentUsername) {
+                // Notificación prioritaria: Alguien respondió a TU carta
+                showSlowNotification('✉️ ¡Respondieron a tu Gota!', `${newReply.author || 'Un viajero'} respondió a tu carta sobre "${targetDrop.topic}": "${newReply.content.substring(0, 60)}..."`);
+                
+                // Mostrar punto rojo / aviso visual en la pestaña del buzón
+                const buzonBtn = document.getElementById('sidebarBuzonBtn');
+                if (buzonBtn) {
+                  buzonBtn.innerHTML = '📬 Mi Buzón de Ecos <span style="color:#ff6b6b; font-size:1.1rem;">●</span>';
+                }
+              } else {
+                // Notificación general de actividad comunitaria
+                showSlowNotification('✉️ Nueva Respuesta Lenta', `${newReply.author || 'Un viajero'} respondió a una carta comunitaria.`);
+              }
+            } catch (e) {
               showSlowNotification('✉️ Nueva Respuesta Lenta', `${newReply.author || 'Un viajero'} respondió a una carta.`);
             }
           })
@@ -1637,6 +1661,13 @@
 
     // --- LÓGICA DE MI BUZÓN DE ECOS ---
     let currentBuzonTab = 'sent';
+
+
+    function openBuzonTab(btn) {
+      btn.innerHTML = '📬 Mi Buzón de Ecos';
+      switchTab('tab-buzon', btn);
+      loadSentReplies();
+    }
 
     function filterBuzonView(tab) {
       currentBuzonTab = tab;
