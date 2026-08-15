@@ -1334,19 +1334,21 @@
       if (supabaseClient) {
         try {
           await supabaseClient.from('drops').insert({
-            author: currentUsername,
-            avatar: currentAvatar,
+            author: currentUsername || 'Viajero',
+            avatar: currentAvatar || '🐺',
             location: 'Tu rincón seguro',
             topic: topic || 'Pensamiento libre',
             content: content
           });
-        } catch (e) {}
+        } catch (e) {
+          console.error(e);
+        }
       }
 
       closeModal('newDropModal');
       document.getElementById('newDropTopic').value = '';
       document.getElementById('newDropContent').value = '';
-      alert('🌊 ¡Tu gota ha sido lanzada al océano y compartida en vivo!');
+      alert('🌊 ¡Tu gota ha sido lanzada al océano vinculada a tu perfil!');
       loadLiveDrops();
     }
 
@@ -1435,12 +1437,46 @@
     async function saveEditedProfile() {
       const name = document.getElementById('editUsernameInput').value.trim();
       if (!name) return;
+      const oldName = currentUsername;
+
+      if (supabaseClient) {
+        try {
+          // Verificar si el nuevo nombre ya está tomado por otro viajero
+          if (name !== oldName) {
+            const { data } = await supabaseClient.from('profiles').select('username').eq('username', name).maybeSingle();
+            if (data) {
+              alert('⚠️ Este nombre ya fue elegido por otro viajero. Elige otro.');
+              return;
+            }
+          }
+
+          // 1. Actualizar perfil en Supabase
+          await supabaseClient.from('profiles').upsert({
+            username: name,
+            avatar: currentAvatar
+          }, { onConflict: 'username' });
+
+          // 2. Actualizar todas las cartas pasadas de este usuario para que lleven el nuevo nombre y avatar
+          await supabaseClient.from('drops')
+            .update({ author: name, avatar: currentAvatar })
+            .eq('author', oldName);
+
+        } catch (e) {
+          console.log('Error actualizando perfil:', e);
+        }
+      }
+
       currentUsername = name;
       localStorage.setItem('gotas_user_name', currentUsername);
       localStorage.setItem('gotas_user_avatar', currentAvatar);
+      
       updateHeaderProfile();
       closeModal('profileModal');
-      alert(`✨ Identidad actualizada: ${currentAvatar} ${currentUsername}`);
+      alert(`✨ Identidad actualizada a: ${currentAvatar} ${currentUsername}. Todas tus cartas y respuestas anteriores ahora muestran tu nuevo perfil.`);
+      
+      // Recargar cartas para reflejar los cambios
+      loadLiveDrops();
+      loadLiveStory();
     }
 
     function openRecoverAccountModal() { document.getElementById('recoverModal').classList.add('show'); }
