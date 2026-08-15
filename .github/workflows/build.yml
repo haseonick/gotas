@@ -75,7 +75,6 @@ jobs:
               os.makedirs(dir_path, exist_ok=True)
               create_icon(s).save(f'{dir_path}/ic_launcher.png')
 
-          # Actualizar nombre de la app en AndroidManifest.xml a 'Gotas'
           manifest_path = 'android/app/src/main/AndroidManifest.xml'
           with open(manifest_path, 'r') as f:
               content = f.read()
