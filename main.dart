@@ -606,15 +606,29 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 .stream(primaryKey: ['id'])
                 .order('created_at', ascending: true),
             builder: (context, snapshot) {
+              const prologue = 'Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.';
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return Text(
                   _fallbackStory.map((e) => e['sentence']).join(''),
                   style: const TextStyle(fontSize: 14, height: 1.6, color: Colors.white),
                 );
               }
-              final fullText = snapshot.data!.map((e) => e['sentence']?.toString() ?? '').join('');
+              final list = snapshot.data!;
+              final hasPrologue = list.any((d) => (d['sentence']?.toString() ?? '').contains('pequeño conejo plateado'));
+              final buffer = StringBuffer();
+              if (!hasPrologue) {
+                buffer.write(prologue);
+              }
+              for (var item in list) {
+                final s = item['sentence']?.toString() ?? '';
+                if (s.startsWith(' ')) {
+                  buffer.write(s);
+                } else {
+                  buffer.write(' $s');
+                }
+              }
               return Text(
-                fullText,
+                buffer.toString(),
                 style: const TextStyle(fontSize: 14, height: 1.6, color: Colors.white),
               );
             },

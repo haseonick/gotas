@@ -44,7 +44,7 @@
       flex-direction: column;
     }
 
-    /* PANTALLA COMPLETA DE BIENVENIDA / REGISTRO INICIAL OBLIGATORIO */
+    /* PANTALLA DE BIENVENIDA / REGISTRO INICIAL OBLIGATORIO */
     #onboardingGate {
       position: fixed;
       top: 0;
@@ -53,7 +53,7 @@
       height: 100vh;
       background: radial-gradient(circle at 50% 20%, #1c2541 0%, #0b132b 80%, #050814 100%);
       z-index: 99999;
-      display: flex;
+      display: none;
       justify-content: center;
       align-items: center;
       padding: 16px;
@@ -85,7 +85,6 @@
       50% { transform: translateY(-4px); }
     }
 
-    /* Vista previa del perfil en tiempo real */
     .profile-live-preview {
       background: rgba(11, 19, 43, 0.8);
       border: 1px solid var(--border-color);
@@ -404,7 +403,7 @@
 
   <!-- =========================================================
        1. PANTALLA INICIAL OBLIGATORIA (ONBOARDING GATE)
-       Bloquea la app hasta que el usuario elige avatar y nombre
+       Entrada anónima en 5 segundos o recuperación con correo
        ========================================================= -->
   <div id="onboardingGate">
     <div class="onboarding-card">
@@ -427,7 +426,7 @@
       </div>
       <h2 style="font-size: 1.35rem; color: #fff; margin-bottom: 4px;">Bienvenido a Gotas</h2>
       <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
-        Crea tu identidad anónima de viajero para empezar a conectar sin prisa.
+        Crea tu identidad anónima de viajero en 5 segundos.
       </p>
 
       <!-- Vista previa en tiempo real -->
@@ -465,10 +464,16 @@
       <button class="btn-primary" style="width:100%; padding:14px; font-size:0.95rem; justify-content:center; border-radius:14px;" onclick="completeOnboarding()">
         Comenzar y Entrar al Océano 💧
       </button>
+
+      <!-- Enlace para recuperar cuenta existente con correo -->
+      <div style="margin-top:14px; font-size:0.78rem;">
+        <span style="color:var(--text-muted);">¿Ya tenías una cuenta respaldada? </span>
+        <a href="javascript:void(0)" onclick="openRecoverAccountModal()" style="color:var(--accent-cyan); text-decoration:underline;">Recuperar con correo</a>
+      </div>
     </div>
   </div>
 
-  <!-- APLICACIÓN PRINCIPAL (Visible tras completar el registro) -->
+  <!-- APLICACIÓN PRINCIPAL -->
   <header>
     <a href="#" class="brand">
       <div class="logo-container">
@@ -516,6 +521,7 @@
       <button class="nav-btn" onclick="switchTab('tab-diario', this)">📖 Mi Diario Privado</button>
       <button class="nav-btn" onclick="switchTab('tab-dilemas', this)">✨ Dilemas del Día</button>
       <button class="nav-btn" onclick="switchTab('tab-silencio', this)">🎨 Historia Colectiva</button>
+      <button class="nav-btn" onclick="switchTab('tab-perfil', this)">🌱 Mi Espacio Seguro</button>
       <button class="nav-btn" onclick="switchTab('tab-apoyo', this)">💛 Apoyar el Proyecto</button>
     </aside>
 
@@ -606,7 +612,41 @@
         </div>
       </section>
 
-      <!-- Tab 5: Apoyo -->
+      <!-- Tab 5: Mi Espacio Seguro (Perfil y Respaldo de Cuenta) -->
+      <section id="tab-perfil" class="view-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h2>🌱 Mi Espacio Seguro</h2>
+          <button class="btn-secondary" onclick="openProfileModal()">Editar Identidad</button>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin:6px 0 18px;">Gestiona tu perfil y el respaldo de tu cuenta.</p>
+
+        <!-- Tarjeta de Identidad -->
+        <div style="background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:16px; padding:18px; display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+          <div class="preview-avatar-circle" id="profileTabAvatar" style="width:60px; height:60px; font-size:2rem;">🐺</div>
+          <div>
+            <div style="font-size:1.15rem; font-weight:bold; color:#fff;" id="profileTabUsername">Viajero</div>
+            <div style="font-size:0.8rem; color:var(--accent-cyan); margin-top:2px;">Cuenta Anónima Activa</div>
+          </div>
+        </div>
+
+        <!-- Apartado de Respaldo Opcional con Correo -->
+        <div style="background:linear-gradient(135deg, rgba(0, 119, 182, 0.2), rgba(72, 202, 228, 0.1)); border:1px solid var(--border-color); border-radius:16px; padding:20px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <span style="font-size:1.3rem;">🛡️</span>
+            <h3 style="font-size:1rem; color:#fff;">Respaldar mi Cuenta con Correo (Opcional)</h3>
+          </div>
+          <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.5; margin-bottom:14px;">
+            Si deseas abrir tu misma cuenta en otro teléfono o computadora sin perder tus cartas, vincula un correo electrónico:
+          </p>
+          <div style="display:flex; gap:8px;">
+            <input type="email" id="backupEmailInput" placeholder="tu-correo@ejemplo.com" style="flex:1; background:#0b132b; border:1px solid var(--border-color); border-radius:10px; padding:10px 14px; color:#fff; font-size:0.9rem;">
+            <button class="btn-primary" onclick="saveBackupEmail()">Vincular</button>
+          </div>
+          <div id="backupFeedback" style="font-size:0.78rem; color:var(--accent-soft); margin-top:8px; display:none;"></div>
+        </div>
+      </section>
+
+      <!-- Tab 6: Apoyo -->
       <section id="tab-apoyo" class="view-card">
         <h2>💛 Apoyar el Proyecto</h2>
         <p style="font-size:0.85rem; color:var(--text-muted); margin:14px 0;">Apoya la publicación oficial en Google Play ($25 USD):</p>
@@ -620,6 +660,19 @@
   </div>
 
   <!-- Modales -->
+  <div class="modal-backdrop" id="recoverModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('recoverModal')">&times;</button>
+      <h3 style="color:#fff; margin-bottom:6px;">🔄 Recuperar Cuenta Existente</h3>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:14px;">Ingresa el correo electrónico con el que respaldaste tu cuenta:</p>
+      <input type="email" id="recoverEmailInput" placeholder="tu-correo@ejemplo.com" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; color:#fff; margin-bottom:14px;">
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn-secondary" onclick="closeModal('recoverModal')">Cancelar</button>
+        <button class="btn-primary" onclick="recoverAccount()">Recuperar Mi Cuenta</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="profileModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('profileModal')">&times;</button>
@@ -704,6 +757,16 @@
 
     const avatarsList = ['🐺', '🦊', '🦉', '🐱', '🐇', '🐼', '🦥', '🐸', '🐢', '🦌', '🦔', '🐧', '🌿', '🌸', '🌙', '🌊', '🌧️', '🍄', '☕', '🕯️', '🔮', '🪐', '🌌', '🎨'];
 
+    function getOrCreateDeviceId() {
+      let id = localStorage.getItem('gotas_device_uuid');
+      if (!id) {
+        id = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('gotas_device_uuid', id);
+      }
+      return id;
+    }
+
+    const deviceId = getOrCreateDeviceId();
     let chosenAvatar = '🐺';
     let currentAvatar = localStorage.getItem('gotas_user_avatar');
     let currentUsername = localStorage.getItem('gotas_user_name');
@@ -711,11 +774,9 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       if (!isRegistered || !currentUsername) {
-        // Bloquear completamente la app y mostrar registro inicial
         document.getElementById('onboardingGate').style.display = 'flex';
         renderOnboardingAvatars();
       } else {
-        // Ya registrado
         document.getElementById('onboardingGate').style.display = 'none';
         updateHeaderProfile();
         loadLiveDrops();
@@ -785,7 +846,9 @@
             return;
           }
           await supabaseClient.from('profiles').insert({ username: name, avatar: chosenAvatar });
-        } catch (e) {}
+        } catch (e) {
+          console.log('Error validando:', e);
+        }
       }
 
       currentUsername = name;
@@ -804,6 +867,73 @@
     function updateHeaderProfile() {
       document.getElementById('userAvatarHeader').innerText = currentAvatar || '🐺';
       document.getElementById('userNameHeader').innerText = currentUsername || 'Viajero';
+      const pAvatar = document.getElementById('profileTabAvatar');
+      const pUser = document.getElementById('profileTabUsername');
+      if (pAvatar) pAvatar.innerText = currentAvatar || '🐺';
+      if (pUser) pUser.innerText = currentUsername || 'Viajero';
+    }
+
+    // Respaldo de cuenta opcional con correo
+    async function saveBackupEmail() {
+      const email = document.getElementById('backupEmailInput').value.trim();
+      const feedback = document.getElementById('backupFeedback');
+      if (!email || !email.includes('@')) {
+        alert('Por favor ingresa un correo válido.');
+        return;
+      }
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('profiles').upsert({
+            username: currentUsername,
+            avatar: currentAvatar,
+            email: email
+          }, { onConflict: 'username' });
+
+          localStorage.setItem('gotas_backup_email', email);
+          feedback.innerText = `✨ Cuenta vinculada exitosamente a ${email}. Ahora puedes recuperarla en cualquier dispositivo.`;
+          feedback.style.display = 'block';
+          alert('🛡️ Respaldo exitoso.');
+        } catch (e) {
+          alert('No se pudo guardar el respaldo. Intenta de nuevo.');
+        }
+      }
+    }
+
+    function openRecoverAccountModal() {
+      document.getElementById('recoverModal').classList.add('show');
+    }
+
+    async function recoverAccount() {
+      const email = document.getElementById('recoverEmailInput').value.trim();
+      if (!email) return;
+
+      if (supabaseClient) {
+        try {
+          const { data, error } = await supabaseClient.from('profiles').select('*').eq('email', email).maybeSingle();
+          if (data) {
+            currentUsername = data.username;
+            currentAvatar = data.avatar || '🐺';
+            localStorage.setItem('gotas_user_registered', 'true');
+            localStorage.setItem('gotas_user_name', currentUsername);
+            localStorage.setItem('gotas_user_avatar', currentAvatar);
+            localStorage.setItem('gotas_backup_email', email);
+
+            closeModal('recoverModal');
+            document.getElementById('onboardingGate').style.display = 'none';
+            updateHeaderProfile();
+            loadLiveDrops();
+            loadLiveStory();
+            initDilemmaVote();
+            alert(`✨ ¡Bienvenido de vuelta, ${currentUsername}! Tu cuenta ha sido recuperada.`);
+            return;
+          } else {
+            alert('No se encontró ninguna cuenta vinculada a este correo.');
+          }
+        } catch (e) {
+          alert('Error al conectar con el servidor.');
+        }
+      }
     }
 
     function initDilemmaVote() {
@@ -927,18 +1057,43 @@
       `;
     }
 
+    const PROLOGUE_STORY = 'Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.';
+
     async function loadLiveStory() {
       const container = document.getElementById('storyContainer');
+      let combinedSentences = [];
+
       if (supabaseClient) {
         try {
-          const { data } = await supabaseClient.from('story_sentences').select('sentence').order('created_at', { ascending: true });
+          const { data, error } = await supabaseClient
+            .from('story_sentences')
+            .select('author, sentence, created_at')
+            .order('created_at', { ascending: true });
+
           if (data && data.length > 0) {
-            container.innerText = data.map(d => d.sentence).join('');
+            // Verificar si el prólogo ya está en los datos de la base de datos
+            const hasPrologue = data.some(d => d.sentence && d.sentence.includes('pequeño conejo plateado'));
+            
+            let htmlOutput = '';
+            if (!hasPrologue) {
+              htmlOutput += `<span class="story-fragment" title="Prólogo">${PROLOGUE_STORY}</span>`;
+            }
+
+            data.forEach(item => {
+              const txt = item.sentence.startsWith(' ') ? item.sentence : ' ' + item.sentence;
+              const authorName = item.author || 'Viajero Anónimo';
+              htmlOutput += `<span class="story-fragment" title="Por: ${authorName}" style="display:inline; padding:1px 3px; border-radius:4px; transition:background 0.2s;">${txt}</span>`;
+            });
+
+            container.innerHTML = htmlOutput;
             return;
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error("Error cargando historia:", e);
+        }
       }
-      container.innerText = 'Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.';
+
+      container.innerHTML = `<span class="story-fragment" title="Prólogo">${PROLOGUE_STORY}</span>`;
     }
 
     async function publishNewDrop() {
@@ -970,18 +1125,25 @@
     async function addStory() {
       const inp = document.getElementById('storyInput');
       const text = inp.value.trim();
-      if (!text) return;
+      if (!text) {
+        alert('Escribe una frase para continuar el relato.');
+        return;
+      }
 
       if (supabaseClient) {
         try {
           await supabaseClient.from('story_sentences').insert({
-            author: `${currentAvatar} ${currentUsername}`,
+            author: `${currentAvatar || '🐺'} ${currentUsername || 'Viajero'}`,
             sentence: ` ${text}`
           });
-        } catch (e) {}
+        } catch (e) {
+          console.error("Error guardando frase:", e);
+        }
       }
+
       inp.value = '';
-      loadLiveStory();
+      alert('✨ Tu frase ha sido añadida a la historia colectiva.');
+      await loadLiveStory();
     }
 
     function openNewDropModal() { document.getElementById('newDropModal').classList.add('show'); }
