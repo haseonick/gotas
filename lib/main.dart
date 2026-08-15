@@ -1,6 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() => runApp(const GotasApp());
+// --- CONFIGURACIÓN DE SUPABASE EN VIVO ---
+const String supabaseUrl = 'https://cfkaqkeohyphdcnvcnsv.supabase.co';
+const String supabaseAnonKey = 'sb_publishable_E7NPno9DbRRJYuSVlOmwtA_bvVWxcWK';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    await Supabase.initialize(
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey,
+    );
+  } catch (e) {
+    debugPrint("Error iniciando Supabase: $e");
+  }
+
+  runApp(const GotasApp());
+}
 
 class GotasApp extends StatelessWidget {
   const GotasApp({super.key});
@@ -24,7 +42,6 @@ class GotasApp extends StatelessWidget {
   }
 }
 
-// Estructura de navegación con barra inferior
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
 
@@ -36,35 +53,30 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
   String _socialBattery = '☕ Tranquilo (60%)';
 
-  // Datos locales de ejemplo mutables para interactuar
-  final List<Map<String, String>> _drops = [
+  // Datos locales de respaldo por si el dispositivo está sin conexión
+  final List<Map<String, dynamic>> _fallbackDrops = [
     {
+      'id': 1,
       'author': 'Yuki',
       'location': '🇯🇵 Kioto, Japón',
       'avatar': '🦊',
       'topic': 'Videojuegos & Paz',
-      'snippet': 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?',
+      'content': 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?',
     },
     {
+      'id': 2,
       'author': 'Mateo',
       'location': '🇦🇷 Buenos Aires, Arg',
       'avatar': '🦉',
       'topic': 'Rutina en Solitario',
-      'snippet': 'Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba. ¿Prefieres entrenar a solas o con música?',
-    },
-    {
-      'author': 'Elena',
-      'location': '🇨🇦 Montreal, Canadá',
-      'avatar': '🌿',
-      'topic': 'Lectura de Fantasía',
-      'snippet': 'Acabo de terminar una historia sobre magia e introspección. ¿Qué tipo de historias te atrapan a ti?',
+      'content': 'Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba. ¿Prefieres entrenar a solas o con música?',
     },
   ];
 
-  final List<String> _storySentences = [
-    "Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.",
-    " Al girar la manecilla, el ruido de la ciudad se transformaba en el murmullo de un río sereno.",
-    " Decidió compartir el secreto con un gato que descansaba sobre el tejado.",
+  final List<Map<String, dynamic>> _fallbackStory = [
+    {'sentence': 'Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma.'},
+    {'sentence': ' Al girar la manecilla, el ruido de la ciudad se transformaba en el murmullo de un río sereno.'},
+    {'sentence': ' Decidió compartir el secreto con un gato que descansaba sobre el tejado.'},
   ];
 
   final List<Map<String, String>> _chatMessages = [
@@ -151,7 +163,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // 1. PÁGINA: GOTAS (Cartas Asíncronas)
+  // 1. PÁGINA: GOTAS EN VIVO (Supabase Realtime)
   Widget _buildGotasPage() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -178,30 +190,57 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ),
         const SizedBox(height: 20),
         const Text(
-          'Gotas que llegaron a ti',
+          'Gotas que llegaron a ti (En Vivo)',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
-        ..._drops.map((drop) => Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: GestureDetector(
-                onTap: () => _openReadAndReplyDialog(drop),
-                child: DropCard(
-                  author: drop['author']!,
-                  location: drop['location']!,
-                  avatar: drop['avatar']!,
-                  topic: drop['topic']!,
-                  snippet: drop['snippet']!,
-                ),
-              ),
-            )),
-        const SizedBox(height: 60), // Espacio para el FloatingActionButton
+
+        StreamBuilder<List<Map<String, dynamic>>>(
+          stream: Supabase.instance.client
+              .from('drops')
+              .stream(primaryKey: ['id'])
+              .order('created_at', ascending: false),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return _buildDropsList(_fallbackDrops);
+            }
+            if (!snapshot.hasData) {
+              return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
+            }
+            final drops = snapshot.data!;
+            if (drops.isEmpty) {
+              return const Center(child: Text('No hay gotas aún. ¡Sé el primero en enviar una!'));
+            }
+            return _buildDropsList(drops);
+          },
+        ),
+
+        const SizedBox(height: 60),
       ],
     );
   }
 
-  // Modal para Leer y Responder una Gota
-  void _openReadAndReplyDialog(Map<String, String> drop) {
+  Widget _buildDropsList(List<Map<String, dynamic>> drops) {
+    return Column(
+      children: drops.map((drop) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: GestureDetector(
+            onTap: () => _openReadAndReplyDialog(drop),
+            child: DropCard(
+              author: drop['author']?.toString() ?? 'Anónimo',
+              location: drop['location']?.toString() ?? 'Mundo',
+              avatar: drop['avatar']?.toString() ?? '🐺',
+              topic: drop['topic']?.toString() ?? 'Pensamiento',
+              snippet: drop['content']?.toString() ?? '',
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  void _openReadAndReplyDialog(Map<String, dynamic> drop) {
     final replyController = TextEditingController();
     showModalBottomSheet(
       context: context,
@@ -225,14 +264,14 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               children: [
                 CircleAvatar(
                   backgroundColor: const Color(0x3348CAE4),
-                  child: Text(drop['avatar']!),
+                  child: Text(drop['avatar']?.toString() ?? '🐺'),
                 ),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(drop['author']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text(drop['location']!, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                    Text(drop['author']?.toString() ?? 'Anónimo', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(drop['location']?.toString() ?? 'Mundo', style: const TextStyle(fontSize: 12, color: Colors.white60)),
                   ],
                 ),
                 const Spacer(),
@@ -242,7 +281,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     color: const Color(0x2648CAE4),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text(drop['topic']!, style: const TextStyle(color: Color(0xFF48CAE4), fontSize: 12)),
+                  child: Text(drop['topic']?.toString() ?? '', style: const TextStyle(color: Color(0xFF48CAE4), fontSize: 12)),
                 )
               ],
             ),
@@ -254,7 +293,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '"${drop['snippet']}"',
+                '"${drop['content'] ?? ''}"',
                 style: const TextStyle(fontSize: 14, height: 1.5, fontStyle: FontStyle.italic, color: Colors.white),
               ),
             ),
@@ -286,8 +325,18 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     backgroundColor: const Color(0xFF0077B6),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
-                  onPressed: () {
-                    if (replyController.text.trim().isNotEmpty) {
+                  onPressed: () async {
+                    final text = replyController.text.trim();
+                    if (text.isNotEmpty) {
+                      try {
+                        if (drop['id'] != null) {
+                          await Supabase.instance.client.from('drop_replies').insert({
+                            'drop_id': drop['id'],
+                            'content': text,
+                            'author': 'Caminante',
+                          });
+                        }
+                      } catch (_) {}
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -307,7 +356,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // Modal para Crear una Nueva Gota
   void _openNewDropDialog() {
     final topicController = TextEditingController();
     final contentController = TextEditingController();
@@ -370,23 +418,23 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     backgroundColor: const Color(0xFF0077B6),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     final topic = topicController.text.trim();
                     final content = contentController.text.trim();
                     if (content.isNotEmpty) {
-                      setState(() {
-                        _drops.insert(0, {
-                          'author': 'Tú',
+                      try {
+                        await Supabase.instance.client.from('drops').insert({
+                          'author': 'Caminante',
                           'location': 'Tu rincón seguro',
                           'avatar': '🐺',
                           'topic': topic.isNotEmpty ? topic : 'Pensamiento libre',
-                          'snippet': content,
+                          'content': content,
                         });
-                      });
+                      } catch (_) {}
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('🌊 Tu gota ha sido lanzada al océano global.'),
+                          content: Text('🌊 Tu gota ha sido lanzada al océano global en vivo.'),
                           backgroundColor: Color(0xFF0077B6),
                         ),
                       );
@@ -460,7 +508,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // 3. PÁGINA: CREACIÓN EN SILENCIO (Historias)
+  // 3. PÁGINA: CREACIÓN EN SILENCIO (Historias en Realtime)
   Widget _buildCoopStoryPage() {
     final sentenceController = TextEditingController();
 
@@ -478,9 +526,24 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0x2648CAE4)),
           ),
-          child: Text(
-            _storySentences.join(''),
-            style: const TextStyle(fontSize: 14, height: 1.6, color: Colors.white),
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: Supabase.instance.client
+                .from('story_sentences')
+                .stream(primaryKey: ['id'])
+                .order('created_at', ascending: true),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Text(
+                  _fallbackStory.map((e) => e['sentence']).join(''),
+                  style: const TextStyle(fontSize: 14, height: 1.6, color: Colors.white),
+                );
+              }
+              final fullText = snapshot.data!.map((e) => e['sentence']?.toString() ?? '').join('');
+              return Text(
+                fullText,
+                style: const TextStyle(fontSize: 14, height: 1.6, color: Colors.white),
+              );
+            },
           ),
         ),
         const SizedBox(height: 16),
@@ -502,12 +565,15 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             const SizedBox(width: 8),
             IconButton(
               icon: const Icon(Icons.send, color: Color(0xFF48CAE4)),
-              onPressed: () {
+              onPressed: () async {
                 final txt = sentenceController.text.trim();
                 if (txt.isNotEmpty) {
-                  setState(() {
-                    _storySentences.add(" $txt");
-                  });
+                  try {
+                    await Supabase.instance.client.from('story_sentences').insert({
+                      'author': 'Caminante',
+                      'sentence': ' $txt',
+                    });
+                  } catch (_) {}
                   sentenceController.clear();
                 }
               },
@@ -586,7 +652,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             },
           ),
         ),
-        // Pastillas de preguntas rápidas
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -758,7 +823,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   }
 }
 
-// Widget del Logo de Gota
 class WaterDropIcon extends StatelessWidget {
   final double size;
   const WaterDropIcon({super.key, required this.size});
