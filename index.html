@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0b132b">
+  <meta name="description" content="Gotas - Conexiones suaves a tu propio ritmo para personas con baja batería social.">
+  <title>Gotas — Conexiones a tu propio ritmo</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-primary: #0b132b;
+      --bg-secondary: #1c2541;
+      --bg-card: rgba(28, 37, 65, 0.7);
+      --bg-card-hover: rgba(58, 80, 107, 0.4);
+      --accent-cyan: #48cae4;
+      --accent-blue: #0077b6;
+      --accent-soft: #90e0ef;
+      --accent-gold: #ffd166;
+      --accent-binance: #f3ba2f;
+      --text-main: #f8f9fa;
+      --text-muted: #94a3b8;
+      --border-color: rgba(144, 224, 239, 0.15);
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --shadow-soft: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 50% 0%, #1c2541 0%, #0b132b 75%, #050814 100%);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      background: rgba(11, 19, 43, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+
+    .logo-container {
+      width: 36px;
+      height: 36px;
+      filter: drop-shadow(0 0 8px rgba(72, 202, 228, 0.4));
+      animation: gentle-float 4s ease-in-out infinite;
+    }
+
+    @keyframes gentle-float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #caf0f8, #48cae4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sound-widget, .battery-widget {
+      background: rgba(28, 37, 65, 0.8);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 5px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      color: var(--accent-soft);
+      transition: all 0.2s ease;
+    }
+
+    .sound-widget:hover, .battery-widget:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(58, 80, 107, 0.6);
+    }
+
+    .app-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 20px 16px;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+
+    @media (max-width: 768px) {
+      .app-container { grid-template-columns: 1fr; }
+      .sidebar { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 6px; }
+      .nav-btn { white-space: nowrap; }
+    }
+
+    .sidebar { display: flex; flex-direction: column; gap: 6px; }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+    .nav-btn:hover { background: var(--bg-card-hover); color: var(--text-main); }
+    .nav-btn.active {
+      background: linear-gradient(135deg, rgba(72, 202, 228, 0.15), rgba(0, 119, 182, 0.25));
+      border-color: var(--accent-cyan);
+      color: var(--text-main);
+    }
+
+    .view-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      backdrop-filter: blur(16px);
+      display: none;
+      animation: fadeIn 0.3s ease forwards;
+    }
+    .view-card.active-view { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    .calm-banner {
+      background: linear-gradient(135deg, rgba(0, 119, 182, 0.25), rgba(72, 202, 228, 0.1));
+      border-left: 4px solid var(--accent-cyan);
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+      color: var(--accent-soft);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Goal Bar */
+    .goal-card {
+      background: linear-gradient(135deg, rgba(255, 209, 102, 0.12), rgba(0, 119, 182, 0.2));
+      border: 1px solid rgba(255, 209, 102, 0.3);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+    .goal-progress {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    .goal-bar {
+      height: 100%;
+      width: 25%;
+      background: linear-gradient(90deg, #ffd166, #06d6a0);
+      border-radius: 4px;
+    }
+
+    .letter-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .letter-card {
+      background: rgba(11, 19, 43, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .letter-card:hover { transform: translateY(-2px); border-color: var(--accent-cyan); }
+    .letter-topic {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 10px;
+      background: rgba(72, 202, 228, 0.15);
+      color: var(--accent-cyan);
+      font-size: 0.72rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0077b6, #48cae4);
+      color: #0b132b;
+      font-weight: 700;
+      padding: 10px 18px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.88rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover { box-shadow: 0 0 12px var(--accent-soft); }
+
+    .btn-kofi {
+      background: #ff5e5b;
+      color: #ffffff;
+      font-weight: 700;
+      padding: 10px 18px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.88rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-kofi:hover { box-shadow: 0 0 12px rgba(255, 94, 91, 0.5); }
+
+    .btn-binance {
+      background: #f3ba2f;
+      color: #000000;
+      font-weight: 700;
+      padding: 10px 18px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.88rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-binance:hover { box-shadow: 0 0 12px rgba(243, 186, 47, 0.5); }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      font-size: 0.88rem;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(5, 8, 20, 0.8); backdrop-filter: blur(8px);
+      z-index: 1000; display: none; justify-content: center; align-items: center; padding: 16px;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal-box {
+      background: #1c2541; border: 1px solid var(--accent-cyan);
+      border-radius: var(--radius-lg); max-width: 480px; width: 100%; padding: 24px; position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 14px; right: 14px; background: transparent;
+      border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="#" class="brand">
+      <div class="logo-container">
+        <svg viewBox="0 0 100 120" width="100%" height="100%">
+          <defs>
+            <linearGradient id="dropGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#caf0f8" />
+              <stop offset="40%" stop-color="#48cae4" />
+              <stop offset="100%" stop-color="#0077b6" />
+            </linearGradient>
+            <radialGradient id="innerGlow" cx="45%" cy="40%" r="50%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8"/>
+              <stop offset="100%" stop-color="#48cae4" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <path d="M50 8 C50 8, 12 62, 12 82 A 38 38 0 0 0 88 82 C 88 62, 50 8, 50 8 Z" fill="url(#dropGrad)" />
+          <ellipse cx="38" cy="65" rx="14" ry="22" transform="rotate(-25 38 65)" fill="url(#innerGlow)" />
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>Gotas</h1>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <div class="sound-widget" id="soundBtn" onclick="toggleAmbientSound()" title="Activar sonido de lluvia relajante">
+        <span id="soundIcon">🌧️</span>
+        <span id="soundText">Lluvia: Off</span>
+      </div>
+
+      <div class="battery-widget" onclick="toggleBatteryModal()">
+        <span id="batteryIcon">☕</span>
+        <span id="batteryText">60%</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-container">
+    <aside class="sidebar">
+      <button class="nav-btn active" onclick="switchTab('tab-gotas', this)">💧 Gotas Globales</button>
+      <button class="nav-btn" onclick="switchTab('tab-diario', this)">📖 Mi Diario Privado</button>
+      <button class="nav-btn" onclick="switchTab('tab-dilemas', this)">✨ Dilemas del Día</button>
+      <button class="nav-btn" onclick="switchTab('tab-silencio', this)">🎨 Historia Colectiva</button>
+      <button class="nav-btn" onclick="switchTab('tab-apoyo', this)">💛 Apoyar el Proyecto</button>
+    </aside>
+
+    <main class="main-content">
+      
+      <!-- Tab 1: Gotas -->
+      <section id="tab-gotas" class="view-card active-view">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2>💧 Gotas del Mundo</h2>
+          <button class="btn-primary" onclick="openNewDropModal()">+ Enviar Gota</button>
+        </div>
+        <div class="calm-banner">
+          <span>🕊️</span>
+          <div>Sin prisa: responde solo cuando tu energía te lo permita.</div>
+        </div>
+        <div class="letter-cards-grid" id="dropsGrid">
+          <div class="letter-card" onclick="openLetter('Yuki', '🇯🇵 Kioto', 'Videojuegos & Paz', 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?')">
+            <span class="letter-topic">Videojuegos & Paz</span>
+            <p style="font-size:0.85rem; font-style:italic;">"Me gusta construir granjas en Minecraft mientras escucho lluvia..."</p>
+            <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted);">Yuki · 🇯🇵 Kioto</div>
+          </div>
+          <div class="letter-card" onclick="openLetter('Mateo', '🇦🇷 Buenos Aires', 'Rutina en Solitario', 'Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba. ¿Prefieres entrenar a solas o con música?')">
+            <span class="letter-topic">Rutina en Solitario</span>
+            <p style="font-size:0.85rem; font-style:italic;">"Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba..."</p>
+            <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted);">Mateo · 🇦🇷 Buenos Aires</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 2: Diario Privado -->
+      <section id="tab-diario" class="view-card">
+        <h2>📖 Mi Diario de Gotas Privadas</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">
+          Un espacio solo para ti. Lo que escribas aquí se guarda exclusivamente en tu navegador.
+        </p>
+        <textarea id="journalInput" rows="4" placeholder="¿Qué pensamiento o momento tranquilo tuviste hoy?..." style="width:100%; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:12px; padding:12px; color:#fff; font-family:inherit; margin-bottom:10px;"></textarea>
+        <div style="display:flex; justify-content:flex-end;">
+          <button class="btn-primary" onclick="saveJournalEntry()">Guardar en mi Diario</button>
+        </div>
+        <div id="journalList" style="margin-top:20px; display:flex; flex-direction:column; gap:10px;"></div>
+      </section>
+
+      <!-- Tab 3: Dilemas -->
+      <section id="tab-dilemas" class="view-card">
+        <h2>✨ Dilema del Día</h2>
+        <p style="margin:14px 0; font-size:0.95rem;">
+          Si pudieras vivir en una biblioteca infinita donde nunca pasa el tiempo o en una cabaña frente al mar con café ilimitado... ¿cuál elegirías?
+        </p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <button class="btn-secondary" onclick="alert('📚 Votaste por la Biblioteca Infinita (62% coincidieron)')">📚 Biblioteca Infinita (62%)</button>
+          <button class="btn-secondary" onclick="alert('🌊 Votaste por la Cabaña en el Mar (38% coincidieron)')">🌊 Cabaña en el Mar (38%)</button>
+        </div>
+      </section>
+
+      <!-- Tab 4: Historia Colectiva -->
+      <section id="tab-silencio" class="view-card">
+        <h2>🎨 Creación en Silencio</h2>
+        <div id="storyContainer" style="background:rgba(11,19,43,0.7); border:1px solid var(--border-color); border-radius:12px; padding:14px; margin:14px 0; line-height:1.6; font-size:0.9rem;">
+          Había una vez un pequeño conejo plateado que encontró un reloj que no medía las horas, sino los momentos de calma. Al girar la manecilla, el ruido de la ciudad se transformaba en el murmullo de un río sereno.
+        </div>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="storyInput" placeholder="Agrega una frase al relato..." style="flex:1; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:20px; padding:8px 14px; color:#fff;">
+          <button class="btn-primary" onclick="addStory()">Agregar</button>
+        </div>
+      </section>
+
+      <!-- Tab 5: Apoyar el Proyecto (Ko-fi & Binance Pay) -->
+      <section id="tab-apoyo" class="view-card">
+        <h2>💛 Apoyar el Lanzamiento de Gotas</h2>
+        <div class="goal-card">
+          <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
+            <span>Meta de registro oficial en Google Play: $25 USD</span>
+            <strong>$6 / $25 USD</strong>
+          </div>
+          <div class="goal-progress"><div class="goal-bar"></div></div>
+          <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.5;">
+            Gotas es un proyecto independiente desarrollado con dedicación para ofrecer un refugio digital tranquilo. Puedes apoyar el proyecto voluntariamente con cualquier aporte:
+          </p>
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <!-- Enlace oficial a Ko-fi -->
+          <a href="https://ko-fi.com/haseonick" target="_blank" class="btn-kofi">
+            ☕ Donar en Ko-fi ($1)
+          </a>
+
+          <!-- Modal de Binance Pay -->
+          <button class="btn-binance" onclick="openBinanceModal()">
+            ⚡ Pagar con Binance Pay
+          </button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal Binance Pay -->
+  <div class="modal-backdrop" id="binanceModal">
+    <div class="modal-box" style="text-align:center;">
+      <button class="modal-close" onclick="closeModal('binanceModal')">&times;</button>
+      <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;">
+        <span style="font-size:1.5rem;">⚡</span>
+        <h3 style="color:#f3ba2f;">Binance Pay</h3>
+      </div>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">
+        Escanea desde tu app de Binance o envía directamente a mi usuario:
+      </p>
+
+      <div style="background:#0b132b; border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:14px;">
+        <div style="font-size:0.8rem; color:var(--text-muted);">Usuario de Binance Pay:</div>
+        <div style="font-size:1.1rem; font-weight:bold; color:#fff; letter-spacing:1px; margin-top:2px;">haseonick</div>
+      </div>
+
+      <div style="font-size:0.8rem; color:var(--accent-soft); line-height:1.4;">
+        Acepta USDT, BUSD y cualquier criptomoneda sin comisión de envío.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let audioCtx = null;
+    let rainNode = null;
+    let isRainPlaying = false;
+
+    function toggleAmbientSound() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (!isRainPlaying) {
+        const bufferSize = audioCtx.sampleRate * 2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        let lastOut = 0.0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          data[i] = (lastOut + (0.02 * white)) / 1.02;
+          lastOut = data[i];
+          data[i] *= 3.5;
+        }
+        rainNode = audioCtx.createBufferSource();
+        rainNode.buffer = buffer;
+        rainNode.loop = true;
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = 0.15;
+        rainNode.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        rainNode.start();
+        isRainPlaying = true;
+        document.getElementById('soundIcon').innerText = '🌧️';
+        document.getElementById('soundText').innerText = 'Lluvia: On';
+      } else {
+        if (rainNode) { rainNode.stop(); rainNode.disconnect(); }
+        isRainPlaying = false;
+        document.getElementById('soundIcon').innerText = '🌧️';
+        document.getElementById('soundText').innerText = 'Lluvia: Off';
+      }
+    }
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.view-card').forEach(el => el.classList.remove('active-view'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active-view');
+      btn.classList.add('active');
+    }
+
+    function openBinanceModal() {
+      document.getElementById('binanceModal').classList.add('show');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('show');
+    }
+
+    function saveJournalEntry() {
+      const val = document.getElementById('journalInput').value.trim();
+      if (!val) return;
+      const list = document.getElementById('journalList');
+      const div = document.createElement('div');
+      div.style.background = 'rgba(11,19,43,0.6)';
+      div.style.padding = '12px';
+      div.style.borderRadius = '10px';
+      div.style.border = '1px solid var(--border-color)';
+      div.innerHTML = `<div style="font-size:0.75rem; color:var(--accent-cyan); margin-bottom:4px;">${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}</div><p style="font-size:0.88rem;">${val}</p>`;
+      list.prepend(div);
+      document.getElementById('journalInput').value = '';
+    }
+
+    function addStory() {
+      const inp = document.getElementById('storyInput');
+      if (inp.value.trim()) {
+        document.getElementById('storyContainer').innerText += ' ' + inp.value.trim();
+        inp.value = '';
+      }
+    }
+  </script>
+</body>
+</html>
