@@ -24,6 +24,9 @@ jobs:
         with:
           channel: 'stable'
 
+      - name: Regenerar configuracion Android moderna (v2 embedding)
+        run: flutter create . --platforms=android --org com.gotas
+
       - name: Instalar dependencias
         run: flutter pub get
 
