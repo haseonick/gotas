@@ -1,0 +1,46 @@
+name: Compilar APK y AAB
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Compilar APK
+        run: flutter build apk --release
+
+      - name: Compilar AAB para Play Store
+        run: flutter build appbundle --release
+
+      - name: Guardar APK descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gotas-Release-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Guardar AAB para Play Store
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gotas-PlayStore-AAB
+          path: build/app/outputs/bundle/release/app-release.aab
