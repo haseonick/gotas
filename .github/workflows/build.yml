@@ -24,8 +24,10 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Regenerar configuracion Android moderna (v2 embedding)
-        run: flutter create . --platforms=android --org com.gotas
+      - name: Reconstruir configuracion Android limpia
+        run: |
+          rm -rf android
+          flutter create . --platforms=android --org com.gotas --project-name gotas_app
 
       - name: Instalar dependencias
         run: flutter pub get
