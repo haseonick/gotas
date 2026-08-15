@@ -1338,7 +1338,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               tileColor: const Color(0xFF0B132B),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0xFFFF5E5B))),
               leading: const Text('☕', style: TextStyle(fontSize: 20)),
-              title: const Text('Ko-fi ($1 USD / Tarjetas / PayPal)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              title: const Text('Ko-fi (1 USD / Tarjetas / PayPal)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               trailing: const Icon(Icons.copy, size: 16, color: Colors.white60),
               onTap: () {
                 Clipboard.setData(const ClipboardData(text: 'https://ko-fi.com/haseonick'));
