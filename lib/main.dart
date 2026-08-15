@@ -776,8 +776,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('Gotas Plus ($1.99/mes)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFFFD166))),
+                  children: [
+                    Text(r'Gotas Plus ($1.99 USD/mes)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFFFD166))),
                     SizedBox(height: 4),
                     Text('Traducción ilimitada, sellos exclusivos y filtros globales avanzados.', style: TextStyle(fontSize: 11, color: Colors.white70)),
                   ],
@@ -916,7 +916,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Text('Plan Mensual', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   Text('\$1.99 USD / mes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFFFD166))),
                 ],
