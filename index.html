@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Supabase JS Client (Sincronización en tiempo real) -->
+  <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -43,6 +43,41 @@
       flex-direction: column;
     }
 
+    /* PANTALLA DE BIENVENIDA / REGISTRO OBLIGATORIO */
+    #onboardingGate {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle at 50% 30%, #1c2541 0%, #0b132b 85%, #050814 100%);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .onboarding-card {
+      background: #1c2541;
+      border: 1px solid var(--accent-cyan);
+      border-radius: var(--radius-lg);
+      max-width: 500px;
+      width: 100%;
+      padding: 28px 24px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+      text-align: center;
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    .welcome-logo {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 12px;
+      filter: drop-shadow(0 0 12px rgba(72, 202, 228, 0.5));
+      animation: gentle-float 4s ease-in-out infinite;
+    }
+
     header {
       background: rgba(11, 19, 43, 0.88);
       backdrop-filter: blur(12px);
@@ -68,6 +103,11 @@
       width: 36px;
       height: 36px;
       filter: drop-shadow(0 0 8px rgba(72, 202, 228, 0.4));
+    }
+
+    @keyframes gentle-float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
     }
 
     .brand-text h1 {
@@ -140,6 +180,8 @@
     }
     .view-card.active-view { display: block; }
 
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
     .calm-banner {
       background: linear-gradient(135deg, rgba(0, 119, 182, 0.25), rgba(72, 202, 228, 0.1));
       border-left: 4px solid var(--accent-cyan);
@@ -162,9 +204,7 @@
       border-radius: var(--radius-md);
       padding: 16px;
       cursor: pointer;
-      transition: transform 0.2s, border-color 0.2s;
     }
-    .letter-card:hover { transform: translateY(-2px); border-color: var(--accent-cyan); }
     .letter-topic {
       display: inline-block;
       padding: 3px 8px;
@@ -214,6 +254,28 @@
       cursor: pointer;
     }
 
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .avatar-item {
+      background: #0b132b;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 10px 0;
+      text-align: center;
+      cursor: pointer;
+      font-size: 1.3rem;
+      transition: all 0.2s;
+    }
+    .avatar-item.selected {
+      border-color: var(--accent-cyan);
+      background: rgba(72, 202, 228, 0.25);
+      transform: scale(1.05);
+    }
+
     .modal-backdrop {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(5, 8, 20, 0.8); backdrop-filter: blur(8px);
@@ -228,30 +290,56 @@
       position: absolute; top: 14px; right: 14px; background: transparent;
       border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer;
     }
-
-    .avatar-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 6px;
-      margin: 10px 0;
-    }
-    .avatar-item {
-      background: #0b132b;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 8px;
-      text-align: center;
-      cursor: pointer;
-      font-size: 1.2rem;
-    }
-    .avatar-item.selected {
-      border-color: var(--accent-cyan);
-      background: rgba(72, 202, 228, 0.2);
-    }
   </style>
 </head>
 <body>
 
+  <!-- 1. PANTALLA DE REGISTRO INICIAL (ONBOARDING OBLIGATORIO) -->
+  <div id="onboardingGate">
+    <div class="onboarding-card">
+      <div class="welcome-logo">
+        <svg viewBox="0 0 100 120" width="100%" height="100%">
+          <defs>
+            <linearGradient id="dropG1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#caf0f8" />
+              <stop offset="40%" stop-color="#48cae4" />
+              <stop offset="100%" stop-color="#0077b6" />
+            </linearGradient>
+            <radialGradient id="innerG1" cx="45%" cy="40%" r="50%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8"/>
+              <stop offset="100%" stop-color="#48cae4" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <path d="M50 8 C50 8, 12 62, 12 82 A 38 38 0 0 0 88 82 C 88 62, 50 8, 50 8 Z" fill="url(#dropG1)" />
+          <ellipse cx="38" cy="65" rx="14" ry="22" transform="rotate(-25 38 65)" fill="url(#innerG1)" />
+        </svg>
+      </div>
+      <h2 style="font-size: 1.4rem; color: #fff; margin-bottom: 6px;">Bienvenido a Gotas</h2>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 18px;">
+        Un refugio tranquilo para conectar con personas de todo el mundo sin prisa ni presión social.
+      </p>
+
+      <div style="text-align:left; margin-bottom:12px;">
+        <label style="font-size:0.85rem; font-weight:600; color:var(--accent-soft);">1. Elige tu Avatar:</label>
+        <div class="avatar-grid" id="onboardingAvatarGrid"></div>
+      </div>
+
+      <div style="text-align:left; margin-bottom:20px;">
+        <label style="font-size:0.85rem; font-weight:600; color:var(--accent-soft);">2. Tu Nombre de Viajero:</label>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <input type="text" id="onboardingUsernameInput" placeholder="Escribe tu alias..." style="flex:1; background:#0b132b; border:1px solid var(--border-color); border-radius:10px; padding:10px 14px; color:#fff; font-family:inherit;">
+          <button class="btn-secondary" onclick="generateOnboardingRandomName()">🎲 Aleatorio</button>
+        </div>
+        <div id="usernameFeedback" style="font-size:0.75rem; color:#ff6b6b; margin-top:6px; display:none;"></div>
+      </div>
+
+      <button class="btn-primary" style="width:100%; padding:12px; font-size:0.95rem; justify-content:center;" onclick="completeOnboarding()">
+        Comenzar mi viaje en Gotas 💧
+      </button>
+    </div>
+  </div>
+
+  <!-- APLICACIÓN PRINCIPAL -->
   <header>
     <a href="#" class="brand">
       <div class="logo-container">
@@ -346,7 +434,7 @@
         <div id="storyContainer" style="background:rgba(11,19,43,0.7); border:1px solid var(--border-color); border-radius:12px; padding:14px; margin:14px 0; line-height:1.6; font-size:0.9rem;">
           Cargando historia colectiva...
         </div>
-        <div style="display:flex; gap:8px;">
+        <div style="display:gap:8px; display:flex;">
           <input type="text" id="storyInput" placeholder="Agrega una frase al relato..." style="flex:1; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:20px; padding:8px 14px; color:#fff;">
           <button class="btn-primary" onclick="addStory()">Agregar</button>
         </div>
@@ -365,7 +453,7 @@
     </main>
   </div>
 
-  <!-- Modal: Perfil y Registro Único -->
+  <!-- Modal: Editar Perfil -->
   <div class="modal-backdrop" id="profileModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('profileModal')">&times;</button>
@@ -373,16 +461,16 @@
       <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:14px;">Elige tu avatar y un nombre único para tus cartas:</p>
 
       <label style="font-size:0.85rem; color:var(--accent-soft);">1. Elige tu Avatar:</label>
-      <div class="avatar-grid" id="avatarGrid"></div>
+      <div class="avatar-grid" id="editAvatarGrid"></div>
 
       <label style="font-size:0.85rem; color:var(--accent-soft); margin-top:10px; display:block;">2. Nombre de Usuario:</label>
       <div style="display:flex; gap:8px; margin-top:4px; margin-bottom:16px;">
-        <input type="text" id="usernameInput" placeholder="Tu alias..." style="flex:1; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff;">
-        <button class="btn-secondary" onclick="generateRandomName()">🎲 Aleatorio</button>
+        <input type="text" id="editUsernameInput" placeholder="Tu alias..." style="flex:1; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff;">
+        <button class="btn-secondary" onclick="generateEditRandomName()">🎲 Aleatorio</button>
       </div>
 
       <div style="display:flex; justify-content:flex-end;">
-        <button class="btn-primary" onclick="saveUserProfile()">Guardar Perfil</button>
+        <button class="btn-primary" onclick="saveEditedProfile()">Guardar Perfil</button>
       </div>
     </div>
   </div>
@@ -444,7 +532,6 @@
   </div>
 
   <script>
-    // --- CONEXIÓN SUPABASE EN LA WEB ---
     const SUPABASE_URL = 'https://cfkaqkeohyphdcnvcnsv.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_E7NPno9DbRRJYuSVlOmwtA_bvVWxcWK';
     let supabaseClient = null;
@@ -453,81 +540,152 @@
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
 
-    // Perfil del Usuario
-    let currentAvatar = localStorage.getItem('gotas_avatar') || '🐺';
-    let currentUsername = localStorage.getItem('gotas_username') || 'Caminante';
-
     const avatarsList = ['🐺', '🦊', '🦉', '🐱', '🐇', '🐼', '🦥', '🐸', '🐢', '🦌', '🦔', '🐧', '🌿', '🌸', '🌙', '🌊', '🌧️', '🍄', '☕', '🕯️', '🔮', '🪐', '🌌', '🎨'];
 
+    let chosenAvatar = '🐺';
+    let currentAvatar = localStorage.getItem('gotas_avatar');
+    let currentUsername = localStorage.getItem('gotas_username');
+    const isRegistered = localStorage.getItem('gotas_registered') === 'true';
+
     document.addEventListener('DOMContentLoaded', () => {
-      updateHeaderProfile();
-      renderAvatarGrid();
-      loadLiveDrops();
-      loadLiveStory();
+      if (!isRegistered || !currentUsername) {
+        // Mostrar pantalla de bienvenida obligatoria
+        document.getElementById('onboardingGate').style.display = 'flex';
+        renderOnboardingAvatars();
+        generateOnboardingRandomName();
+      } else {
+        // Ya registrado en este dispositivo
+        document.getElementById('onboardingGate').style.display = 'none';
+        updateHeaderProfile();
+        loadLiveDrops();
+        loadLiveStory();
+      }
     });
 
-    function updateHeaderProfile() {
-      document.getElementById('userAvatarHeader').innerText = currentAvatar;
-      document.getElementById('userNameHeader').innerText = currentUsername;
+    function renderOnboardingAvatars() {
+      const grid = document.getElementById('onboardingAvatarGrid');
+      grid.innerHTML = '';
+      avatarsList.forEach(av => {
+        const div = document.createElement('div');
+        div.className = 'avatar-item' + (av === chosenAvatar ? ' selected' : '');
+        div.innerText = av;
+        div.onclick = () => {
+          document.querySelectorAll('#onboardingAvatarGrid .avatar-item').forEach(e => e.classList.remove('selected'));
+          div.classList.add('selected');
+          chosenAvatar = av;
+        };
+        grid.appendChild(div);
+      });
     }
 
-    function renderAvatarGrid() {
-      const grid = document.getElementById('avatarGrid');
+    function getRandomPoeticName() {
+      const sustantivos = ['Caminante', 'Zorro', 'Búho', 'Gato', 'Conejo', 'Lobo', 'Viajero', 'Eco', 'Bruma', 'Nómada', 'Panda', 'Erizo', 'Rana', 'Ciervo'];
+      const adjetivos = ['Silencioso', 'Sereno', 'Tranquilo', 'Nocturno', 'Calmo', 'Lofi', 'Pacífico', 'Suave', 'Astral', 'Zen', 'Pensativo', 'Solitario'];
+      return sustantivos[Math.floor(Math.random()*sustantivos.length)] + adjetivos[Math.floor(Math.random()*adjetivos.length)];
+    }
+
+    function generateOnboardingRandomName() {
+      document.getElementById('onboardingUsernameInput').value = getRandomPoeticName();
+      document.getElementById('usernameFeedback').style.display = 'none';
+    }
+
+    async function completeOnboarding() {
+      const name = document.getElementById('onboardingUsernameInput').value.trim();
+      const feedback = document.getElementById('usernameFeedback');
+
+      if (!name || name.length < 3) {
+        feedback.innerText = '⚠️ Elige un nombre de al menos 3 letras.';
+        feedback.style.display = 'block';
+        return;
+      }
+
+      // Validar si el nombre ya existe en Supabase
+      if (supabaseClient) {
+        try {
+          const { data } = await supabaseClient.from('profiles').select('username').eq('username', name).maybeSingle();
+          if (data) {
+            feedback.innerText = '⚠️ Este nombre ya fue elegido por otro viajero. Elige otro o pulsa 🎲 Aleatorio.';
+            feedback.style.display = 'block';
+            return;
+          }
+
+          // Registrar perfil en la base de datos
+          await supabaseClient.from('profiles').insert({ username: name, avatar: chosenAvatar });
+        } catch (e) {
+          console.log('Error validando:', e);
+        }
+      }
+
+      // Guardar en este dispositivo
+      currentUsername = name;
+      currentAvatar = chosenAvatar;
+      localStorage.setItem('gotas_registered', 'true');
+      localStorage.setItem('gotas_username', currentUsername);
+      localStorage.setItem('gotas_avatar', currentAvatar);
+
+      document.getElementById('onboardingGate').style.display = 'none';
+      updateHeaderProfile();
+      loadLiveDrops();
+      loadLiveStory();
+    }
+
+    function updateHeaderProfile() {
+      document.getElementById('userAvatarHeader').innerText = currentAvatar || '🐺';
+      document.getElementById('userNameHeader').innerText = currentUsername || 'Viajero';
+    }
+
+    // Modal de edición de perfil
+    function openProfileModal() {
+      document.getElementById('editUsernameInput').value = currentUsername;
+      const grid = document.getElementById('editAvatarGrid');
       grid.innerHTML = '';
       avatarsList.forEach(av => {
         const div = document.createElement('div');
         div.className = 'avatar-item' + (av === currentAvatar ? ' selected' : '');
         div.innerText = av;
         div.onclick = () => {
-          document.querySelectorAll('.avatar-item').forEach(e => e.classList.remove('selected'));
+          document.querySelectorAll('#editAvatarGrid .avatar-item').forEach(e => e.classList.remove('selected'));
           div.classList.add('selected');
           currentAvatar = av;
         };
         grid.appendChild(div);
       });
-      document.getElementById('usernameInput').value = currentUsername;
+      document.getElementById('profileModal').classList.add('show');
     }
 
-    function generateRandomName() {
-      const sustantivos = ['Caminante', 'Zorro', 'Búho', 'Gato', 'Conejo', 'Lobo', 'Viajero', 'Eco', 'Bruma', 'Nómada', 'Panda', 'Erizo'];
-      const adjetivos = ['Silencioso', 'Sereno', 'Tranquilo', 'Nocturno', 'Calmo', 'Lofi', 'Pacífico', 'Suave', 'Astral', 'Zen'];
-      const name = sustantivos[Math.floor(Math.random()*sustantivos.length)] + adjetivos[Math.floor(Math.random()*adjetivos.length)];
-      document.getElementById('usernameInput').value = name;
+    function generateEditRandomName() {
+      document.getElementById('editUsernameInput').value = getRandomPoeticName();
     }
 
-    async function saveUserProfile() {
-      const name = document.getElementById('usernameInput').value.trim();
+    async function saveEditedProfile() {
+      const name = document.getElementById('editUsernameInput').value.trim();
       if (!name) return;
 
-      // Verificar si el nombre ya existe en Supabase
-      if (supabaseClient) {
+      if (supabaseClient && name !== localStorage.getItem('gotas_username')) {
         try {
           const { data } = await supabaseClient.from('profiles').select('username').eq('username', name).maybeSingle();
-          if (data && data.username !== currentUsername) {
-            alert('⚠️ Este nombre de usuario ya está registrado por otro viajero. Por favor elige otro o genera uno aleatorio.');
+          if (data) {
+            alert('⚠️ Este nombre ya fue elegido por otro viajero. Elige otro.');
             return;
           }
-          // Guardar perfil en la base de datos
           await supabaseClient.from('profiles').upsert({ username: name, avatar: currentAvatar }, { onConflict: 'username' });
-        } catch (e) {
-          console.log('Error verificando perfil:', e);
-        }
+        } catch (e) {}
       }
 
       currentUsername = name;
-      localStorage.setItem('gotas_avatar', currentAvatar);
       localStorage.setItem('gotas_username', currentUsername);
+      localStorage.setItem('gotas_avatar', currentAvatar);
       updateHeaderProfile();
       closeModal('profileModal');
-      alert(`✨ Perfil guardado: ${currentAvatar} ${currentUsername}`);
+      alert(`✨ Identidad actualizada: ${currentAvatar} ${currentUsername}`);
     }
 
-    // Cargar Gotas en Vivo (Supabase)
+    // Cargar Gotas en Vivo
     async function loadLiveDrops() {
       const grid = document.getElementById('dropsGrid');
       if (supabaseClient) {
         try {
-          const { data, error } = await supabaseClient.from('drops').select('*').order('created_at', { ascending: false });
+          const { data } = await supabaseClient.from('drops').select('*').order('created_at', { ascending: false });
           if (data && data.length > 0) {
             grid.innerHTML = '';
             data.forEach(drop => {
@@ -537,7 +695,7 @@
               card.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                   <span class="letter-topic">${drop.topic}</span>
-                  <span style="font-size:0.85rem;">${drop.avatar || '💧'}</span>
+                  <span style="font-size:0.95rem;">${drop.avatar || '💧'}</span>
                 </div>
                 <p style="font-size:0.85rem; font-style:italic;">"${drop.content.substring(0, 80)}..."</p>
                 <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted);">${drop.author || 'Anónimo'} · ${drop.location || 'Mundo'}</div>
@@ -548,7 +706,6 @@
           }
         } catch (e) {}
       }
-      // Fallback si no hay conexión
       grid.innerHTML = `
         <div class="letter-card" onclick="openLetter('Yuki', '🇯🇵 Kioto', 'Videojuegos & Paz', 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?')">
           <span class="letter-topic">Videojuegos & Paz</span>
@@ -594,7 +751,7 @@
       closeModal('newDropModal');
       document.getElementById('newDropTopic').value = '';
       document.getElementById('newDropContent').value = '';
-      alert('🌊 ¡Tu gota ha sido lanzada al océano y está sincronizada en vivo!');
+      alert('🌊 ¡Tu gota ha sido lanzada al océano y compartida en vivo!');
       loadLiveDrops();
     }
 
@@ -615,7 +772,6 @@
       loadLiveStory();
     }
 
-    function openProfileModal() { document.getElementById('profileModal').classList.add('show'); }
     function openNewDropModal() { document.getElementById('newDropModal').classList.add('show'); }
     function openLetter(author, location, topic, content) {
       document.getElementById('modalAuthor').innerText = author;
