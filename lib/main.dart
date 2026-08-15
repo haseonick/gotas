@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // --- CONFIGURACIÓN DE SUPABASE EN VIVO ---
@@ -121,9 +122,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.stars, color: Color(0xFFFFD166)),
-            tooltip: 'Gotas Plus',
-            onPressed: _showPlusModal,
+            icon: const Icon(Icons.favorite, color: Color(0xFFFF5E5B)),
+            tooltip: 'Apoyar el proyecto',
+            onPressed: _showSupportModal,
           ),
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
@@ -716,7 +717,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // 5. PÁGINA: PERFIL, ESPACIO SEGURO Y BOUTIQUE DE SELLOS
+  // 5. PÁGINA: PERFIL, ESPACIO SEGURO Y APOYO AL PROYECTO
   Widget _buildProfilePage() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -761,37 +762,37 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ),
         const SizedBox(height: 20),
 
-        // Banner Gotas Plus en Perfil
+        // Banner Gotas Plus y Apoyo en Perfil
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0x33FFD166), Color(0x1A0077B6)]),
+            gradient: const LinearGradient(colors: [Color(0x33FF5E5B), Color(0x1A0077B6)]),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0x66FFD166)),
+            border: Border.all(color: const Color(0x66FF5E5B)),
           ),
           child: Row(
             children: [
-              const Text('👑', style: TextStyle(fontSize: 28)),
+              const Text('💛', style: TextStyle(fontSize: 28)),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(r'Gotas Plus ($1.99 USD/mes)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFFFD166))),
+                  children: const [
+                    Text('Apoyar el Proyecto', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFFFD166))),
                     SizedBox(height: 4),
-                    Text('Traducción ilimitada, sellos exclusivos y filtros globales avanzados.', style: TextStyle(fontSize: 11, color: Colors.white70)),
+                    Text('Dona vía Ko-fi o Binance Pay para publicar en Play Store.', style: TextStyle(fontSize: 11, color: Colors.white70)),
                   ],
                 ),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFD166),
-                  foregroundColor: Colors.black,
+                  backgroundColor: const Color(0xFFFF5E5B),
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: _showPlusModal,
-                child: const Text('Ver Plan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                onPressed: _showSupportModal,
+                child: const Text('Apoyar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
               )
             ],
           ),
@@ -870,7 +871,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  void _showPlusModal() {
+  // Modal de Métodos de Pago: Ko-fi & Binance Pay
+  void _showSupportModal() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -894,72 +896,113 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             const SizedBox(height: 16),
             Row(
               children: const [
-                Text('👑', style: TextStyle(fontSize: 28)),
+                Text('💛', style: TextStyle(fontSize: 28)),
                 SizedBox(width: 10),
-                Text('Membresía Gotas Plus', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFFFD166))),
+                Text('Apoyar Gotas', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFFFD166))),
               ],
             ),
             const SizedBox(height: 8),
-            const Text('Apoya el proyecto independiente y desbloquea funciones exclusivas:', style: TextStyle(fontSize: 13, color: Colors.white70)),
-            const SizedBox(height: 16),
-            _buildPlusFeature('🌍 Traducciones automáticas ilimitadas de cartas'),
-            _buildPlusFeature('🎨 Colección completa de sellos y papeles de carta'),
-            _buildPlusFeature('🔍 Filtros de afinidad por país e idioma de práctica'),
-            _buildPlusFeature('✨ Insignia dorada de apoyo a la comunidad'),
+            const Text(
+              'Ayúdanos a recaudar los \$25 USD para publicar Gotas oficialmente en Google Play Store.',
+              style: TextStyle(fontSize: 13, color: Colors.white70),
+            ),
             const SizedBox(height: 20),
+
+            // Opción 1: Ko-fi
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: const Color(0xFF0B132B),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFFFD166)),
+                border: Border.all(color: const Color(0xFFFF5E5B)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Plan Mensual', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  Text('\$1.99 USD / mes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFFFD166))),
+                  Row(
+                    children: const [
+                      Text('☕', style: TextStyle(fontSize: 20)),
+                      SizedBox(width: 8),
+                      Text('Ko-fi (Tarjetas / PayPal)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text('Dona \$1 USD fácilmente con tarjeta internacional o PayPal.', style: TextStyle(fontSize: 11, color: Colors.white60)),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF5E5B),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        Clipboard.setData(const ClipboardData(text: 'https://ko-fi.com/haseonick'));
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('📋 Enlace de Ko-fi copiado: https://ko-fi.com/haseonick (Ábrelo en tu navegador)'),
+                            backgroundColor: Color(0xFFFF5E5B),
+                          ),
+                        );
+                      },
+                      child: const Text('Copiar enlace de Ko-fi (ko-fi.com/haseonick)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  )
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFD166),
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                onPressed: () {
-                  setState(() => _isPlusMember = true);
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('✨ ¡Bienvenido a Gotas Plus! Funciones exclusivas desbloqueadas.'),
-                      backgroundColor: Color(0xFF0077B6),
-                    ),
-                  );
-                },
-                child: const Text('Suscribirme a Gotas Plus', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+
+            const SizedBox(height: 14),
+
+            // Opción 2: Binance Pay
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0B132B),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFF3BA2F)),
               ),
-            )
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: const [
+                      Text('⚡', style: TextStyle(fontSize: 20)),
+                      SizedBox(width: 8),
+                      Text('Binance Pay (Cero comisiones)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text('Envía USDT o criptomonedas directamente desde tu app de Binance.', style: TextStyle(fontSize: 11, color: Colors.white60)),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF3BA2F),
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        Clipboard.setData(const ClipboardData(text: 'haseonick'));
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('📋 Usuario de Binance Pay copiado: haseonick'),
+                            backgroundColor: Color(0xFF0077B6),
+                          ),
+                        );
+                      },
+                      child: const Text('Copiar Usuario de Binance: haseonick', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  )
+                ],
+              ),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPlusFeature(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
-      child: Row(
-        children: [
-          const Icon(Icons.check_circle, color: Color(0xFF48CAE4), size: 18),
-          const SizedBox(width: 10),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 13, color: Colors.white))),
-        ],
       ),
     );
   }
