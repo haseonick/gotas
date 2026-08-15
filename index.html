@@ -8,7 +8,7 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -17,19 +17,20 @@
     :root {
       --bg-primary: #0b132b;
       --bg-secondary: #1c2541;
-      --bg-card: rgba(28, 37, 65, 0.7);
-      --bg-card-hover: rgba(58, 80, 107, 0.4);
+      --bg-card: rgba(28, 37, 65, 0.75);
+      --bg-card-hover: rgba(58, 80, 107, 0.45);
       --accent-cyan: #48cae4;
       --accent-blue: #0077b6;
       --accent-soft: #90e0ef;
       --accent-gold: #ffd166;
+      --accent-binance: #f3ba2f;
       --text-main: #f8f9fa;
       --text-muted: #94a3b8;
-      --border-color: rgba(144, 224, 239, 0.15);
-      --radius-sm: 8px;
+      --border-color: rgba(144, 224, 239, 0.18);
+      --radius-sm: 10px;
       --radius-md: 16px;
       --radius-lg: 24px;
-      --shadow-soft: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      --shadow-soft: 0 12px 36px 0 rgba(0, 0, 0, 0.45);
       --font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
@@ -43,39 +44,70 @@
       flex-direction: column;
     }
 
-    /* PANTALLA DE BIENVENIDA / REGISTRO OBLIGATORIO */
+    /* PANTALLA COMPLETA DE BIENVENIDA / REGISTRO INICIAL OBLIGATORIO */
     #onboardingGate {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: radial-gradient(circle at 50% 30%, #1c2541 0%, #0b132b 85%, #050814 100%);
-      z-index: 9999;
+      background: radial-gradient(circle at 50% 20%, #1c2541 0%, #0b132b 80%, #050814 100%);
+      z-index: 99999;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 16px;
+      overflow-y: auto;
     }
 
     .onboarding-card {
-      background: #1c2541;
-      border: 1px solid var(--accent-cyan);
+      background: rgba(28, 37, 65, 0.95);
+      border: 1.5px solid var(--accent-cyan);
       border-radius: var(--radius-lg);
-      max-width: 500px;
+      max-width: 520px;
       width: 100%;
-      padding: 28px 24px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+      padding: 32px 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(72, 202, 228, 0.15);
       text-align: center;
       animation: fadeIn 0.4s ease forwards;
     }
 
     .welcome-logo {
-      width: 56px;
-      height: 56px;
-      margin: 0 auto 12px;
-      filter: drop-shadow(0 0 12px rgba(72, 202, 228, 0.5));
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 10px;
+      filter: drop-shadow(0 0 14px rgba(72, 202, 228, 0.6));
       animation: gentle-float 4s ease-in-out infinite;
+    }
+
+    @keyframes gentle-float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+
+    /* Vista previa del perfil en tiempo real */
+    .profile-live-preview {
+      background: rgba(11, 19, 43, 0.8);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin: 14px 0 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+    .preview-avatar-circle {
+      width: 54px;
+      height: 54px;
+      background: linear-gradient(135deg, rgba(0, 119, 182, 0.4), rgba(72, 202, 228, 0.3));
+      border: 2px solid var(--accent-cyan);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      box-shadow: 0 0 12px rgba(72, 202, 228, 0.3);
     }
 
     header {
@@ -105,11 +137,6 @@
       filter: drop-shadow(0 0 8px rgba(72, 202, 228, 0.4));
     }
 
-    @keyframes gentle-float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-4px); }
-    }
-
     .brand-text h1 {
       font-size: 1.15rem;
       font-weight: 700;
@@ -131,6 +158,11 @@
       cursor: pointer;
       font-size: 0.78rem;
       color: var(--accent-soft);
+      transition: all 0.2s ease;
+    }
+    .sound-widget:hover, .battery-widget:hover, .user-badge:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(58, 80, 107, 0.6);
     }
 
     .app-container {
@@ -163,7 +195,9 @@
       font-size: 0.9rem;
       cursor: pointer;
       text-align: left;
+      transition: all 0.2s;
     }
+    .nav-btn:hover { background: var(--bg-card-hover); color: var(--text-main); }
     .nav-btn.active {
       background: linear-gradient(135deg, rgba(72, 202, 228, 0.15), rgba(0, 119, 182, 0.25));
       border-color: var(--accent-cyan);
@@ -204,7 +238,9 @@
       border-radius: var(--radius-md);
       padding: 16px;
       cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
     }
+    .letter-card:hover { transform: translateY(-2px); border-color: var(--accent-cyan); }
     .letter-topic {
       display: inline-block;
       padding: 3px 8px;
@@ -225,7 +261,10 @@
       border: none;
       cursor: pointer;
       font-size: 0.88rem;
+      transition: all 0.2s;
     }
+    .btn-primary:hover { box-shadow: 0 0 14px var(--accent-soft); transform: scale(1.02); }
+
     .btn-kofi {
       background: #ff5e5b;
       color: #ffffff;
@@ -234,6 +273,9 @@
       border-radius: 20px;
       text-decoration: none;
       font-size: 0.88rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .btn-binance {
       background: #f3ba2f;
@@ -244,6 +286,9 @@
       border: none;
       cursor: pointer;
       font-size: 0.88rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .btn-secondary {
       background: rgba(255, 255, 255, 0.08);
@@ -252,13 +297,71 @@
       border-radius: 20px;
       border: 1px solid var(--border-color);
       cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    /* Dilemma Cards */
+    .dilemma-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    @media (max-width: 600px) {
+      .dilemma-container { grid-template-columns: 1fr; }
+    }
+
+    .dilemma-card {
+      background: rgba(11, 19, 43, 0.6);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .dilemma-card:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+      background: rgba(58, 80, 107, 0.3);
+    }
+    .dilemma-card.selected {
+      border-color: var(--accent-cyan);
+      background: linear-gradient(135deg, rgba(72, 202, 228, 0.15), rgba(0, 119, 182, 0.3));
+      box-shadow: 0 0 15px rgba(72, 202, 228, 0.25);
+    }
+    .dilemma-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 8px;
+    }
+    .dilemma-pct-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    .dilemma-pct-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0077b6, #48cae4);
+      border-radius: 3px;
+      transition: width 0.5s ease;
     }
 
     .avatar-grid {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 8px;
-      margin: 12px 0;
+      margin: 10px 0;
     }
     .avatar-item {
       background: #0b132b;
@@ -270,15 +373,20 @@
       font-size: 1.3rem;
       transition: all 0.2s;
     }
+    .avatar-item:hover {
+      border-color: var(--accent-soft);
+      transform: scale(1.05);
+    }
     .avatar-item.selected {
       border-color: var(--accent-cyan);
       background: rgba(72, 202, 228, 0.25);
-      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(72, 202, 228, 0.4);
+      transform: scale(1.08);
     }
 
     .modal-backdrop {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(5, 8, 20, 0.8); backdrop-filter: blur(8px);
+      background: rgba(5, 8, 20, 0.85); backdrop-filter: blur(8px);
       z-index: 1000; display: none; justify-content: center; align-items: center; padding: 16px;
     }
     .modal-backdrop.show { display: flex; }
@@ -294,7 +402,10 @@
 </head>
 <body>
 
-  <!-- 1. PANTALLA DE REGISTRO INICIAL (ONBOARDING OBLIGATORIO) -->
+  <!-- =========================================================
+       1. PANTALLA INICIAL OBLIGATORIA (ONBOARDING GATE)
+       Bloquea la app hasta que el usuario elige avatar y nombre
+       ========================================================= -->
   <div id="onboardingGate">
     <div class="onboarding-card">
       <div class="welcome-logo">
@@ -314,32 +425,50 @@
           <ellipse cx="38" cy="65" rx="14" ry="22" transform="rotate(-25 38 65)" fill="url(#innerG1)" />
         </svg>
       </div>
-      <h2 style="font-size: 1.4rem; color: #fff; margin-bottom: 6px;">Bienvenido a Gotas</h2>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 18px;">
-        Un refugio tranquilo para conectar con personas de todo el mundo sin prisa ni presión social.
+      <h2 style="font-size: 1.35rem; color: #fff; margin-bottom: 4px;">Bienvenido a Gotas</h2>
+      <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
+        Crea tu identidad anónima de viajero para empezar a conectar sin prisa.
       </p>
 
-      <div style="text-align:left; margin-bottom:12px;">
-        <label style="font-size:0.85rem; font-weight:600; color:var(--accent-soft);">1. Elige tu Avatar:</label>
+      <!-- Vista previa en tiempo real -->
+      <div class="profile-live-preview">
+        <div class="preview-avatar-circle" id="previewAvatar">🐺</div>
+        <div style="text-align:left;">
+          <div style="font-size:0.75rem; color:var(--text-muted);">Tu Nombre en Gotas:</div>
+          <div style="font-size:1.05rem; font-weight:700; color:#fff;" id="previewUsername">Escribe tu alias...</div>
+        </div>
+      </div>
+
+      <!-- Paso 1: Elegir Avatar -->
+      <div style="text-align:left; margin-bottom:14px;">
+        <label style="font-size:0.82rem; font-weight:700; color:var(--accent-soft); text-transform:uppercase; letter-spacing:0.5px;">
+          1. Elige tu Avatar:
+        </label>
         <div class="avatar-grid" id="onboardingAvatarGrid"></div>
       </div>
 
+      <!-- Paso 2: Nombre de Usuario -->
       <div style="text-align:left; margin-bottom:20px;">
-        <label style="font-size:0.85rem; font-weight:600; color:var(--accent-soft);">2. Tu Nombre de Viajero:</label>
+        <label style="font-size:0.82rem; font-weight:700; color:var(--accent-soft); text-transform:uppercase; letter-spacing:0.5px;">
+          2. Escribe tu Nombre o Apodo:
+        </label>
         <div style="display:flex; gap:8px; margin-top:6px;">
-          <input type="text" id="onboardingUsernameInput" placeholder="Escribe tu alias..." style="flex:1; background:#0b132b; border:1px solid var(--border-color); border-radius:10px; padding:10px 14px; color:#fff; font-family:inherit;">
-          <button class="btn-secondary" onclick="generateOnboardingRandomName()">🎲 Aleatorio</button>
+          <input type="text" id="onboardingUsernameInput" placeholder="Ej: ZorroAzul, LectorSilente..." oninput="updateLivePreview()" style="flex:1; background:#0b132b; border:1.5px solid var(--border-color); border-radius:12px; padding:12px 14px; color:#fff; font-family:inherit; font-size:0.92rem;">
+          <button class="btn-secondary" style="border-color:var(--accent-cyan); display:inline-flex; align-items:center; gap:4px; font-weight:600;" onclick="generateOnboardingRandomName()">
+            🎲 Aleatorio
+          </button>
         </div>
-        <div id="usernameFeedback" style="font-size:0.75rem; color:#ff6b6b; margin-top:6px; display:none;"></div>
+        <div id="usernameFeedback" style="font-size:0.78rem; color:#ff6b6b; margin-top:6px; display:none;"></div>
       </div>
 
-      <button class="btn-primary" style="width:100%; padding:12px; font-size:0.95rem; justify-content:center;" onclick="completeOnboarding()">
-        Comenzar mi viaje en Gotas 💧
+      <!-- Botón Comenzar -->
+      <button class="btn-primary" style="width:100%; padding:14px; font-size:0.95rem; justify-content:center; border-radius:14px;" onclick="completeOnboarding()">
+        Comenzar y Entrar al Océano 💧
       </button>
     </div>
   </div>
 
-  <!-- APLICACIÓN PRINCIPAL -->
+  <!-- APLICACIÓN PRINCIPAL (Visible tras completar el registro) -->
   <header>
     <a href="#" class="brand">
       <div class="logo-container">
@@ -365,10 +494,9 @@
     </a>
 
     <div class="header-actions">
-      <!-- Usuario Actual -->
       <div class="user-badge" onclick="openProfileModal()" title="Configurar tu perfil y avatar">
         <span id="userAvatarHeader">🐺</span>
-        <span id="userNameHeader" style="font-weight:600;">Caminante</span>
+        <span id="userNameHeader" style="font-weight:600;">Viajero</span>
       </div>
 
       <div class="sound-widget" id="soundBtn" onclick="toggleAmbientSound()">
@@ -393,7 +521,7 @@
 
     <main class="main-content">
       
-      <!-- Tab 1: Gotas en Vivo compartidas con la App -->
+      <!-- Tab 1: Gotas -->
       <section id="tab-gotas" class="view-card active-view">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
           <h2>💧 Gotas del Mundo (En Vivo)</h2>
@@ -418,23 +546,61 @@
         <div id="journalList" style="margin-top:20px; display:flex; flex-direction:column; gap:10px;"></div>
       </section>
 
-      <!-- Tab 3: Dilemas -->
+      <!-- Tab 3: Dilemas con Selección Persistente -->
       <section id="tab-dilemas" class="view-card">
         <h2>✨ Dilema del Día</h2>
-        <p style="margin:14px 0;">Si pudieras vivir en una biblioteca infinita donde nunca pasa el tiempo o en una cabaña frente al mar con café ilimitado... ¿cuál elegirías?</p>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <button class="btn-secondary" onclick="alert('📚 Votaste por la Biblioteca Infinita (62%)')">📚 Biblioteca Infinita (62%)</button>
-          <button class="btn-secondary" onclick="alert('🌊 Votaste por la Cabaña en el Mar (38%)')">🌊 Cabaña en el Mar (38%)</button>
+        <p style="margin:14px 0; font-size:0.95rem; line-height:1.5;">
+          Si pudieras vivir en una biblioteca infinita donde nunca pasa el tiempo o en una cabaña frente al mar con café ilimitado... ¿cuál elegirías?
+        </p>
+
+        <div class="dilemma-container">
+          <div class="dilemma-card" id="dilemmaOptA" onclick="voteDilemma('A')">
+            <div>
+              <div class="dilemma-badge" id="badgeA">Opción A</div>
+              <h4 style="color:#fff; font-size:0.95rem; margin-bottom:6px;">📚 La Biblioteca Infinita</h4>
+              <p style="font-size:0.82rem; color:var(--text-muted);">Tiempo detenido, millones de historias y conocimiento sin fin.</p>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-top:12px;">
+                <span id="voteLabelA" style="color:var(--text-muted);">Votar por esta opción</span>
+                <strong id="votePctA" style="color:var(--accent-cyan);">62%</strong>
+              </div>
+              <div class="dilemma-pct-bar">
+                <div class="dilemma-pct-fill" id="fillA" style="width: 62%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dilemma-card" id="dilemmaOptB" onclick="voteDilemma('B')">
+            <div>
+              <div class="dilemma-badge" id="badgeB">Opción B</div>
+              <h4 style="color:#fff; font-size:0.95rem; margin-bottom:6px;">🌊 La Cabaña frente al Mar</h4>
+              <p style="font-size:0.82rem; color:var(--text-muted);">Sonido de olas, brisa serena y café cálido ilimitado.</p>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-top:12px;">
+                <span id="voteLabelB" style="color:var(--text-muted);">Votar por esta opción</span>
+                <strong id="votePctB" style="color:var(--accent-cyan);">38%</strong>
+              </div>
+              <div class="dilemma-pct-bar">
+                <div class="dilemma-pct-fill" id="fillB" style="width: 38%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="dilemmaFeedbackMsg" style="font-size:0.82rem; color:var(--accent-soft); text-align:center; margin-top:12px; display:none;">
+          ✨ ¡Tu elección ha quedado guardada! Compartes afinidad con otros viajeros del mundo.
         </div>
       </section>
 
-      <!-- Tab 4: Historia Colectiva en Vivo -->
+      <!-- Tab 4: Historia Colectiva -->
       <section id="tab-silencio" class="view-card">
         <h2>🎨 Creación en Silencio (En Vivo)</h2>
         <div id="storyContainer" style="background:rgba(11,19,43,0.7); border:1px solid var(--border-color); border-radius:12px; padding:14px; margin:14px 0; line-height:1.6; font-size:0.9rem;">
           Cargando historia colectiva...
         </div>
-        <div style="display:gap:8px; display:flex;">
+        <div style="display:flex; gap:8px;">
           <input type="text" id="storyInput" placeholder="Agrega una frase al relato..." style="flex:1; background:rgba(11,19,43,0.8); border:1px solid var(--border-color); border-radius:20px; padding:8px 14px; color:#fff;">
           <button class="btn-primary" onclick="addStory()">Agregar</button>
         </div>
@@ -453,12 +619,12 @@
     </main>
   </div>
 
-  <!-- Modal: Editar Perfil -->
+  <!-- Modales -->
   <div class="modal-backdrop" id="profileModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('profileModal')">&times;</button>
-      <h3 style="color:#fff; margin-bottom:6px;">🌱 Mi Perfil de Viajero</h3>
-      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:14px;">Elige tu avatar y un nombre único para tus cartas:</p>
+      <h3 style="color:#fff; margin-bottom:6px;">🌱 Mi Identidad de Viajero</h3>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:14px;">Cambia tu avatar y apodo:</p>
 
       <label style="font-size:0.85rem; color:var(--accent-soft);">1. Elige tu Avatar:</label>
       <div class="avatar-grid" id="editAvatarGrid"></div>
@@ -470,12 +636,11 @@
       </div>
 
       <div style="display:flex; justify-content:flex-end;">
-        <button class="btn-primary" onclick="saveEditedProfile()">Guardar Perfil</button>
+        <button class="btn-primary" onclick="saveEditedProfile()">Guardar Cambios</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Crear Gota -->
   <div class="modal-backdrop" id="newDropModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('newDropModal')">&times;</button>
@@ -490,7 +655,6 @@
     </div>
   </div>
 
-  <!-- Modal: Leer Carta -->
   <div class="modal-backdrop" id="letterModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('letterModal')">&times;</button>
@@ -506,7 +670,6 @@
     </div>
   </div>
 
-  <!-- Modal: Batería -->
   <div class="modal-backdrop" id="batteryModal">
     <div class="modal-box" style="max-width:400px;">
       <button class="modal-close" onclick="closeModal('batteryModal')">&times;</button>
@@ -519,7 +682,6 @@
     </div>
   </div>
 
-  <!-- Modal: Binance -->
   <div class="modal-backdrop" id="binanceModal">
     <div class="modal-box" style="text-align:center;">
       <button class="modal-close" onclick="closeModal('binanceModal')">&times;</button>
@@ -543,22 +705,22 @@
     const avatarsList = ['🐺', '🦊', '🦉', '🐱', '🐇', '🐼', '🦥', '🐸', '🐢', '🦌', '🦔', '🐧', '🌿', '🌸', '🌙', '🌊', '🌧️', '🍄', '☕', '🕯️', '🔮', '🪐', '🌌', '🎨'];
 
     let chosenAvatar = '🐺';
-    let currentAvatar = localStorage.getItem('gotas_avatar');
-    let currentUsername = localStorage.getItem('gotas_username');
-    const isRegistered = localStorage.getItem('gotas_registered') === 'true';
+    let currentAvatar = localStorage.getItem('gotas_user_avatar');
+    let currentUsername = localStorage.getItem('gotas_user_name');
+    const isRegistered = localStorage.getItem('gotas_user_registered') === 'true';
 
     document.addEventListener('DOMContentLoaded', () => {
       if (!isRegistered || !currentUsername) {
-        // Mostrar pantalla de bienvenida obligatoria
+        // Bloquear completamente la app y mostrar registro inicial
         document.getElementById('onboardingGate').style.display = 'flex';
         renderOnboardingAvatars();
-        generateOnboardingRandomName();
       } else {
-        // Ya registrado en este dispositivo
+        // Ya registrado
         document.getElementById('onboardingGate').style.display = 'none';
         updateHeaderProfile();
         loadLiveDrops();
         loadLiveStory();
+        initDilemmaVote();
       }
     });
 
@@ -573,9 +735,22 @@
           document.querySelectorAll('#onboardingAvatarGrid .avatar-item').forEach(e => e.classList.remove('selected'));
           div.classList.add('selected');
           chosenAvatar = av;
+          document.getElementById('previewAvatar').innerText = chosenAvatar;
         };
         grid.appendChild(div);
       });
+    }
+
+    function updateLivePreview() {
+      const val = document.getElementById('onboardingUsernameInput').value.trim();
+      const preview = document.getElementById('previewUsername');
+      if (val) {
+        preview.innerText = val;
+        preview.style.color = '#fff';
+      } else {
+        preview.innerText = 'Escribe tu alias...';
+        preview.style.color = 'var(--text-muted)';
+      }
     }
 
     function getRandomPoeticName() {
@@ -585,7 +760,9 @@
     }
 
     function generateOnboardingRandomName() {
-      document.getElementById('onboardingUsernameInput').value = getRandomPoeticName();
+      const name = getRandomPoeticName();
+      document.getElementById('onboardingUsernameInput').value = name;
+      updateLivePreview();
       document.getElementById('usernameFeedback').style.display = 'none';
     }
 
@@ -594,12 +771,11 @@
       const feedback = document.getElementById('usernameFeedback');
 
       if (!name || name.length < 3) {
-        feedback.innerText = '⚠️ Elige un nombre de al menos 3 letras.';
+        feedback.innerText = '⚠️ Por favor escribe un nombre de al menos 3 letras o pulsa 🎲 Aleatorio.';
         feedback.style.display = 'block';
         return;
       }
 
-      // Validar si el nombre ya existe en Supabase
       if (supabaseClient) {
         try {
           const { data } = await supabaseClient.from('profiles').select('username').eq('username', name).maybeSingle();
@@ -608,25 +784,21 @@
             feedback.style.display = 'block';
             return;
           }
-
-          // Registrar perfil en la base de datos
           await supabaseClient.from('profiles').insert({ username: name, avatar: chosenAvatar });
-        } catch (e) {
-          console.log('Error validando:', e);
-        }
+        } catch (e) {}
       }
 
-      // Guardar en este dispositivo
       currentUsername = name;
       currentAvatar = chosenAvatar;
-      localStorage.setItem('gotas_registered', 'true');
-      localStorage.setItem('gotas_username', currentUsername);
-      localStorage.setItem('gotas_avatar', currentAvatar);
+      localStorage.setItem('gotas_user_registered', 'true');
+      localStorage.setItem('gotas_user_name', currentUsername);
+      localStorage.setItem('gotas_user_avatar', currentAvatar);
 
       document.getElementById('onboardingGate').style.display = 'none';
       updateHeaderProfile();
       loadLiveDrops();
       loadLiveStory();
+      initDilemmaVote();
     }
 
     function updateHeaderProfile() {
@@ -634,7 +806,48 @@
       document.getElementById('userNameHeader').innerText = currentUsername || 'Viajero';
     }
 
-    // Modal de edición de perfil
+    function initDilemmaVote() {
+      const savedVote = localStorage.getItem('gotas_dilemma_choice');
+      if (savedVote === 'A') {
+        applyDilemmaUI('A');
+      } else if (savedVote === 'B') {
+        applyDilemmaUI('B');
+      }
+    }
+
+    function voteDilemma(choice) {
+      localStorage.setItem('gotas_dilemma_choice', choice);
+      applyDilemmaUI(choice);
+    }
+
+    function applyDilemmaUI(choice) {
+      const cardA = document.getElementById('dilemmaOptA');
+      const cardB = document.getElementById('dilemmaOptB');
+      const badgeA = document.getElementById('badgeA');
+      const badgeB = document.getElementById('badgeB');
+      const labelA = document.getElementById('voteLabelA');
+      const labelB = document.getElementById('voteLabelB');
+      const feedback = document.getElementById('dilemmaFeedbackMsg');
+
+      if (choice === 'A') {
+        cardA.classList.add('selected');
+        cardB.classList.remove('selected');
+        badgeA.innerHTML = 'Opción A <span style="color:#06d6a0;">✓ Tu elección</span>';
+        badgeB.innerText = 'Opción B';
+        labelA.innerHTML = '<strong style="color:var(--accent-cyan);">✓ Seleccionado</strong>';
+        labelB.innerText = 'Cambiar a esta opción';
+      } else if (choice === 'B') {
+        cardB.classList.add('selected');
+        cardA.classList.remove('selected');
+        badgeB.innerHTML = 'Opción B <span style="color:#06d6a0;">✓ Tu elección</span>';
+        badgeA.innerText = 'Opción A';
+        labelB.innerHTML = '<strong style="color:var(--accent-cyan);">✓ Seleccionado</strong>';
+        labelA.innerText = 'Cambiar a esta opción';
+      }
+
+      if (feedback) feedback.style.display = 'block';
+    }
+
     function openProfileModal() {
       document.getElementById('editUsernameInput').value = currentUsername;
       const grid = document.getElementById('editAvatarGrid');
@@ -661,7 +874,7 @@
       const name = document.getElementById('editUsernameInput').value.trim();
       if (!name) return;
 
-      if (supabaseClient && name !== localStorage.getItem('gotas_username')) {
+      if (supabaseClient && name !== localStorage.getItem('gotas_user_name')) {
         try {
           const { data } = await supabaseClient.from('profiles').select('username').eq('username', name).maybeSingle();
           if (data) {
@@ -673,14 +886,13 @@
       }
 
       currentUsername = name;
-      localStorage.setItem('gotas_username', currentUsername);
-      localStorage.setItem('gotas_avatar', currentAvatar);
+      localStorage.setItem('gotas_user_name', currentUsername);
+      localStorage.setItem('gotas_user_avatar', currentAvatar);
       updateHeaderProfile();
       closeModal('profileModal');
       alert(`✨ Identidad actualizada: ${currentAvatar} ${currentUsername}`);
     }
 
-    // Cargar Gotas en Vivo
     async function loadLiveDrops() {
       const grid = document.getElementById('dropsGrid');
       if (supabaseClient) {

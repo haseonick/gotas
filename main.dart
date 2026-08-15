@@ -55,6 +55,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
   String _socialBattery = '☕ Tranquilo (60%)';
   bool _isPlusMember = false;
+  String? _dilemmaChoice;
 
   // Datos del Usuario Actual (Personalizables)
   String _myUsername = 'CaminanteSilencioso';
@@ -534,28 +535,44 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   style: TextStyle(fontSize: 14, height: 1.4, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 14),
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0x3348CAE4)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                InkWell(
+                  onTap: () => setState(() => _dilemmaChoice = 'A'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _dilemmaChoice == 'A' ? const Color(0x3348CAE4) : const Color(0xFF0B132B),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _dilemmaChoice == 'A' ? const Color(0xFF48CAE4) : Colors.white12, width: _dilemmaChoice == 'A' ? 2 : 1),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('📚 La Biblioteca Infinita', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text(_dilemmaChoice == 'A' ? '✓ 62%' : '62%', style: TextStyle(fontWeight: FontWeight.bold, color: _dilemmaChoice == 'A' ? const Color(0xFF48CAE4) : Colors.white60)),
+                      ],
+                    ),
                   ),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('📚 Votaste por la Biblioteca Infinita (62% coinciden)')));
-                  },
-                  child: const Align(alignment: Alignment.centerLeft, child: Text('📚 La Biblioteca Infinita (62%)')),
                 ),
-                const SizedBox(height: 8),
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0x3348CAE4)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                const SizedBox(height: 10),
+                InkWell(
+                  onTap: () => setState(() => _dilemmaChoice = 'B'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _dilemmaChoice == 'B' ? const Color(0x3348CAE4) : const Color(0xFF0B132B),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _dilemmaChoice == 'B' ? const Color(0xFF48CAE4) : Colors.white12, width: _dilemmaChoice == 'B' ? 2 : 1),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('🌊 La Cabaña en el Mar', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text(_dilemmaChoice == 'B' ? '✓ 38%' : '38%', style: TextStyle(fontWeight: FontWeight.bold, color: _dilemmaChoice == 'B' ? const Color(0xFF48CAE4) : Colors.white60)),
+                      ],
+                    ),
                   ),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🌊 Votaste por la Cabaña en el Mar (38% coinciden)')));
-                  },
-                  child: const Align(alignment: Alignment.centerLeft, child: Text('🌊 La Cabaña en el Mar (38%)')),
                 ),
               ],
             ),
