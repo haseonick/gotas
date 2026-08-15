@@ -19,6 +19,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Instalar Pillow para generar icono
+        run: pip install pillow
+
       - name: Configurar Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -28,6 +36,54 @@ jobs:
         run: |
           rm -rf android
           flutter create . --platforms=android --org com.gotas --project-name gotas_app
+
+      - name: Aplicar Logo de Gota de Agua y Nombre Gotas
+        run: |
+          python3 -c "
+          from PIL import Image, ImageDraw
+          import math, os
+
+          def create_icon(size):
+              img = Image.new('RGBA', (size, size), (11, 19, 43, 255))
+              draw = ImageDraw.Draw(img)
+              radius = int(size * 0.22)
+              draw.rounded_rectangle([(0, 0), (size-1, size-1)], radius=radius, fill=(11, 19, 43, 255))
+              center = (size // 2, size // 2 + int(size * 0.05))
+              r = int(size * 0.42)
+              draw.ellipse([center[0]-r, center-r, center[0]+r, center+r], fill=(72, 202, 228, 40))
+              top_x, top_y = size * 0.5, size * 0.16
+              cx, cy, drop_r = size * 0.5, size * 0.62, size * 0.30
+              pts = []
+              for deg in range(0, 181):
+                  rad = math.radians(deg)
+                  pts.append((cx + drop_r * math.cos(rad), cy + drop_r * math.sin(rad)))
+              draw.polygon([(top_x, top_y)] + pts + [(top_x, top_y)], fill=(0, 119, 182, 255))
+              inner_r = drop_r * 0.85
+              inner_pts = []
+              for deg in range(0, 181):
+                  rad = math.radians(deg)
+                  inner_pts.append((cx + inner_r * math.cos(rad), (cy + size*0.02) + inner_r * math.sin(rad)))
+              draw.polygon([(top_x, top_y + size*0.06)] + inner_pts + [(top_x, top_y + size*0.06)], fill=(72, 202, 228, 255))
+              draw.ellipse([size*0.34, size*0.36, size*0.50, size*0.68], fill=(202, 240, 248, 220))
+              draw.ellipse([cx - size*0.18, size*0.68, cx + size*0.18, size*0.76], outline=(202, 240, 248, 180), width=max(1, int(size*0.02)))
+              draw.ellipse([cx - size*0.10, size*0.78, cx + size*0.10, size*0.83], outline=(202, 240, 248, 140), width=max(1, int(size*0.015)))
+              return img
+
+          sizes = {'mipmap-mdpi': 48, 'mipmap-hdpi': 72, 'mipmap-xhdpi': 96, 'mipmap-xxhdpi': 144, 'mipmap-xxxhdpi': 192}
+          for folder, s in sizes.items():
+              dir_path = f'android/app/src/main/res/{folder}'
+              os.makedirs(dir_path, exist_ok=True)
+              create_icon(s).save(f'{dir_path}/ic_launcher.png')
+
+          # Actualizar nombre de la app en AndroidManifest.xml a 'Gotas'
+          manifest_path = 'android/app/src/main/AndroidManifest.xml'
+          with open(manifest_path, 'r') as f:
+              content = f.read()
+          content = content.replace('android:label=\"gotas_app\"', 'android:label=\"Gotas\"')
+          with open(manifest_path, 'w') as f:
+              f.write(content)
+          print('Icono y nombre aplicados correctamente.')
+          "
 
       - name: Instalar dependencias
         run: flutter pub get
