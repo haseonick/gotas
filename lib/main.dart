@@ -9,6 +9,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 const String supabaseUrl = 'https://cfkaqkeohyphdcnvcnsv.supabase.co';
 const String supabaseAnonKey = 'sb_publishable_E7NPno9DbRRJYuSVlOmwtA_bvVWxcWK';
 
+// --- VERSIÓN ACTUAL DE LA APP ---
+const String currentAppVersion = '1.0.0'; 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -94,10 +97,109 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   void initState() {
     super.initState();
+    _checkForUpdates(); // <-- INICIA EL VERIFICADOR DE ACTUALIZACIONES
     _loadSavedSession();
     _subscribeToLiveChanges();
     _initPresenceTracker();
   }
+
+  // ==========================================
+  // VERIFICADOR DE ACTUALIZACIONES
+  // ==========================================
+  Future<void> _checkForUpdates() async {
+    try {
+      final data = await Supabase.instance.client
+          .from('app_config')
+          .select()
+          .limit(1)
+          .maybeSingle();
+
+      if (data != null) {
+        final latestVersion = data['latest_version']?.toString();
+        final isMandatory = data['is_mandatory'] as bool? ?? false;
+        
+        if (latestVersion != null && latestVersion != currentAppVersion) {
+          if (mounted) {
+            _showUpdateDialog(latestVersion, isMandatory);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error comprobando actualizaciones: $e');
+    }
+  }
+
+  void _showUpdateDialog(String latestVersion, bool isMandatory) {
+    showDialog(
+      context: context,
+      barrierDismissible: !isMandatory, // Si es obligatoria, no se puede cerrar tocando fuera
+      builder: (ctx) => WillPopScope(
+        onWillPop: () async => !isMandatory, // Evita cerrar con el botón atrás del móvil si es obligatorio
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF1C2541),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xFF48CAE4), width: 1.5),
+          ),
+          title: const Row(
+            children: [
+              Text('🚀', style: TextStyle(fontSize: 24)),
+              SizedBox(width: 10),
+              Expanded(child: Text('Nueva versión disponible', style: TextStyle(color: Color(0xFFCAF0F8), fontSize: 16, fontWeight: FontWeight.bold))),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'La versión $latestVersion de Gotas está lista.',
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isMandatory 
+                  ? 'Esta actualización es obligatoria para asegurar tu conexión al backend.'
+                  : 'Te recomendamos actualizar para disfrutar de más calma y nuevas funciones.',
+                style: const TextStyle(color: Colors.white60, fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0B132B),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: const Text('Link de descarga:\nhttps://haseonick.github.io/gotas/', style: TextStyle(fontSize: 12, color: Color(0xFF48CAE4))),
+              )
+            ],
+          ),
+          actions: [
+            if (!isMandatory)
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Más tarde', style: TextStyle(color: Colors.white60)),
+              ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0077B6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () {
+                Clipboard.setData(const ClipboardData(text: 'https://haseonick.github.io/gotas/'));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🔗 Enlace copiado en el portapapeles')));
+                if (!isMandatory) Navigator.pop(ctx);
+              },
+              child: const Text('Copiar Link 🔗', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  // ==========================================
+
 
   Future<void> _loadSavedSession() async {
     try {
@@ -147,7 +249,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           } else {
             _isRegistered = false;
           }
-          _isCheckingSession = false;
+            _isCheckingSession = false;
         });
       }
     } catch (e) {
