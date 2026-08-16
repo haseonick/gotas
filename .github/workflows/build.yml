@@ -37,37 +37,31 @@ jobs:
           rm -rf android
           flutter create . --platforms=android --org com.gotas --project-name gotas_app
 
-      - name: Aplicar Logo de Gota de Agua y Nombre Gotas
+      - name: Aplicar Logo de Gota Puro, Permisos de Internet y Nombre Gotas
         run: |
           python3 -c "
           from PIL import Image, ImageDraw
           import math, os
 
           def create_icon(size):
-              img = Image.new('RGBA', (size, size), (11, 19, 43, 255))
+              img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
               draw = ImageDraw.Draw(img)
-              radius = int(size * 0.22)
-              draw.rounded_rectangle([(0, 0), (size-1, size-1)], radius=radius, fill=(11, 19, 43, 255))
-              cx = size // 2
-              cy = size // 2 + int(size * 0.05)
-              r = int(size * 0.42)
-              draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(72, 202, 228, 40))
-              top_x, top_y = size * 0.5, size * 0.16
-              drop_cx, drop_cy, drop_r = size * 0.5, size * 0.62, size * 0.30
+              top_x, top_y = size * 0.5, size * 0.06
+              cx, cy, drop_r = size * 0.5, size * 0.58, size * 0.40
               pts = []
               for deg in range(0, 181):
                   rad = math.radians(deg)
-                  pts.append((drop_cx + drop_r * math.cos(rad), drop_cy + drop_r * math.sin(rad)))
+                  pts.append((cx + drop_r * math.cos(rad), cy + drop_r * math.sin(rad)))
               draw.polygon([(top_x, top_y)] + pts + [(top_x, top_y)], fill=(0, 119, 182, 255))
-              inner_r = drop_r * 0.85
+              inner_r = drop_r * 0.88
               inner_pts = []
               for deg in range(0, 181):
                   rad = math.radians(deg)
-                  inner_pts.append((drop_cx + inner_r * math.cos(rad), (drop_cy + size*0.02) + inner_r * math.sin(rad)))
+                  inner_pts.append((cx + inner_r * math.cos(rad), (cy + size*0.02) + inner_r * math.sin(rad)))
               draw.polygon([(top_x, top_y + size*0.06)] + inner_pts + [(top_x, top_y + size*0.06)], fill=(72, 202, 228, 255))
-              draw.ellipse([size*0.34, size*0.36, size*0.50, size*0.68], fill=(202, 240, 248, 220))
-              draw.ellipse([drop_cx - size*0.18, size*0.68, drop_cx + size*0.18, size*0.76], outline=(202, 240, 248, 180), width=max(1, int(size*0.02)))
-              draw.ellipse([drop_cx - size*0.10, size*0.78, drop_cx + size*0.10, size*0.83], outline=(202, 240, 248, 140), width=max(1, int(size*0.015)))
+              draw.ellipse([size*0.36, size*0.34, size*0.52, size*0.68], fill=(202, 240, 248, 230))
+              draw.ellipse([cx - size*0.20, size*0.66, cx + size*0.20, size*0.76], outline=(202, 240, 248, 200), width=max(1, int(size*0.025)))
+              draw.ellipse([cx - size*0.11, size*0.78, cx + size*0.11, size*0.84], outline=(202, 240, 248, 160), width=max(1, int(size*0.018)))
               return img
 
           sizes = {'mipmap-mdpi': 48, 'mipmap-hdpi': 72, 'mipmap-xhdpi': 96, 'mipmap-xxhdpi': 144, 'mipmap-xxxhdpi': 192}
@@ -80,9 +74,14 @@ jobs:
           with open(manifest_path, 'r') as f:
               content = f.read()
           content = content.replace('android:label=\"gotas_app\"', 'android:label=\"Gotas\"')
+          if '<uses-permission android:name=\"android.permission.INTERNET\"/>' not in content:
+              content = content.replace(
+                  '<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\">',
+                  '<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\">\\n    <uses-permission android:name=\"android.permission.INTERNET\"/>\\n    <uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>'
+              )
           with open(manifest_path, 'w') as f:
               f.write(content)
-          print('Icono y nombre aplicados exitosamente.')
+          print('Permisos de INTERNET, icono puro y nombre aplicados exitosamente.')
           "
 
       - name: Instalar dependencias
