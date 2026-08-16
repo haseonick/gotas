@@ -73,6 +73,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   String _myUsername = '';
   String _myAvatar = '🐺';
+  String _myLocation = 'Mundo'; // NUEVO: Ubicación del usuario
 
   // Votaciones de Dilemas
   String? _dilemmaChoice1;
@@ -167,6 +168,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       final prefs = await SharedPreferences.getInstance();
       final savedUser = prefs.getString('gotas_user_name');
       final savedAvatar = prefs.getString('gotas_user_avatar');
+      final savedLocation = prefs.getString('gotas_user_location'); // CARGAR UBICACIÓN
       final savedReg = prefs.getBool('gotas_user_registered') ?? false;
 
       _dilemmaChoice1 = prefs.getString('gotas_dilemma_1');
@@ -201,6 +203,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           if (savedUser != null && savedUser.isNotEmpty && savedReg) {
             _myUsername = savedUser;
             _myAvatar = savedAvatar ?? '🐺';
+            _myLocation = savedLocation ?? 'Mundo';
             _isRegistered = true;
           } else {
             _isRegistered = false;
@@ -665,15 +668,18 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 if (data != null) {
                   final name = data['username'];
                   final av = data['avatar'] ?? '🐺';
+                  final loc = data['location'] ?? 'Mundo';
                   
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setString('gotas_user_name', name);
                   await prefs.setString('gotas_user_avatar', av);
+                  await prefs.setString('gotas_user_location', loc);
                   await prefs.setBool('gotas_user_registered', true);
 
                   setState(() {
                     _myUsername = name;
                     _myAvatar = av;
+                    _myLocation = loc;
                     _isRegistered = true;
                     _isAuthLoading = false;
                   });
@@ -687,7 +693,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 }
               } catch (e) {
                 setState(() => _isAuthLoading = false);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ Error de conexión. Intenta de nuevo.')));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ Error de conexión. Verifica los permisos de Supabase.')));
               }
             },
             child: _isAuthLoading 
@@ -1364,7 +1370,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   }
 
   void _openNewDropDialog() {
-    final locationController = TextEditingController();
+    // PRE-RELLENAR UBICACIÓN CON LA UBICACIÓN GUARDADA EN EL PERFIL
+    final locationController = TextEditingController(text: _myLocation != 'Mundo' ? _myLocation : '');
     final topicController = TextEditingController();
     final contentController = TextEditingController();
 
@@ -1893,7 +1900,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             TextButton.icon(
               style: TextButton.styleFrom(foregroundColor: const Color(0xFF48CAE4)),
               icon: const Icon(Icons.edit, size: 16),
-              label: const Text('Cambiar Avatar'),
+              label: const Text('Editar Perfil'),
               onPressed: _openProfileEditorModal,
             )
           ],
@@ -1916,6 +1923,14 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   children: [
                     Text(_myUsername, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, size: 12, color: Colors.white60),
+                        const SizedBox(width: 4),
+                        Text(_myLocation, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
                     const Text('🔒 Nombre Permanente', style: TextStyle(fontSize: 11, color: Color(0xFF48CAE4))),
                   ],
                 ),
@@ -2005,6 +2020,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   void _openProfileEditorModal() {
     String tempAvatar = _myAvatar;
+    final locationController = TextEditingController(text: _myLocation != 'Mundo' ? _myLocation : '');
 
     showModalBottomSheet(
       context: context,
@@ -2017,10 +2033,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('🌱 Personalizar mi Avatar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              const Text('Puedes cambiar tu avatar ilustrado cuando desees:', style: TextStyle(fontSize: 12, color: Colors.white60)),
-              const SizedBox(height: 12),
+              const Text('🌱 Editar mi Perfil', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
               SizedBox(
                 height: 140,
                 child: GridView.builder(
@@ -2041,6 +2055,20 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                       ),
                     );
                   },
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: locationController,
+                decoration: InputDecoration(
+                  labelText: 'Ubicación / País',
+                  labelStyle: const TextStyle(color: Color(0xFF90E0EF), fontSize: 13),
+                  hintText: 'Ej: 🇻🇪 Anzoátegui',
+                  hintStyle: const TextStyle(fontSize: 12, color: Colors.white38),
+                  filled: true,
+                  fillColor: const Color(0xFF0B132B),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  prefixIcon: const Icon(Icons.location_on, color: Color(0xFF48CAE4), size: 18),
                 ),
               ),
               const SizedBox(height: 14),
@@ -2078,11 +2106,15 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF48CAE4), foregroundColor: const Color(0xFF0B132B)),
                   onPressed: () async {
+                    final newLoc = locationController.text.trim().isNotEmpty ? locationController.text.trim() : 'Mundo';
+
                     try {
                       await Supabase.instance.client.from('profiles').update({
                         'avatar': tempAvatar,
+                        'location': newLoc,
                       }).eq('username', _myUsername);
 
+                      // Opcional: Actualizar los drops ya enviados si quieres
                       await Supabase.instance.client.from('drops').update({
                         'avatar': tempAvatar,
                       }).eq('author', _myUsername);
@@ -2090,14 +2122,16 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
                     final prefs = await SharedPreferences.getInstance();
                     await prefs.setString('gotas_user_avatar', tempAvatar);
+                    await prefs.setString('gotas_user_location', newLoc);
 
                     setState(() {
                       _myAvatar = tempAvatar;
+                      _myLocation = newLoc;
                     });
                     Navigator.pop(ctx);
                     _fetchLiveDrops();
                   },
-                  child: const Text('Guardar Avatar', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text('Guardar Perfil', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               )
             ],
@@ -2151,6 +2185,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     'username': _myUsername,
                     'avatar': _myAvatar,
                     'email': email,
+                    'location': _myLocation,
                   }, onConflict: 'username');
                   
                   Navigator.pop(ctx);
