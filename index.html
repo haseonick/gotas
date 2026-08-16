@@ -61,7 +61,7 @@
       background: rgba(28, 37, 65, 0.95);
       border: 1.5px solid var(--accent-cyan);
       border-radius: var(--radius-lg);
-      max-width: 520px;
+      max-width: 480px;
       width: 100%;
       padding: 32px 24px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(72, 202, 228, 0.15);
@@ -439,69 +439,108 @@
 </head>
 <body>
 
+  <!-- ============================================== -->
   <!-- 1. PANTALLA INICIAL OBLIGATORIA (ONBOARDING) -->
+  <!-- ============================================== -->
   <div id="onboardingGate">
     <div class="onboarding-card">
-      <div class="welcome-logo">
-        <svg viewBox="0 0 100 120" width="100%" height="100%">
-          <defs>
-            <linearGradient id="dropG1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#caf0f8" />
-              <stop offset="40%" stop-color="#48cae4" />
-              <stop offset="100%" stop-color="#0077b6" />
-            </linearGradient>
-            <radialGradient id="innerG1" cx="45%" cy="40%" r="50%">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8"/>
-              <stop offset="100%" stop-color="#48cae4" stop-opacity="0"/>
-            </radialGradient>
-          </defs>
-          <path d="M50 8 C50 8, 12 62, 12 82 A 38 38 0 0 0 88 82 C 88 62, 50 8, 50 8 Z" fill="url(#dropG1)" />
-          <ellipse cx="38" cy="65" rx="14" ry="22" transform="rotate(-25 38 65)" fill="url(#innerG1)" />
-        </svg>
-      </div>
-      <h2 style="font-size: 1.35rem; color: #fff; margin-bottom: 4px;">Bienvenido a Gotas</h2>
-      <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
-        Crea tu identidad anónima de viajero en 5 segundos.
-      </p>
-
-      <div class="profile-live-preview">
-        <div class="preview-avatar-circle" id="previewAvatar">🐺</div>
-        <div style="text-align:left;">
-          <div style="font-size:0.75rem; color:var(--text-muted);">Tu Nombre en Gotas:</div>
-          <div style="font-size:1.05rem; font-weight:700; color:#fff;" id="previewUsername">Escribe tu alias...</div>
+      
+      <!-- PASO 0: ELECCIÓN PRINCIPAL -->
+      <div id="step0" style="display: block;">
+        <div class="welcome-logo">
+          <svg viewBox="0 0 100 120" width="100%" height="100%">
+            <defs>
+              <linearGradient id="dropG1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#caf0f8" />
+                <stop offset="40%" stop-color="#48cae4" />
+                <stop offset="100%" stop-color="#0077b6" />
+              </linearGradient>
+              <radialGradient id="innerG1" cx="45%" cy="40%" r="50%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="#48cae4" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <path d="M50 8 C50 8, 12 62, 12 82 A 38 38 0 0 0 88 82 C 88 62, 50 8, 50 8 Z" fill="url(#dropG1)" />
+            <ellipse cx="38" cy="65" rx="14" ry="22" transform="rotate(-25 38 65)" fill="url(#innerG1)" />
+          </svg>
         </div>
+        <h2 style="font-size: 1.5rem; color: #fff; margin-bottom: 4px;">Bienvenido a Gotas</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 30px;">Un refugio digital de baja presión.<br>Conecta a tu propio ritmo.</p>
+        
+        <button class="btn-primary" style="width:100%; margin-bottom:14px; padding:14px; font-size:1rem;" onclick="showOnboardingStep(1)">Comenzar como Nuevo Viajero 🌊</button>
+        <button class="btn-secondary" style="width:100%; border-color:var(--accent-cyan); color:var(--accent-cyan); padding:14px; font-size:0.9rem;" onclick="showOnboardingStep(2)">Ya tengo una cuenta (Recuperar) 🔄</button>
       </div>
 
-      <div style="text-align:left; margin-bottom:14px;">
-        <label style="font-size:0.82rem; font-weight:700; color:var(--accent-soft); text-transform:uppercase; letter-spacing:0.5px;">
-          1. Elige tu Avatar (36 Opciones):
-        </label>
-        <div class="avatar-grid" id="onboardingAvatarGrid"></div>
-      </div>
-
-      <div style="text-align:left; margin-bottom:20px;">
-        <label style="font-size:0.82rem; font-weight:700; color:var(--accent-soft); text-transform:uppercase; letter-spacing:0.5px;">
-          2. Escribe tu Nombre o Apodo:
-        </label>
-        <div style="display:flex; gap:8px; margin-top:6px;">
-          <input type="text" id="onboardingUsernameInput" placeholder="Ej: ZorroAzul, LectorSilente..." oninput="updateLivePreview()" style="flex:1; background:#0b132b; border:1.5px solid var(--border-color); border-radius:12px; padding:12px 14px; color:#fff; font-family:inherit; font-size:0.92rem;">
-          <button class="btn-secondary" style="border-color:var(--accent-cyan); display:inline-flex; align-items:center; gap:4px; font-weight:600;" onclick="generateOnboardingRandomName()">
-            🎲 Aleatorio
-          </button>
+      <!-- PASO 1: CREAR NUEVO VIAJERO -->
+      <div id="step1" style="display: none;">
+        <div style="text-align:left; margin-bottom:10px;">
+          <button class="btn-secondary" style="padding:6px 12px; border:none; font-size:0.8rem;" onclick="showOnboardingStep(0)">← Volver</button>
         </div>
-        <div id="usernameFeedback" style="font-size:0.78rem; color:#ff6b6b; margin-top:6px; display:none;"></div>
+        <h3 style="color:#fff; margin-bottom:16px;">Crear Identidad</h3>
+        
+        <div class="profile-live-preview">
+          <div class="preview-avatar-circle" id="previewAvatar">🐺</div>
+          <div style="text-align:left;">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Tu Nombre en Gotas:</div>
+            <div style="font-size:1.05rem; font-weight:700; color:#fff;" id="previewUsername">Escribe tu alias...</div>
+          </div>
+        </div>
+
+        <div style="text-align:left; margin-bottom:14px;">
+          <label style="font-size:0.82rem; font-weight:700; color:var(--accent-soft); text-transform:uppercase; letter-spacing:0.5px;">
+            1. Elige tu Avatar (36 Opciones):
+          </label>
+          <div class="avatar-grid" id="onboardingAvatarGrid"></div>
+        </div>
+
+        <div style="text-align:left; margin-bottom:20px;">
+          <label style="font-size:0.82rem; font-weight:700; color:var(--accent-soft); text-transform:uppercase; letter-spacing:0.5px;">
+            2. Escribe tu Nombre o Apodo:
+          </label>
+          <div style="display:flex; gap:8px; margin-top:6px;">
+            <input type="text" id="onboardingUsernameInput" placeholder="Ej: ZorroAzul, LectorSilente..." oninput="updateLivePreview()" style="flex:1; background:#0b132b; border:1.5px solid var(--border-color); border-radius:12px; padding:12px 14px; color:#fff; font-family:inherit; font-size:0.92rem;">
+            <button class="btn-secondary" style="border-color:var(--accent-cyan); display:inline-flex; align-items:center; gap:4px; font-weight:600;" onclick="generateOnboardingRandomName()">
+              🎲 Aleatorio
+            </button>
+          </div>
+          <div id="usernameFeedback" style="font-size:0.78rem; color:#ff6b6b; margin-top:6px; display:none;"></div>
+        </div>
+
+        <button class="btn-primary" style="width:100%; padding:14px; font-size:0.95rem; justify-content:center; border-radius:14px;" onclick="promptOnboardingConfirm()">
+          Comenzar y Entrar al Océano 💧
+        </button>
       </div>
 
-      <button class="btn-primary" style="width:100%; padding:14px; font-size:0.95rem; justify-content:center; border-radius:14px;" onclick="promptOnboardingConfirm()">
-        Comenzar y Entrar al Océano 💧
-      </button>
-
-      <div style="margin-top:14px; font-size:0.78rem;">
-        <span style="color:var(--text-muted);">¿Ya tenías una cuenta respaldada? </span>
-        <a href="javascript:void(0)" onclick="openRecoverAccountModal()" style="color:var(--accent-cyan); text-decoration:underline;">Recuperar con correo</a>
+      <!-- PASO 2: RECUPERAR (PEDIR CORREO) -->
+      <div id="step2" style="display: none;">
+        <div style="text-align:left; margin-bottom:10px;">
+          <button class="btn-secondary" style="padding:6px 12px; border:none; font-size:0.8rem;" onclick="showOnboardingStep(0)">← Volver</button>
+        </div>
+        <h2 style="color:#fff; margin-bottom:8px;">🔄 Recuperar Cuenta</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 24px; line-height:1.5;">Ingresa el correo que vinculaste. Te enviaremos un código de seguridad para entrar.</p>
+        
+        <input type="email" id="loginEmailInput" placeholder="tu-correo@ejemplo.com" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:12px; padding:12px 14px; color:#fff; margin-bottom:20px; font-size:1rem;">
+        
+        <button class="btn-primary" style="width:100%; padding:14px; font-size:1rem;" onclick="requestOtpCode()" id="btnRequestOtp">Enviar Código al Correo</button>
       </div>
+
+      <!-- PASO 3: RECUPERAR (CÓDIGO OTP) -->
+      <div id="step3" style="display: none;">
+        <div style="text-align:left; margin-bottom:10px;">
+          <button class="btn-secondary" style="padding:6px 12px; border:none; font-size:0.8rem;" onclick="showOnboardingStep(2)">← Volver</button>
+        </div>
+        <h2 style="color:#fff; margin-bottom:8px;">✉️ Revisa tu Bandeja</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 24px; line-height:1.5;">Ingresa el código de 6 dígitos que enviamos a tu correo electrónico.</p>
+        
+        <input type="number" id="loginCodeInput" placeholder="000000" maxlength="6" style="width:100%; text-align:center; letter-spacing:12px; font-size:28px; font-weight:bold; background:#0b132b; border:1px solid var(--border-color); border-radius:12px; padding:14px; color:#fff; margin-bottom:20px;">
+        
+        <button class="btn-primary" style="width:100%; padding:14px; font-size:1rem;" onclick="verifyOtpCode()" id="btnVerifyOtp">Verificar y Entrar</button>
+      </div>
+
     </div>
   </div>
+  <!-- ============================================== -->
+
 
   <!-- APLICACIÓN PRINCIPAL -->
   <header>
@@ -947,6 +986,7 @@
       <button class="modal-close" onclick="closeModal('newDropModal')">&times;</button>
       <h3 style="color:#fff; margin-bottom:8px;">🌊 Enviar una Gota al Océano</h3>
       
+      <!-- NUEVO CAMPO: UBICACIÓN -->
       <input type="text" id="newDropLocation" placeholder="Ubicación (Ej. 🇻🇪 Anzoátegui, o 'En mi cuarto')" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; margin-bottom:12px;">
       
       <input type="text" id="newDropTopic" placeholder="Tema (Ej. Hábitos, Videojuegos, Lectura)" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; margin-bottom:14px;">
@@ -979,18 +1019,6 @@
         <div style="display:flex; justify-content:flex-end; margin-top:8px;">
           <button class="btn-primary" style="padding:8px 16px; font-size:0.8rem;" onclick="sendCorrLetter()">Enviar Carta ✉️</button>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="recoverModal">
-    <div class="modal-box">
-      <button class="modal-close" onclick="closeModal('recoverModal')">&times;</button>
-      <h3 style="color:#fff; margin-bottom:6px;">🔄 Recuperar Cuenta</h3>
-      <input type="email" id="recoverEmailInput" placeholder="tu-correo@ejemplo.com" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; color:#fff; margin-bottom:14px;">
-      <div style="display:flex; justify-content:flex-end; gap:8px;">
-        <button class="btn-secondary" onclick="closeModal('recoverModal')">Cancelar</button>
-        <button class="btn-primary" onclick="recoverAccount()">Recuperar Cuenta</button>
       </div>
     </div>
   </div>
@@ -1055,6 +1083,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       if (!isRegistered || !currentUsername) {
         document.getElementById('onboardingGate').style.display = 'flex';
+        showOnboardingStep(0);
         renderOnboardingAvatars();
       } else {
         document.getElementById('onboardingGate').style.display = 'none';
@@ -1070,6 +1099,13 @@
         initPresenceTracker();
       }
     });
+
+    function showOnboardingStep(step) {
+      document.getElementById('step0').style.display = step === 0 ? 'block' : 'none';
+      document.getElementById('step1').style.display = step === 1 ? 'block' : 'none';
+      document.getElementById('step2').style.display = step === 2 ? 'block' : 'none';
+      document.getElementById('step3').style.display = step === 3 ? 'block' : 'none';
+    }
 
     function updateHeaderProfile() {
       document.getElementById('userAvatarHeader').innerText = currentAvatar;
@@ -1966,7 +2002,7 @@
       loadLiveDrops();
     }
 
-    // --- RESPALDO Y RECUPERACIÓN CON CORREO ---
+    // --- RESPALDO Y RECUPERACIÓN CON CORREO Y OTP ---
     async function saveBackupEmail() {
       const email = document.getElementById('backupEmailInput').value.trim();
       const feedback = document.getElementById('backupFeedback');
@@ -1981,20 +2017,57 @@
       }
     }
 
-    function openRecoverAccountModal() { document.getElementById('recoverModal').classList.add('show'); }
-    async function recoverAccount() {
-      const email = document.getElementById('recoverEmailInput').value.trim();
-      if (!email) return;
+    async function requestOtpCode() {
+      const email = document.getElementById('loginEmailInput').value.trim();
+      if (!email || !email.includes('@')) { alert('Ingresa un correo válido.'); return; }
+      
+      document.getElementById('btnRequestOtp').innerText = 'Enviando...';
+      
       if (supabaseClient) {
         try {
           const { data } = await supabaseClient.from('profiles').select('*').eq('email', email).maybeSingle();
-          if (data) {
-            currentUsername = data.username;
-            currentAvatar = data.avatar || '🐺';
+          if (!data) {
+            alert('⚠️ No encontramos ninguna cuenta vinculada a este correo.');
+            document.getElementById('btnRequestOtp').innerText = 'Enviar Código al Correo';
+            return;
+          }
+          
+          const { error } = await supabaseClient.auth.signInWithOtp({ email: email });
+          if (error) throw error;
+          
+          showOnboardingStep(3);
+        } catch (e) {
+          alert('Error enviando el correo. Intenta de nuevo.');
+        }
+      }
+      document.getElementById('btnRequestOtp').innerText = 'Enviar Código al Correo';
+    }
+
+    async function verifyOtpCode() {
+      const email = document.getElementById('loginEmailInput').value.trim();
+      const code = document.getElementById('loginCodeInput').value.trim();
+      if (code.length !== 6) { alert('El código debe tener 6 dígitos.'); return; }
+      
+      document.getElementById('btnVerifyOtp').innerText = 'Verificando...';
+      
+      if (supabaseClient) {
+        try {
+          const { data, error } = await supabaseClient.auth.verifyOtp({
+            email: email,
+            token: code,
+            type: 'magiclink'
+          });
+          
+          if (error) throw error;
+          
+          if (data.session) {
+            const { data: profile } = await supabaseClient.from('profiles').select('*').eq('email', email).single();
+            currentUsername = profile.username;
+            currentAvatar = profile.avatar || '🐺';
             localStorage.setItem('gotas_user_registered', 'true');
             localStorage.setItem('gotas_user_name', currentUsername);
             localStorage.setItem('gotas_user_avatar', currentAvatar);
-            closeModal('recoverModal');
+            
             document.getElementById('onboardingGate').style.display = 'none';
             updateHeaderProfile();
             loadLiveDrops();
@@ -2003,12 +2076,14 @@
             loadSavedJournal();
             updateSavedDropsCount();
             updateFriendsCountUI();
+            
             alert(`✨ ¡Bienvenido de vuelta, ${currentUsername}!`);
-            return;
           }
-        } catch (e) {}
+        } catch (e) {
+          alert('❌ Código incorrecto o expirado.');
+        }
       }
-      alert('No se encontró ninguna cuenta vinculada a este correo.');
+      document.getElementById('btnVerifyOtp').innerText = 'Verificar y Entrar';
     }
 
     // --- NOTIFICACIONES ---
