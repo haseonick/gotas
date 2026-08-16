@@ -1349,8 +1349,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  void _openNewDropDialog() {
+ void _openNewDropDialog() {
     final topicController = TextEditingController();
+    final locationController = TextEditingController(); // <-- NUEVO CONTROLADOR
     final contentController = TextEditingController();
 
     showModalBottomSheet(
@@ -1383,10 +1384,23 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               ],
             ),
             const SizedBox(height: 14),
+            // --- NUEVO CAMPO: UBICACIÓN ---
+            TextField(
+              controller: locationController,
+              decoration: InputDecoration(
+                labelText: 'Ubicación (Ej: 🇻🇪 Anzoátegui, o "En mi cuarto")',
+                labelStyle: const TextStyle(color: Color(0xFF90E0EF), fontSize: 13),
+                filled: true,
+                fillColor: const Color(0xFF0B132B),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // ------------------------------
             TextField(
               controller: topicController,
               decoration: InputDecoration(
-                labelText: 'Tema (Ej: Hábitos, Calistenia, Videojuegos, Lectura)',
+                labelText: 'Tema (Ej: Hábitos, Calistenia, Videojuegos)',
                 labelStyle: const TextStyle(color: Color(0xFF90E0EF), fontSize: 13),
                 filled: true,
                 fillColor: const Color(0xFF0B132B),
@@ -1420,13 +1434,14 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
                   onPressed: () async {
+                    final location = locationController.text.trim(); // <-- CAPTURAMOS LA UBICACIÓN
                     final topic = topicController.text.trim();
                     final content = contentController.text.trim();
                     if (content.isNotEmpty) {
                       try {
                         await Supabase.instance.client.from('drops').insert({
                           'author': _myUsername,
-                          'location': 'Tu rincón seguro',
+                          'location': location.isNotEmpty ? location : 'Tu rincón seguro', // <-- SI ESTÁ VACÍO, PONE EL DEFAULT
                           'avatar': _myAvatar,
                           'topic': topic.isNotEmpty ? topic : 'Pensamiento libre',
                           'content': content,
@@ -1451,7 +1466,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       ),
     );
   }
-
   // --- 2. PÁGINA: BUZÓN DE ECOS ---
   Widget _buildBuzonPage() {
     List<Map<String, dynamic>> myPublishedDrops = _liveDrops.where((d) => d['author'] == _myUsername).toList();
