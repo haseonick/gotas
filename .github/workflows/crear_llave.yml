@@ -1,0 +1,15 @@
+name: Crear Llave Maestra
+on: workflow_dispatch
+jobs:
+  crear-llave:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generar y codificar llave
+        run: |
+          keytool -genkey -v -keystore gotas.jks -keyalg RSA -keysize 2048 -validity 10000 -alias gotas -storepass gotas2026 -keypass gotas2026 -dname "CN=Gotas, OU=Gotas, O=Gotas, L=Barcelona, ST=Anzoategui, C=VE"
+          echo "==========================================================="
+          echo "Copia TODO el texto gigante que aparece debajo de esta línea:"
+          echo "==========================================================="
+          base64 -w 0 gotas.jks
+          echo ""
+          echo "==========================================================="
