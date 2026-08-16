@@ -946,6 +946,10 @@
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('newDropModal')">&times;</button>
       <h3 style="color:#fff; margin-bottom:8px;">🌊 Enviar una Gota al Océano</h3>
+      
+      <!-- NUEVO CAMPO: UBICACIÓN -->
+      <input type="text" id="newDropLocation" placeholder="Ubicación (Ej. 🇻🇪 Anzoátegui, o 'En mi cuarto')" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; margin-bottom:12px;">
+      
       <input type="text" id="newDropTopic" placeholder="Tema (Ej. Hábitos, Videojuegos, Lectura)" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; margin-bottom:14px;">
       <textarea id="newDropContent" rows="4" placeholder="Comparte tu reflexión con tranquilidad..." style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:10px; color:#fff; font-family:inherit; margin-bottom:16px;"></textarea>
       <div style="display:flex; justify-content:flex-end; gap:10px;">
@@ -1331,8 +1335,10 @@
     }
 
     async function publishNewDrop() {
+      const locationVal = document.getElementById('newDropLocation').value.trim();
       const topic = document.getElementById('newDropTopic').value.trim();
       const content = document.getElementById('newDropContent').value.trim();
+      
       if (!content) { alert('Por favor escribe el contenido de tu gota.'); return; }
 
       if (supabaseClient) {
@@ -1340,7 +1346,7 @@
           await supabaseClient.from('drops').insert({
             author: currentUsername,
             avatar: currentAvatar,
-            location: 'Tu rincón seguro',
+            location: locationVal ? locationVal : 'Tu rincón seguro',
             topic: topic || 'Pensamiento libre',
             content: content
           });
@@ -1348,6 +1354,7 @@
       }
 
       closeModal('newDropModal');
+      document.getElementById('newDropLocation').value = '';
       document.getElementById('newDropTopic').value = '';
       document.getElementById('newDropContent').value = '';
       alert('🌊 ¡Tu gota ha sido lanzada al océano vinculada a tu perfil!');
