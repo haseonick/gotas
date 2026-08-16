@@ -599,7 +599,7 @@
 
         <div class="filter-pills">
           <div class="filter-pill active" id="pillMyFriends" onclick="filterAlmasView('friends')">🌱 Mis Almas Afines (<span id="friendsCount">0</span>)</div>
-          <div class="filter-pill" id="pillDirectLetters" onclick="filterAlmasView('letters')">✉️ Cartas Directas Recibidas (<span id="directCount">0</span>)</div>
+          <div class="filter-pill" id="pillDirectLetters" onclick="filterAlmasView('letters')">✉️ Historial de Cartas Directas</div>
         </div>
 
         <!-- Lista de Amigos Guardados -->
@@ -609,7 +609,7 @@
 
         <!-- Lista de Cartas Directas Recibidas -->
         <div id="directLettersContainer" style="display:none; flex-direction:column; gap:12px; margin-top:14px;">
-          <div style="text-align:center; padding:20px; color:var(--text-muted);">Cargando correspondencia privada...</div>
+          <div style="text-align:center; padding:20px; color:var(--text-muted);">Cargando correspondencia...</div>
         </div>
       </section>
 
@@ -947,7 +947,6 @@
       <button class="modal-close" onclick="closeModal('newDropModal')">&times;</button>
       <h3 style="color:#fff; margin-bottom:8px;">🌊 Enviar una Gota al Océano</h3>
       
-      <!-- NUEVO CAMPO: UBICACIÓN -->
       <input type="text" id="newDropLocation" placeholder="Ubicación (Ej. 🇻🇪 Anzoátegui, o 'En mi cuarto')" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; margin-bottom:12px;">
       
       <input type="text" id="newDropTopic" placeholder="Tema (Ej. Hábitos, Videojuegos, Lectura)" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; margin-bottom:14px;">
@@ -955,6 +954,31 @@
       <div style="display:flex; justify-content:flex-end; gap:10px;">
         <button class="btn-secondary" onclick="closeModal('newDropModal')">Cancelar</button>
         <button class="btn-primary" onclick="publishNewDrop()">Lanzar al Mundo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Hilo de Correspondencia (Reemplaza al directLetterModal) -->
+  <div class="modal-backdrop" id="correspondenceModal">
+    <div class="modal-box" style="max-width: 600px; max-height: 90vh; display: flex; flex-direction: column;">
+      <button class="modal-close" onclick="closeModal('correspondenceModal')">&times;</button>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+        <span style="font-size:2rem;" id="corrAvatar">🐺</span>
+        <div>
+          <h3 style="color:#fff; margin:0;" id="corrName">Viajero</h3>
+          <span style="font-size:0.75rem; color:var(--accent-cyan);">Nuestra Correspondencia Lenta</span>
+        </div>
+      </div>
+      
+      <div id="corrThread" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; margin-bottom:16px; padding-right:8px; min-height: 250px;">
+        <!-- Aquí se cargan las cartas -->
+      </div>
+      
+      <div style="background:#0b132b; border:1px solid var(--border-color); border-radius:12px; padding:12px;">
+        <textarea id="corrInput" rows="3" placeholder="Escribe tu siguiente carta con serenidad..." style="width:100%; background:transparent; border:none; color:#fff; font-family:inherit; font-size:0.9rem; resize:none; outline:none;"></textarea>
+        <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+          <button class="btn-primary" style="padding:8px 16px; font-size:0.8rem;" onclick="sendCorrLetter()">Enviar Carta ✉️</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1026,6 +1050,7 @@
     let currentBuzonTab = 'sent';
     let tempEditAvatar = '🐺';
     let myFriendsList = JSON.parse(localStorage.getItem('gotas_my_friends') || '[]'); // Lista de amigos inicializada
+    let currentAlmasFilter = 'friends';
 
     document.addEventListener('DOMContentLoaded', () => {
       if (!isRegistered || !currentUsername) {
@@ -1368,6 +1393,7 @@
     }
 
     function filterAlmasView(type) {
+      currentAlmasFilter = type;
       document.getElementById('pillMyFriends').className = 'filter-pill' + (type === 'friends' ? ' active' : '');
       document.getElementById('pillDirectLetters').className = 'filter-pill' + (type === 'letters' ? ' active' : '');
       document.getElementById('friendsListContainer').style.display = type === 'friends' ? 'grid' : 'none';
@@ -1401,7 +1427,7 @@
               </div>
             </div>
           </div>
-          <button style="width:100%; margin-top:10px;" class="btn-secondary" onclick="openDirectLetterModal('${friend.username}')">✉️ Escribir Carta Lenta</button>
+          <button style="width:100%; margin-top:10px;" class="btn-secondary" onclick="openCorrespondenceModal('${friend.username}', '${friend.avatar}')">Abrir Hilo de Papel</button>
         `;
         container.appendChild(card);
       });
@@ -1409,33 +1435,53 @@
 
     async function loadDirectLetters() {
       const container = document.getElementById('directLettersContainer');
-      container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted); background:rgba(11,19,43,0.5); border-radius:12px;">Cargando cartas privadas...</div>';
+      container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted); background:rgba(11,19,43,0.5); border-radius:12px;">Cargando correspondencia...</div>';
       
       if (supabaseClient) {
         try {
-          const { data } = await supabaseClient.from('direct_letters')
-            .select('*')
-            .eq('recipient', currentUsername)
-            .order('created_at', { ascending: false });
+          // Buscamos todas las cartas donde soy destinatario o remitente
+          const { data: received } = await supabaseClient.from('direct_letters').select('*').eq('recipient', currentUsername);
+          const { data: sent } = await supabaseClient.from('direct_letters').select('*').eq('sender', currentUsername);
           
-          if (data && data.length > 0) {
+          const allLetters = [...(received || []), ...(sent || [])].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          
+          if (allLetters.length > 0) {
             container.innerHTML = '';
-            data.forEach(letter => {
+            
+            // Agrupamos por usuario
+            const convos = {};
+            allLetters.forEach(letter => {
+              const otherUser = letter.sender === currentUsername ? letter.recipient : letter.sender;
+              const otherAvatar = letter.sender === currentUsername ? '💧' : (letter.sender_avatar || '🐺');
+              
+              if (!convos[otherUser]) {
+                convos[otherUser] = {
+                  username: otherUser,
+                  avatar: otherAvatar,
+                  lastMessage: letter.content,
+                  date: letter.created_at
+                };
+              }
+            });
+            
+            Object.values(convos).forEach(convo => {
               const card = document.createElement('div');
               card.style.background = 'rgba(11, 19, 43, 0.6)';
               card.style.border = '1px solid var(--border-color)';
               card.style.borderRadius = 'var(--radius-md)';
               card.style.padding = '16px';
               card.innerHTML = `
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-                  <span style="font-size:1.5rem;">${letter.sender_avatar || '🐺'}</span>
-                  <span style="font-weight:bold; color:var(--accent-cyan);">De: ${letter.sender}</span>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.5rem;">${convo.avatar}</span>
+                    <span style="font-weight:bold; color:var(--accent-cyan);">Correspondencia con ${convo.username}</span>
+                  </div>
                 </div>
-                <div style="background:#0b132b; border-radius:10px; padding:12px; font-style:italic; color:#fff; font-size:0.9rem;">
-                  "${letter.content}"
+                <div style="background:#0b132b; border-radius:10px; padding:12px; font-style:italic; color:var(--text-muted); font-size:0.85rem; margin-bottom:10px;">
+                  Última carta: "${convo.lastMessage.substring(0, 60)}..."
                 </div>
-                <div style="text-align:right; margin-top:10px;">
-                  <button class="btn-secondary" style="font-size:0.8rem; padding:6px 12px;" onclick="openDirectLetterModal('${letter.sender}')">Responder Carta Lenta</button>
+                <div style="text-align:right;">
+                  <button class="btn-secondary" style="font-size:0.8rem; padding:6px 12px;" onclick="openCorrespondenceModal('${convo.username}', '${convo.avatar}')">Abrir Hilo de Papel</button>
                 </div>
               `;
               container.appendChild(card);
@@ -1447,7 +1493,7 @@
         }
       }
       
-      container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted); background:rgba(11,19,43,0.5); border-radius:12px;">📭<br>No tienes correspondencia directa nueva de tus almas afines.</div>';
+      container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted); background:rgba(11,19,43,0.5); border-radius:12px;">📭<br>Aún no tienes correspondencia iniciada.</div>';
     }
 
     function updateFriendBtnUI(isFriend) {
@@ -2125,39 +2171,107 @@
       }
     }
 
-    // --- CARTAS DIRECTAS (ALMAS AFINES) ---
-    let currentDirectRecipient = '';
+    // --- HILO DE CORRESPONDENCIA DIRECTA (CARTAS ENLAZADAS) ---
+    let currentCorrRecipient = '';
+    let currentCorrAvatar = '';
 
-    function openDirectLetterModal(recipient) {
-      currentDirectRecipient = recipient;
-      document.getElementById('directRecipientName').innerText = recipient;
-      document.getElementById('directLetterContent').value = '';
-      document.getElementById('directLetterModal').classList.add('show');
+    async function openCorrespondenceModal(recipientName, recipientAvatar) {
+      currentCorrRecipient = recipientName;
+      currentCorrAvatar = recipientAvatar || '🐺';
+      
+      document.getElementById('corrName').innerText = recipientName;
+      document.getElementById('corrAvatar').innerText = currentCorrAvatar;
+      document.getElementById('corrInput').value = '';
+      
+      const threadContainer = document.getElementById('corrThread');
+      threadContainer.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted);">Buscando cartas en el archivo...</div>';
+      
+      document.getElementById('correspondenceModal').classList.add('show');
+      
+      await loadThread();
     }
 
-    async function sendDirectLetter() {
-      const content = document.getElementById('directLetterContent').value.trim();
-      
-      if (!content) { 
-        alert('Por favor escribe tu carta.'); 
-        return; 
+    async function loadThread() {
+      const threadContainer = document.getElementById('corrThread');
+      if (supabaseClient) {
+        try {
+          // Buscamos todas mis cartas entrantes y salientes
+          const { data: received } = await supabaseClient.from('direct_letters').select('*').eq('recipient', currentUsername);
+          const { data: sent } = await supabaseClient.from('direct_letters').select('*').eq('sender', currentUsername);
+          
+          // Filtramos solo las que pertenecen a esta charla específica y las ordenamos por fecha
+          const allLetters = [...(received || []), ...(sent || [])]
+            .filter(l => 
+              (l.sender === currentUsername && l.recipient === currentCorrRecipient) || 
+              (l.sender === currentCorrRecipient && l.recipient === currentUsername)
+            )
+            .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            
+          threadContainer.innerHTML = '';
+          
+          if (allLetters.length > 0) {
+            allLetters.forEach(letter => {
+              const isMine = letter.sender === currentUsername;
+              const card = document.createElement('div');
+              
+              card.style.maxWidth = '85%';
+              card.style.alignSelf = isMine ? 'flex-end' : 'flex-start';
+              card.style.background = isMine ? 'rgba(72, 202, 228, 0.1)' : 'rgba(11, 19, 43, 0.8)';
+              card.style.border = isMine ? '1px solid rgba(72, 202, 228, 0.3)' : '1px solid var(--border-color)';
+              card.style.borderRadius = '12px';
+              card.style.padding = '14px';
+              
+              const dateStr = new Date(letter.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+              
+              card.innerHTML = `
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:6px; text-align:${isMine ? 'right' : 'left'};">
+                  ${isMine ? 'Tu carta' : `Carta de ${letter.sender}`} • ${dateStr}
+                </div>
+                <div style="font-size:0.95rem; color:#fff; line-height:1.5; font-style:italic;">
+                  "${letter.content}"
+                </div>
+              `;
+              threadContainer.appendChild(card);
+            });
+            
+            // Bajar el scroll para ver la última carta
+            setTimeout(() => { threadContainer.scrollTop = threadContainer.scrollHeight; }, 100);
+          } else {
+            threadContainer.innerHTML = `
+              <div style="text-align:center; padding:30px; color:var(--text-muted); margin:auto;">
+                <div style="font-size:2rem; margin-bottom:10px;">🕊️</div>
+                Este es el inicio de tu correspondencia con ${currentCorrRecipient}.<br>Anímate a escribirle la primera carta.
+              </div>
+            `;
+          }
+        } catch (e) {
+          console.error(e);
+        }
       }
+    }
 
+    async function sendCorrLetter() {
+      const content = document.getElementById('corrInput').value.trim();
+      if (!content) return;
+      
       if (supabaseClient) {
         try {
           await supabaseClient.from('direct_letters').insert({
             sender: currentUsername,
             sender_avatar: currentAvatar,
-            recipient: currentDirectRecipient,
+            recipient: currentCorrRecipient,
             content: content
           });
-        } catch (e) {
-          console.error("Error enviando carta directa:", e);
-        }
+        } catch (e) { console.error("Error enviando carta", e); }
       }
-
-      closeModal('directLetterModal');
-      alert(`✉️ Tu carta ha sido enviada con calma a ${currentDirectRecipient}.`);
+      
+      document.getElementById('corrInput').value = '';
+      await loadThread(); // Recarga el hilo para mostrar mi nueva carta
+      
+      // Actualiza la lista de fondo si estamos en la pestaña de cartas
+      if (currentAlmasFilter === 'letters') {
+        loadDirectLetters();
+      }
     }
   </script>
 
