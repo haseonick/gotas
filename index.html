@@ -555,6 +555,7 @@
   <div class="app-container">
     <aside class="sidebar">
       <button class="nav-btn active" onclick="switchTab('tab-gotas', this)">💧 Gotas Globales</button>
+      <button class="nav-btn" id="sidebarAlmasBtn" onclick="openAlmasTab(this)">👥 Almas Afines</button>
       <button class="nav-btn" id="sidebarBuzonBtn" onclick="openBuzonTab(this)">📬 Mi Buzón de Ecos</button>
       <button class="nav-btn" onclick="switchTab('tab-diario', this)">📖 Mi Diario Privado</button>
       <button class="nav-btn" onclick="switchTab('tab-dilemas', this)">✨ Dilemas del Día</button>
@@ -574,6 +575,7 @@
 
         <div class="filter-pills">
           <div class="filter-pill active" id="pillAllDrops" onclick="filterDropsView('all')">🌊 Todas las Gotas</div>
+          <div class="filter-pill" id="pillFriendsDrops" onclick="filterDropsView('friends')">👥 De Almas Afines</div>
           <div class="filter-pill" id="pillSavedDrops" onclick="filterDropsView('saved')">🔖 Gotas Guardadas (<span id="savedCount">0</span>)</div>
         </div>
 
@@ -582,6 +584,33 @@
         </div>
         <div class="letter-cards-grid" id="dropsGrid">
           <div style="text-align:center; padding:20px; color:var(--text-muted);">Cargando gotas del océano global...</div>
+        </div>
+      </section>
+
+
+      <!-- Tab: Almas Afines (Amigos y Correspondencia Privada) -->
+      <section id="tab-almas" class="view-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2>👥 Almas Afines</h2>
+          <span style="font-size:0.8rem; color:var(--accent-cyan);">Tu círculo de calma</span>
+        </div>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:16px;">
+          Viajeros con los que sentiste afinidad. Tu lista es 100% privada (sin contadores públicos ni presión social).
+        </p>
+
+        <div class="filter-pills">
+          <div class="filter-pill active" id="pillMyFriends" onclick="filterAlmasView('friends')">🌱 Mis Almas Afines (<span id="friendsCount">0</span>)</div>
+          <div class="filter-pill" id="pillDirectLetters" onclick="filterAlmasView('letters')">✉️ Cartas Directas Recibidas (<span id="directCount">0</span>)</div>
+        </div>
+
+        <!-- Lista de Amigos Guardados -->
+        <div id="friendsListContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; margin-top:14px;">
+          <div style="text-align:center; padding:20px; color:var(--text-muted); grid-column:1/-1;">Cargando almas afines...</div>
+        </div>
+
+        <!-- Lista de Cartas Directas Recibidas -->
+        <div id="directLettersContainer" style="display:none; flex-direction:column; gap:12px; margin-top:14px;">
+          <div style="text-align:center; padding:20px; color:var(--text-muted);">Cargando correspondencia privada...</div>
         </div>
       </section>
 
@@ -883,7 +912,10 @@
         <div style="display:flex; align-items:center; gap:10px;">
           <div class="preview-avatar-circle" id="modalAvatar" style="width:38px; height:38px; font-size:1.3rem;">🐺</div>
           <div>
-            <h3 id="modalAuthor" style="color:#fff; font-size:1rem; margin:0;">Autor</h3>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h3 id="modalAuthor" style="color:#fff; font-size:1rem; margin:0;">Autor</h3>
+              <button id="modalFriendBtn" onclick="toggleFriendStatus()" style="background:rgba(6,214,160,0.15); border:1px solid #06d6a0; border-radius:12px; padding:2px 8px; font-size:0.7rem; color:#06d6a0; cursor:pointer; font-weight:600;">🌱 Conectar</button>
+            </div>
             <div id="modalLocation" style="font-size:0.75rem; color:var(--text-muted);">Ubicación</div>
           </div>
         </div>
@@ -1003,6 +1035,7 @@
         initDilemmaVote();
         loadSavedJournal();
         updateSavedDropsCount();
+        updateFriendsCountUI();
         updateNotificationUI();
         initRealtimeNotifications();
         initPresenceTracker();
@@ -1109,6 +1142,7 @@
       initDilemmaVote();
       loadSavedJournal();
       updateSavedDropsCount();
+        updateFriendsCountUI();
       updateNotificationUI();
       initRealtimeNotifications();
         initPresenceTracker();
@@ -1136,6 +1170,8 @@
     function filterDropsView(type) {
       currentDropsFilter = type;
       document.getElementById('pillAllDrops').className = 'filter-pill' + (type === 'all' ? ' active' : '');
+      const pFr = document.getElementById('pillFriendsDrops');
+      if (pFr) pFr.className = 'filter-pill' + (type === 'friends' ? ' active' : '');
       document.getElementById('pillSavedDrops').className = 'filter-pill' + (type === 'saved' ? ' active' : '');
       renderDropsView();
     }
@@ -1145,7 +1181,14 @@
       grid.innerHTML = '';
 
       let list = allGlobalDrops;
-      if (currentDropsFilter === 'saved') {
+      if (currentDropsFilter === 'friends') {
+        const friendNames = myFriendsList.map(f => f.username);
+        list = allGlobalDrops.filter(d => friendNames.includes(d.author));
+        if (list.length === 0) {
+          grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px; color:var(--text-muted); background:rgba(11,19,43,0.5); border-radius:14px;">No hay cartas de tus Almas Afines aún. Conecta con otros viajeros tocando <strong>"🌱 Conectar"</strong> en sus cartas para verlas aquí.</div>';
+          return;
+        }
+      } else if (currentDropsFilter === 'saved') {
         const savedIds = JSON.parse(localStorage.getItem('gotas_saved_drop_ids') || '[]');
         list = allGlobalDrops.filter(d => savedIds.includes(d.id));
         if (list.length === 0) {
@@ -1190,6 +1233,8 @@
       document.getElementById('replyText').value = '';
 
       loadRepliesForCurrentDrop(drop.id);
+      const isFr = myFriendsList.some(f => f.username === drop.author);
+      updateFriendBtnUI(isFr);
       document.getElementById('letterModal').classList.add('show');
     }
 
@@ -1224,6 +1269,7 @@
         localStorage.setItem('gotas_saved_drop_ids', JSON.stringify(savedIds));
       }
       updateSavedDropsCount();
+        updateFriendsCountUI();
       alert('🔖 Carta guardada en tu lista de "Gotas Guardadas" para leer y responder cuando tengas energía social.');
       closeModal('letterModal');
     }
@@ -1735,6 +1781,7 @@
             initDilemmaVote();
             loadSavedJournal();
             updateSavedDropsCount();
+        updateFriendsCountUI();
             alert(`✨ ¡Bienvenido de vuelta, ${currentUsername}!`);
             return;
           }
@@ -1904,5 +1951,20 @@
     }
 
   </script>
+
+  <!-- Modal: Enviar Carta Directa Lenta a un Amigo -->
+  <div class="modal-backdrop" id="directLetterModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('directLetterModal')">&times;</button>
+      <h3 style="color:#fff; margin-bottom:4px;">✉️ Carta Lenta para <span id="directRecipientName" style="color:var(--accent-cyan);">Viajero</span></h3>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:14px;">Correspondencia privada sin prisa. Tu amigo responderá cuando recargue su energía social.</p>
+      <textarea id="directLetterContent" rows="5" placeholder="Escribe tu carta con serenidad..." style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:10px; padding:12px; color:#fff; font-family:inherit; margin-bottom:14px; font-size:0.9rem;"></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn-secondary" onclick="closeModal('directLetterModal')">Cancelar</button>
+        <button class="btn-primary" onclick="sendDirectLetter()">Enviar Carta ✉️</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
