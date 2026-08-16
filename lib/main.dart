@@ -64,6 +64,14 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   bool _isRegistered = false;
   bool _isCheckingSession = true;
 
+  // Variables para el Onboarding / Login
+  int _onboardingStep = 0; 
+  String _onboardingAvatar = '🐺';
+  final TextEditingController _onboardingNameController = TextEditingController();
+  final TextEditingController _loginEmailController = TextEditingController();
+  final TextEditingController _loginCodeController = TextEditingController();
+  bool _isAuthLoading = false;
+
   String _myUsername = '';
   String _myAvatar = '🐺';
 
@@ -105,25 +113,16 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   Future<void> _checkForUpdates() async {
     try {
-      final data = await Supabase.instance.client
-          .from('app_config')
-          .select()
-          .limit(1)
-          .maybeSingle();
-
+      final data = await Supabase.instance.client.from('app_config').select().limit(1).maybeSingle();
       if (data != null) {
         final latestVersion = data['latest_version']?.toString();
         final isMandatory = data['is_mandatory'] as bool? ?? false;
         
         if (latestVersion != null && latestVersion != currentAppVersion) {
-          if (mounted) {
-            _showUpdateDialog(latestVersion, isMandatory);
-          }
+          if (mounted) _showUpdateDialog(latestVersion, isMandatory);
         }
       }
-    } catch (e) {
-      debugPrint('Error comprobando actualizaciones: $e');
-    }
+    } catch (e) { debugPrint('Error comprobando actualizaciones: $e'); }
   }
 
   void _showUpdateDialog(String latestVersion, bool isMandatory) {
@@ -134,49 +133,23 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         onWillPop: () async => !isMandatory,
         child: AlertDialog(
           backgroundColor: const Color(0xFF1C2541),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Color(0xFF48CAE4), width: 1.5),
-          ),
-          title: const Row(
-            children: [
-              Text('🚀', style: TextStyle(fontSize: 24)),
-              SizedBox(width: 10),
-              Expanded(child: Text('Nueva versión disponible', style: TextStyle(color: Color(0xFFCAF0F8), fontSize: 16, fontWeight: FontWeight.bold))),
-            ],
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF48CAE4), width: 1.5)),
+          title: const Row(children: [Text('🚀', style: TextStyle(fontSize: 24)), SizedBox(width: 10), Expanded(child: Text('Nueva versión disponible', style: TextStyle(color: Color(0xFFCAF0F8), fontSize: 16, fontWeight: FontWeight.bold)))]),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('La versión $latestVersion de Gotas está lista.', style: const TextStyle(color: Colors.white, fontSize: 14)),
               const SizedBox(height: 8),
-              Text(
-                isMandatory 
-                  ? 'Esta actualización es obligatoria para asegurar tu conexión al backend.'
-                  : 'Te recomendamos actualizar para disfrutar de más calma y nuevas funciones.',
-                style: const TextStyle(color: Colors.white60, fontSize: 13, height: 1.4),
-              ),
+              Text(isMandatory ? 'Esta actualización es obligatoria para asegurar tu conexión al backend.' : 'Te recomendamos actualizar para disfrutar de más calma y nuevas funciones.', style: const TextStyle(color: Colors.white60, fontSize: 13, height: 1.4)),
               const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0B132B),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white12),
-                ),
-                child: const Text('Link de descarga:\nhttps://haseonick.github.io/gotas/', style: TextStyle(fontSize: 12, color: Color(0xFF48CAE4))),
-              )
+              Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF0B132B), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white12)), child: const Text('Link de descarga:\nhttps://haseonick.github.io/gotas/', style: TextStyle(fontSize: 12, color: Color(0xFF48CAE4))))
             ],
           ),
           actions: [
-            if (!isMandatory)
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Más tarde', style: TextStyle(color: Colors.white60))),
+            if (!isMandatory) TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Más tarde', style: TextStyle(color: Colors.white60))),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0077B6),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0077B6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               onPressed: () {
                 Clipboard.setData(const ClipboardData(text: 'https://haseonick.github.io/gotas/'));
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🔗 Enlace copiado en el portapapeles')));
@@ -286,7 +259,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   Future<void> _fetchDirectLetters() async {
     try {
-      // Obtenemos todos los mensajes donde soy remitente o destinatario (Para el Hilo)
       final data = await Supabase.instance.client
           .from('direct_letters')
           .select()
@@ -304,18 +276,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     try {
       Supabase.instance.client
           .channel('public:drops_and_letters')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'drops',
-            callback: (payload) => _fetchLiveDrops(),
-          )
-          .onPostgresChanges(
-            event: PostgresChangeEvent.insert,
-            schema: 'public',
-            table: 'direct_letters',
-            callback: (payload) => _fetchDirectLetters(),
-          )
+          .onPostgresChanges(event: PostgresChangeEvent.all, schema: 'public', table: 'drops', callback: (payload) => _fetchLiveDrops())
+          .onPostgresChanges(event: PostgresChangeEvent.insert, schema: 'public', table: 'direct_letters', callback: (payload) => _fetchDirectLetters())
           .subscribe();
     } catch (_) {}
   }
@@ -351,15 +313,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   }
 
   String _generateRandomName() {
-    final sustantivos = [
-      'Caminante', 'Zorro', 'Búho', 'Gato', 'Conejo', 'Lobo',
-      'Viajero', 'Eco', 'Bruma', 'Nómada', 'Lector', 'Panda',
-      'Erizo', 'Ciervo', 'Rana', 'Pingüino', 'Tortuga'
-    ];
-    final adjetivos = [
-      'Silencioso', 'Sereno', 'Tranquilo', 'Nocturno', 'Calmo', 'Lofi',
-      'Pacífico', 'Suave', 'Astral', 'Zen', 'Pensativo', 'Solitario'
-    ];
+    final sustantivos = ['Caminante', 'Zorro', 'Búho', 'Gato', 'Conejo', 'Lobo', 'Viajero', 'Eco', 'Bruma', 'Nómada', 'Lector', 'Panda', 'Erizo', 'Ciervo', 'Rana', 'Pingüino', 'Tortuga'];
+    final adjetivos = ['Silencioso', 'Sereno', 'Tranquilo', 'Nocturno', 'Calmo', 'Lofi', 'Pacífico', 'Suave', 'Astral', 'Zen', 'Pensativo', 'Solitario'];
     final rand = math.Random();
     return '${sustantivos[rand.nextInt(sustantivos.length)]}${adjetivos[rand.nextInt(adjetivos.length)]}';
   }
@@ -367,9 +322,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   Widget build(BuildContext context) {
     if (_isCheckingSession) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: Color(0xFF48CAE4))),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator(color: Color(0xFF48CAE4))));
     }
 
     if (!_isRegistered) return _buildOnboardingScreen();
@@ -400,11 +353,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0x2606D6A0),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0x6606D6A0)),
-              ),
+              decoration: BoxDecoration(color: const Color(0x2606D6A0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0x6606D6A0))),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -415,11 +364,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.favorite, color: Color(0xFFFF5E5B)),
-            tooltip: 'Apoyar el proyecto',
-            onPressed: _showSupportModal,
-          ),
+          IconButton(icon: const Icon(Icons.favorite, color: Color(0xFFFF5E5B)), tooltip: 'Apoyar el proyecto', onPressed: _showSupportModal),
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
             child: ActionChip(
@@ -462,25 +407,38 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // --- PANTALLA INICIAL OBLIGATORIA (ONBOARDING) ---
+  // ==========================================
+  // PANTALLA INICIAL OBLIGATORIA (ONBOARDING)
+  // ==========================================
   Widget _buildOnboardingScreen() {
-    final nameController = TextEditingController();
-    String tempAvatar = _myAvatar;
+    Widget content;
+    
+    if (_onboardingStep == 0) {
+      content = _buildStep0Choice();
+    } else if (_onboardingStep == 1) {
+      content = _buildStep1Create();
+    } else if (_onboardingStep == 2) {
+      content = _buildStep2LoginEmail();
+    } else {
+      content = _buildStep3LoginCode();
+    }
 
     return Scaffold(
-      body: StatefulBuilder(
-        builder: (ctx, setGateState) => Container(
-          decoration: const BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment(0, -0.3),
-              radius: 1.2,
-              colors: [Color(0xFF1C2541), Color(0xFF0B132B), Color(0xFF050814)],
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(0, -0.3),
+            radius: 1.2,
+            colors: [Color(0xFF1C2541), Color(0xFF0B132B), Color(0xFF050814)],
           ),
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
               child: Card(
+                key: ValueKey<int>(_onboardingStep),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
                   side: const BorderSide(color: Color(0xFF48CAE4), width: 1.5),
@@ -488,204 +446,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 color: const Color(0xFF1C2541),
                 child: Padding(
                   padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const WaterDropIcon(size: 48),
-                      const SizedBox(height: 12),
-                      const Text('Bienvenido a Gotas', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                      const SizedBox(height: 6),
-                      const Text('Crea tu identidad anónima de viajero antes de comenzar.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.white60)),
-                      const SizedBox(height: 16),
-
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0B132B),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0x3348CAE4)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircleAvatar(radius: 20, backgroundColor: const Color(0x3348CAE4), child: Text(tempAvatar, style: const TextStyle(fontSize: 20))),
-                            const SizedBox(width: 12),
-                            Text(
-                              nameController.text.isNotEmpty ? nameController.text : 'Escribe tu alias...',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: nameController.text.isNotEmpty ? Colors.white : Colors.white38),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('1. Elige tu Avatar (36 Opciones):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF90E0EF))),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 110,
-                        child: GridView.builder(
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 6, crossAxisSpacing: 6, mainAxisSpacing: 6),
-                          itemCount: _availableAvatars.length,
-                          itemBuilder: (c, i) {
-                            final av = _availableAvatars[i];
-                            final isSel = tempAvatar == av;
-                            return GestureDetector(
-                              onTap: () => setGateState(() => tempAvatar = av),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: isSel ? const Color(0x3348CAE4) : const Color(0xFF0B132B),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: isSel ? const Color(0xFF48CAE4) : Colors.white12, width: isSel ? 2 : 1),
-                                ),
-                                child: Center(child: Text(av, style: const TextStyle(fontSize: 18))),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('2. Tu Nombre o Apodo:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF90E0EF))),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: nameController,
-                              onChanged: (v) => setGateState(() {}),
-                              decoration: InputDecoration(
-                                hintText: 'Ej: ZorroAzul, Lector...',
-                                hintStyle: const TextStyle(fontSize: 12, color: Colors.white38),
-                                filled: true,
-                                fillColor: const Color(0xFF0B132B),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0077B6),
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            onPressed: () {
-                              final randName = _generateRandomName();
-                              setGateState(() => nameController.text = randName);
-                            },
-                            child: const Text('🎲 Aleatorio', style: TextStyle(fontSize: 11, color: Colors.white)),
-                          )
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF48CAE4),
-                            foregroundColor: const Color(0xFF0B132B),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                          onPressed: () {
-                            final name = nameController.text.trim();
-                            if (name.length < 3) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Por favor escribe un nombre de al menos 3 letras.')));
-                              return;
-                            }
-
-                            showDialog(
-                              context: context,
-                              builder: (c) => AlertDialog(
-                                backgroundColor: const Color(0xFF1C2541),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF48CAE4))),
-                                title: Row(
-                                  children: const [
-                                    Text('🔒', style: TextStyle(fontSize: 22)),
-                                    SizedBox(width: 8),
-                                    Text('¿Estás seguro?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
-                                  ],
-                                ),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Text(
-                                      'Tu nombre de viajero será definitivo y permanente. No podrás cambiarlo después para mantener la confianza en tus cartas.',
-                                      style: TextStyle(fontSize: 13, color: Colors.white70, height: 1.4),
-                                    ),
-                                    const SizedBox(height: 14),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF0B132B),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: const Color(0xFF48CAE4)),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text(tempAvatar, style: const TextStyle(fontSize: 22)),
-                                          const SizedBox(width: 10),
-                                          Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(c), child: const Text('Revisar', style: TextStyle(color: Colors.white60))),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0077B6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                                    onPressed: () async {
-                                      Navigator.pop(c);
-                                      try {
-                                        await Supabase.instance.client.from('profiles').insert({
-                                          'username': name,
-                                          'avatar': tempAvatar,
-                                        });
-                                      } catch (_) {}
-
-                                      final prefs = await SharedPreferences.getInstance();
-                                      await prefs.setString('gotas_user_name', name);
-                                      await prefs.setString('gotas_user_avatar', tempAvatar);
-                                      await prefs.setBool('gotas_user_registered', true);
-
-                                      setState(() {
-                                        _myUsername = name;
-                                        _myAvatar = tempAvatar;
-                                        _isRegistered = true;
-                                      });
-
-                                      _fetchLiveDrops();
-                                      _fetchDirectLetters();
-                                    },
-                                    child: const Text('Sí, confirmar 💧', style: TextStyle(color: Colors.white)),
-                                  )
-                                ],
-                              ),
-                            );
-                          },
-                          child: const Text('Comenzar y Entrar al Océano 💧', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextButton(
-                        onPressed: () => _showRecoverAccountModal(),
-                        child: const Text(
-                          '¿Ya tenías una cuenta respaldada? Recuperar con correo',
-                          style: TextStyle(color: Color(0xFF48CAE4), fontSize: 12, decoration: TextDecoration.underline),
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: content,
                 ),
               ),
             ),
@@ -694,6 +455,312 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       ),
     );
   }
+
+  Widget _buildStep0Choice() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const WaterDropIcon(size: 54),
+        const SizedBox(height: 16),
+        const Text('Bienvenido a Gotas', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+        const SizedBox(height: 8),
+        const Text('Un refugio digital de baja presión.\nConecta a tu propio ritmo.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: Colors.white60, height: 1.4)),
+        const SizedBox(height: 32),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF48CAE4),
+              foregroundColor: const Color(0xFF0B132B),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            onPressed: () => setState(() => _onboardingStep = 1),
+            child: const Text('Comenzar como Nuevo Viajero 🌊', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          ),
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF48CAE4),
+              side: const BorderSide(color: Color(0xFF48CAE4)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            onPressed: () => setState(() => _onboardingStep = 2),
+            child: const Text('Ya tengo una cuenta (Recuperar) 🔄', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStep1Create() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Align(
+          alignment: Alignment.topLeft,
+          child: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white70), onPressed: () => setState(() => _onboardingStep = 0)),
+        ),
+        const WaterDropIcon(size: 32),
+        const SizedBox(height: 12),
+        const Text('Crear Identidad', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(color: const Color(0xFF0B132B), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0x3348CAE4))),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircleAvatar(radius: 20, backgroundColor: const Color(0x3348CAE4), child: Text(_onboardingAvatar, style: const TextStyle(fontSize: 20))),
+              const SizedBox(width: 12),
+              Text(_onboardingNameController.text.isNotEmpty ? _onboardingNameController.text : 'Escribe tu alias...', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: _onboardingNameController.text.isNotEmpty ? Colors.white : Colors.white38)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Align(alignment: Alignment.centerLeft, child: Text('1. Elige tu Avatar:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF90E0EF)))),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 110,
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 6, crossAxisSpacing: 6, mainAxisSpacing: 6),
+            itemCount: _availableAvatars.length,
+            itemBuilder: (c, i) {
+              final av = _availableAvatars[i];
+              final isSel = _onboardingAvatar == av;
+              return GestureDetector(
+                onTap: () => setState(() => _onboardingAvatar = av),
+                child: Container(
+                  decoration: BoxDecoration(color: isSel ? const Color(0x3348CAE4) : const Color(0xFF0B132B), borderRadius: BorderRadius.circular(10), border: Border.all(color: isSel ? const Color(0xFF48CAE4) : Colors.white12, width: isSel ? 2 : 1)),
+                  child: Center(child: Text(av, style: const TextStyle(fontSize: 18))),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 14),
+        const Align(alignment: Alignment.centerLeft, child: Text('2. Tu Nombre o Apodo:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF90E0EF)))),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _onboardingNameController,
+                onChanged: (v) => setState(() {}),
+                decoration: InputDecoration(hintText: 'Ej: ZorroAzul...', hintStyle: const TextStyle(fontSize: 12, color: Colors.white38), filled: true, fillColor: const Color(0xFF0B132B), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0077B6), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              onPressed: () => setState(() => _onboardingNameController.text = _generateRandomName()),
+              child: const Text('🎲 Aleatorio', style: TextStyle(fontSize: 11, color: Colors.white)),
+            )
+          ],
+        ),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF48CAE4), foregroundColor: const Color(0xFF0B132B), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+            onPressed: () {
+              final name = _onboardingNameController.text.trim();
+              if (name.length < 3) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Escribe un nombre de al menos 3 letras.')));
+                return;
+              }
+              showDialog(
+                context: context,
+                builder: (c) => AlertDialog(
+                  backgroundColor: const Color(0xFF1C2541),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF48CAE4))),
+                  title: const Row(children: [Text('🔒', style: TextStyle(fontSize: 22)), SizedBox(width: 8), Text('¿Estás seguro?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8)))]),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('Tu nombre será definitivo y permanente.', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(color: const Color(0xFF0B132B), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF48CAE4))),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [Text(_onboardingAvatar, style: const TextStyle(fontSize: 22)), const SizedBox(width: 10), Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white))],
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(c), child: const Text('Revisar', style: TextStyle(color: Colors.white60))),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0077B6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      onPressed: () async {
+                        Navigator.pop(c);
+                        try {
+                          await Supabase.instance.client.from('profiles').insert({'username': name, 'avatar': _onboardingAvatar});
+                        } catch (_) {}
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setString('gotas_user_name', name);
+                        await prefs.setString('gotas_user_avatar', _onboardingAvatar);
+                        await prefs.setBool('gotas_user_registered', true);
+                        setState(() {
+                          _myUsername = name;
+                          _myAvatar = _onboardingAvatar;
+                          _isRegistered = true;
+                        });
+                        _fetchLiveDrops();
+                        _fetchDirectLetters();
+                      },
+                      child: const Text('Sí, confirmar 💧', style: TextStyle(color: Colors.white)),
+                    )
+                  ],
+                ),
+              );
+            },
+            child: const Text('Comenzar 💧', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildStep2LoginEmail() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Align(
+          alignment: Alignment.topLeft,
+          child: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white70), onPressed: () => setState(() => _onboardingStep = 0)),
+        ),
+        const Text('🔄 Recuperar Cuenta', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+        const SizedBox(height: 8),
+        const Text('Ingresa el correo que vinculaste. Te enviaremos un código de seguridad para entrar.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.white60)),
+        const SizedBox(height: 20),
+        TextField(
+          controller: _loginEmailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            hintText: 'tu-correo@ejemplo.com',
+            filled: true,
+            fillColor: const Color(0xFF0B132B),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          ),
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF48CAE4), foregroundColor: const Color(0xFF0B132B), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+            onPressed: _isAuthLoading ? null : () async {
+              final email = _loginEmailController.text.trim();
+              if (email.isEmpty || !email.contains('@')) return;
+              setState(() => _isAuthLoading = true);
+              try {
+                final data = await Supabase.instance.client.from('profiles').select().eq('email', email).maybeSingle();
+                if (data == null) {
+                  setState(() => _isAuthLoading = false);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ No encontramos ninguna cuenta vinculada a este correo.')));
+                  return;
+                }
+                
+                await Supabase.instance.client.auth.signInWithOtp(email: email);
+                
+                setState(() {
+                  _isAuthLoading = false;
+                  _onboardingStep = 3;
+                });
+              } catch (e) {
+                setState(() => _isAuthLoading = false);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error enviando el correo. Intenta de nuevo.')));
+              }
+            },
+            child: _isAuthLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Color(0xFF0B132B), strokeWidth: 2)) : const Text('Enviar Código al Correo', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildStep3LoginCode() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Align(
+          alignment: Alignment.topLeft,
+          child: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white70), onPressed: () => setState(() => _onboardingStep = 2)),
+        ),
+        const Text('✉️ Revisa tu Bandeja', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+        const SizedBox(height: 8),
+        const Text('Ingresa el código de 6 dígitos que enviamos a tu correo electrónico.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.white60)),
+        const SizedBox(height: 20),
+        TextField(
+          controller: _loginCodeController,
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 24, letterSpacing: 4, fontWeight: FontWeight.bold),
+          maxLength: 6,
+          decoration: InputDecoration(
+            counterText: "",
+            hintText: '000000',
+            filled: true,
+            fillColor: const Color(0xFF0B132B),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          ),
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0077B6), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+            onPressed: _isAuthLoading ? null : () async {
+              final code = _loginCodeController.text.trim();
+              final email = _loginEmailController.text.trim();
+              if (code.length != 6) return;
+              setState(() => _isAuthLoading = true);
+              try {
+                final res = await Supabase.instance.client.auth.verifyOTP(
+                  type: OtpType.magiclink, 
+                  email: email,
+                  token: code,
+                );
+                
+                if (res.session != null) {
+                  final data = await Supabase.instance.client.from('profiles').select().eq('email', email).single();
+                  final name = data['username'];
+                  final av = data['avatar'] ?? '🐺';
+                  
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setString('gotas_user_name', name);
+                  await prefs.setString('gotas_user_avatar', av);
+                  await prefs.setBool('gotas_user_registered', true);
+
+                  setState(() {
+                    _myUsername = name;
+                    _myAvatar = av;
+                    _isRegistered = true;
+                    _isAuthLoading = false;
+                  });
+                  
+                  _fetchLiveDrops();
+                  _fetchDirectLetters();
+                }
+              } catch (e) {
+                setState(() => _isAuthLoading = false);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ Código incorrecto o expirado.')));
+              }
+            },
+            child: _isAuthLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Verificar y Entrar', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        )
+      ],
+    );
+  }
+  // ==========================================
+
 
   // --- PÁGINA: ALMAS AFINES (Agrupación e Hilo de Papel) ---
   Widget _buildAlmasPage() {
@@ -711,6 +778,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         const Text('Viajeros con los que sentiste afinidad. Tu lista es 100% privada.', style: TextStyle(fontSize: 12, color: Colors.white60)),
         const SizedBox(height: 16),
 
+        // Filtros (ChoiceChips)
         Row(
           children: [
             ChoiceChip(
@@ -1357,7 +1425,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   }
 
   void _openNewDropDialog() {
-    final locationController = TextEditingController(); // NUEVO: Controlador de Ubicación
+    final locationController = TextEditingController();
     final topicController = TextEditingController();
     final contentController = TextEditingController();
 
@@ -2096,87 +2164,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _showRecoverAccountModal() {
-    final emailController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1C2541),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFF48CAE4)),
-        ),
-        title: const Text('🔄 Recuperar Cuenta', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Ingresa el correo que vinculaste a tu viajero.', style: TextStyle(color: Colors.white70, fontSize: 12)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                hintText: 'tu-correo@ejemplo.com',
-                hintStyle: const TextStyle(fontSize: 12, color: Colors.white38),
-                filled: true,
-                fillColor: const Color(0xFF0B132B),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0077B6)),
-            onPressed: () async {
-              final email = emailController.text.trim();
-              if (email.isNotEmpty) {
-                try {
-                  final data = await Supabase.instance.client
-                      .from('profiles')
-                      .select()
-                      .eq('email', email)
-                      .maybeSingle();
-
-                  if (data != null) {
-                    final name = data['username'];
-                    final av = data['avatar'] ?? '🐺';
-                    
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setString('gotas_user_name', name);
-                    await prefs.setString('gotas_user_avatar', av);
-                    await prefs.setBool('gotas_user_registered', true);
-
-                    setState(() {
-                      _myUsername = name;
-                      _myAvatar = av;
-                      _isRegistered = true;
-                    });
-
-                    Navigator.pop(ctx);
-                    _fetchLiveDrops();
-                    _fetchDirectLetters();
-                    
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✨ ¡Bienvenido de vuelta, $name!')));
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ No se encontró ninguna cuenta vinculada a este correo.')));
-                  }
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al conectar con la base de datos.')));
-                }
-              }
-            },
-            child: const Text('Recuperar', style: TextStyle(color: Colors.white)),
-          )
-        ],
       ),
     );
   }
