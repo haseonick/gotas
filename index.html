@@ -511,30 +511,17 @@
         </button>
       </div>
 
-      <!-- PASO 2: RECUPERAR (PEDIR CORREO) -->
+      <!-- PASO 2: RECUPERAR CUENTA (NUEVO: DIRECTO SIN CÓDIGO) -->
       <div id="step2" style="display: none;">
         <div style="text-align:left; margin-bottom:10px;">
           <button class="btn-secondary" style="padding:6px 12px; border:none; font-size:0.8rem;" onclick="showOnboardingStep(0)">← Volver</button>
         </div>
         <h2 style="color:#fff; margin-bottom:8px;">🔄 Recuperar Cuenta</h2>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 24px; line-height:1.5;">Ingresa el correo que vinculaste. Te enviaremos un código de seguridad para entrar.</p>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 24px; line-height:1.5;">Ingresa el correo que vinculaste para recuperar a tu viajero y entrar al instante.</p>
         
         <input type="email" id="loginEmailInput" placeholder="tu-correo@ejemplo.com" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:12px; padding:12px 14px; color:#fff; margin-bottom:20px; font-size:1rem;">
         
-        <button class="btn-primary" style="width:100%; padding:14px; font-size:1rem;" onclick="requestOtpCode()" id="btnRequestOtp">Enviar Código al Correo</button>
-      </div>
-
-      <!-- PASO 3: RECUPERAR (CÓDIGO OTP) -->
-      <div id="step3" style="display: none;">
-        <div style="text-align:left; margin-bottom:10px;">
-          <button class="btn-secondary" style="padding:6px 12px; border:none; font-size:0.8rem;" onclick="showOnboardingStep(2)">← Volver</button>
-        </div>
-        <h2 style="color:#fff; margin-bottom:8px;">✉️ Revisa tu Bandeja</h2>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 24px; line-height:1.5;">Ingresa el código de 6 dígitos que enviamos a tu correo electrónico.</p>
-        
-        <input type="number" id="loginCodeInput" placeholder="000000" maxlength="6" style="width:100%; text-align:center; letter-spacing:12px; font-size:28px; font-weight:bold; background:#0b132b; border:1px solid var(--border-color); border-radius:12px; padding:14px; color:#fff; margin-bottom:20px;">
-        
-        <button class="btn-primary" style="width:100%; padding:14px; font-size:1rem;" onclick="verifyOtpCode()" id="btnVerifyOtp">Verificar y Entrar</button>
+        <button class="btn-primary" style="width:100%; padding:14px; font-size:1rem;" onclick="recoverAccountDirectly()" id="btnRequestOtp">Recuperar Viajero</button>
       </div>
 
     </div>
@@ -856,7 +843,7 @@
       <section id="tab-perfil" class="view-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <h2>🌱 Mi Espacio Seguro</h2>
-          <button class="btn-secondary" onclick="openProfileModal()">Cambiar Avatar</button>
+          <button class="btn-secondary" onclick="openProfileModal()">Editar Perfil</button>
         </div>
         <p style="font-size:0.85rem; color:var(--text-muted); margin:6px 0 18px;">Tu identidad protegida y respaldo de cuenta.</p>
 
@@ -864,7 +851,9 @@
           <div class="preview-avatar-circle" id="profileTabAvatar" style="width:60px; height:60px; font-size:2rem;">🐺</div>
           <div>
             <div style="font-size:1.15rem; font-weight:bold; color:#fff;" id="profileTabUsername">Viajero</div>
-            <div style="font-size:0.8rem; color:var(--accent-cyan); margin-top:2px;">🔒 Nombre de Usuario Permanente</div>
+            <!-- NUEVO: UBICACIÓN VISIBLE -->
+            <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;" id="profileTabLocation">📍 Mundo</div>
+            <div style="font-size:0.8rem; color:var(--accent-cyan); margin-top:2px;">🔒 Nombre Permanente</div>
           </div>
         </div>
 
@@ -919,13 +908,17 @@
     </div>
   </div>
 
-  <!-- Modal: Personalizar Avatar -->
+  <!-- Modal: Personalizar Avatar y Ubicación -->
   <div class="modal-backdrop" id="profileModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('profileModal')">&times;</button>
-      <h3 style="color:#fff; margin-bottom:4px;">🌱 Personalizar mi Avatar</h3>
-      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:14px;">Elige entre los 36 avatares ilustrados:</p>
-      <div class="avatar-grid" id="editAvatarGrid"></div>
+      <h3 style="color:#fff; margin-bottom:4px;">🌱 Editar mi Perfil</h3>
+      
+      <div class="avatar-grid" id="editAvatarGrid" style="margin-top:14px;"></div>
+
+      <div style="margin-top:14px; text-align:left;">
+        <input type="text" id="editLocationInput" placeholder="Ubicación / País (Ej: 🇻🇪 Anzoátegui)" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:12px; padding:12px 14px; color:#fff; font-size:0.9rem;">
+      </div>
 
       <div style="background:#0b132b; border:1px solid var(--border-color); border-radius:12px; padding:12px 14px; margin:16px 0 18px; display:flex; justify-content:space-between; align-items:center;">
         <div>
@@ -937,7 +930,7 @@
 
       <div style="display:flex; justify-content:flex-end; gap:8px;">
         <button class="btn-secondary" onclick="closeModal('profileModal')">Cancelar</button>
-        <button class="btn-primary" onclick="saveEditedAvatarOnly()">Guardar Avatar</button>
+        <button class="btn-primary" onclick="saveProfile()">Guardar Perfil</button>
       </div>
     </div>
   </div>
@@ -986,7 +979,6 @@
       <button class="modal-close" onclick="closeModal('newDropModal')">&times;</button>
       <h3 style="color:#fff; margin-bottom:8px;">🌊 Enviar una Gota al Océano</h3>
       
-      <!-- NUEVO CAMPO: UBICACIÓN -->
       <input type="text" id="newDropLocation" placeholder="Ubicación (Ej. 🇻🇪 Anzoátegui, o 'En mi cuarto')" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; margin-bottom:12px;">
       
       <input type="text" id="newDropTopic" placeholder="Tema (Ej. Hábitos, Videojuegos, Lectura)" style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; margin-bottom:14px;">
@@ -1070,6 +1062,7 @@
     let chosenAvatar = '🐺';
     let currentAvatar = localStorage.getItem('gotas_user_avatar') || '🐺';
     let currentUsername = localStorage.getItem('gotas_user_name') || '';
+    let currentLocation = localStorage.getItem('gotas_user_location') || 'Mundo'; // NUEVO: UBICACIÓN
     const isRegistered = localStorage.getItem('gotas_user_registered') === 'true';
 
     let currentOpenDrop = null;
@@ -1077,7 +1070,7 @@
     let currentDropsFilter = 'all';
     let currentBuzonTab = 'sent';
     let tempEditAvatar = '🐺';
-    let myFriendsList = JSON.parse(localStorage.getItem('gotas_my_friends') || '[]'); // Lista de amigos inicializada
+    let myFriendsList = JSON.parse(localStorage.getItem('gotas_my_friends') || '[]');
     let currentAlmasFilter = 'friends';
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -1104,7 +1097,6 @@
       document.getElementById('step0').style.display = step === 0 ? 'block' : 'none';
       document.getElementById('step1').style.display = step === 1 ? 'block' : 'none';
       document.getElementById('step2').style.display = step === 2 ? 'block' : 'none';
-      document.getElementById('step3').style.display = step === 3 ? 'block' : 'none';
     }
 
     function updateHeaderProfile() {
@@ -1112,8 +1104,10 @@
       document.getElementById('userNameHeader').innerText = currentUsername;
       const pAvatar = document.getElementById('profileTabAvatar');
       const pUser = document.getElementById('profileTabUsername');
+      const pLoc = document.getElementById('profileTabLocation'); // Ubicación
       if (pAvatar) pAvatar.innerText = currentAvatar;
       if (pUser) pUser.innerText = currentUsername;
+      if (pLoc) pLoc.innerHTML = `📍 ${currentLocation}`;
     }
 
     function renderOnboardingAvatars() {
@@ -1196,9 +1190,11 @@
 
       currentUsername = name;
       currentAvatar = chosenAvatar;
+      currentLocation = 'Mundo';
       localStorage.setItem('gotas_user_registered', 'true');
       localStorage.setItem('gotas_user_name', currentUsername);
       localStorage.setItem('gotas_user_avatar', currentAvatar);
+      localStorage.setItem('gotas_user_location', currentLocation);
 
       document.getElementById('onboardingGate').style.display = 'none';
       updateHeaderProfile();
@@ -1415,7 +1411,7 @@
       }
 
       closeModal('newDropModal');
-      document.getElementById('newDropLocation').value = '';
+      // No borramos la ubicación para que sirva de default la próxima vez si no se guardó en el perfil
       document.getElementById('newDropTopic').value = '';
       document.getElementById('newDropContent').value = '';
       alert('🌊 ¡Tu gota ha sido lanzada al océano vinculada a tu perfil!');
@@ -1969,6 +1965,8 @@
     function openProfileModal() {
       tempEditAvatar = currentAvatar;
       document.getElementById('editLockedUsername').innerText = currentUsername;
+      document.getElementById('editLocationInput').value = currentLocation !== 'Mundo' ? currentLocation : '';
+      
       const grid = document.getElementById('editAvatarGrid');
       grid.innerHTML = '';
       avatarsList.forEach(av => {
@@ -1985,31 +1983,35 @@
       document.getElementById('profileModal').classList.add('show');
     }
 
-    async function saveEditedAvatarOnly() {
+    async function saveProfile() {
       currentAvatar = tempEditAvatar;
+      const newLoc = document.getElementById('editLocationInput').value.trim();
+      currentLocation = newLoc ? newLoc : 'Mundo';
+
       localStorage.setItem('gotas_user_avatar', currentAvatar);
+      localStorage.setItem('gotas_user_location', currentLocation);
 
       if (supabaseClient && currentUsername) {
         try {
-          await supabaseClient.from('profiles').update({ avatar: currentAvatar }).eq('username', currentUsername);
+          await supabaseClient.from('profiles').update({ avatar: currentAvatar, location: currentLocation }).eq('username', currentUsername);
           await supabaseClient.from('drops').update({ avatar: currentAvatar }).eq('author', currentUsername);
         } catch (e) {}
       }
 
       updateHeaderProfile();
       closeModal('profileModal');
-      alert(`✨ Avatar actualizado a ${currentAvatar}.`);
+      alert(`✨ Perfil actualizado.`);
       loadLiveDrops();
     }
 
-    // --- RESPALDO Y RECUPERACIÓN CON CORREO Y OTP ---
+    // --- RESPALDO Y RECUPERACIÓN DIRECTA ---
     async function saveBackupEmail() {
       const email = document.getElementById('backupEmailInput').value.trim();
       const feedback = document.getElementById('backupFeedback');
       if (!email || !email.includes('@')) { alert('Por favor ingresa un correo válido.'); return; }
       if (supabaseClient) {
         try {
-          await supabaseClient.from('profiles').upsert({ username: currentUsername, avatar: currentAvatar, email: email }, { onConflict: 'username' });
+          await supabaseClient.from('profiles').upsert({ username: currentUsername, avatar: currentAvatar, location: currentLocation, email: email }, { onConflict: 'username' });
           feedback.innerText = `✨ Cuenta vinculada exitosamente a ${email}.`;
           feedback.style.display = 'block';
           alert('🛡️ Respaldo exitoso.');
@@ -2017,56 +2019,25 @@
       }
     }
 
-    async function requestOtpCode() {
+    async function recoverAccountDirectly() {
       const email = document.getElementById('loginEmailInput').value.trim();
       if (!email || !email.includes('@')) { alert('Ingresa un correo válido.'); return; }
       
-      document.getElementById('btnRequestOtp').innerText = 'Enviando...';
+      const btn = document.getElementById('btnRequestOtp');
+      btn.innerText = 'Buscando...';
       
       if (supabaseClient) {
         try {
           const { data } = await supabaseClient.from('profiles').select('*').eq('email', email).maybeSingle();
-          if (!data) {
-            alert('⚠️ No encontramos ninguna cuenta vinculada a este correo.');
-            document.getElementById('btnRequestOtp').innerText = 'Enviar Código al Correo';
-            return;
-          }
-          
-          const { error } = await supabaseClient.auth.signInWithOtp({ email: email });
-          if (error) throw error;
-          
-          showOnboardingStep(3);
-        } catch (e) {
-          alert('Error enviando el correo. Intenta de nuevo.');
-        }
-      }
-      document.getElementById('btnRequestOtp').innerText = 'Enviar Código al Correo';
-    }
-
-    async function verifyOtpCode() {
-      const email = document.getElementById('loginEmailInput').value.trim();
-      const code = document.getElementById('loginCodeInput').value.trim();
-      if (code.length !== 6) { alert('El código debe tener 6 dígitos.'); return; }
-      
-      document.getElementById('btnVerifyOtp').innerText = 'Verificando...';
-      
-      if (supabaseClient) {
-        try {
-          const { data, error } = await supabaseClient.auth.verifyOtp({
-            email: email,
-            token: code,
-            type: 'magiclink'
-          });
-          
-          if (error) throw error;
-          
-          if (data.session) {
-            const { data: profile } = await supabaseClient.from('profiles').select('*').eq('email', email).single();
-            currentUsername = profile.username;
-            currentAvatar = profile.avatar || '🐺';
+          if (data) {
+            currentUsername = data.username;
+            currentAvatar = data.avatar || '🐺';
+            currentLocation = data.location || 'Mundo';
+            
             localStorage.setItem('gotas_user_registered', 'true');
             localStorage.setItem('gotas_user_name', currentUsername);
             localStorage.setItem('gotas_user_avatar', currentAvatar);
+            localStorage.setItem('gotas_user_location', currentLocation);
             
             document.getElementById('onboardingGate').style.display = 'none';
             updateHeaderProfile();
@@ -2078,12 +2049,14 @@
             updateFriendsCountUI();
             
             alert(`✨ ¡Bienvenido de vuelta, ${currentUsername}!`);
+          } else {
+            alert('⚠️ No encontramos ninguna cuenta vinculada a este correo.');
           }
         } catch (e) {
-          alert('❌ Código incorrecto o expirado.');
+          alert('❌ Error de conexión. Intenta de nuevo.');
         }
       }
-      document.getElementById('btnVerifyOtp').innerText = 'Verificar y Entrar';
+      btn.innerText = 'Recuperar Viajero';
     }
 
     // --- NOTIFICACIONES ---
@@ -2147,7 +2120,10 @@
     }
 
     // --- SONIDO Y MODALES ---
-    function openNewDropModal() { document.getElementById('newDropModal').classList.add('show'); }
+    function openNewDropModal() { 
+      document.getElementById('newDropLocation').value = currentLocation !== 'Mundo' ? currentLocation : '';
+      document.getElementById('newDropModal').classList.add('show'); 
+    }
     function toggleBatteryModal() { document.getElementById('batteryModal').classList.add('show'); }
     function openBinanceModal() { document.getElementById('binanceModal').classList.add('show'); }
     function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); }
