@@ -56,6 +56,8 @@ class MainNavigationShell extends StatefulWidget {
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
   String _socialBattery = '☕ Tranquilo (60%)';
+  int _onlineCount = 1;
+  RealtimeChannel? _presenceChannel;
   bool _isRegistered = false;
   bool _isCheckingSession = true;
 
@@ -89,6 +91,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     super.initState();
     _loadSavedSession();
     _subscribeToLiveChanges();
+    _initPresenceTracker();
   }
 
   Future<void> _loadSavedSession() async {
@@ -152,8 +155,39 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           .select()
           .order('created_at', ascending: false);
       if (mounted) {
+        final List<Map<String, dynamic>> fetched = List<Map<String, dynamic>>.from(data);
         setState(() {
-          _liveDrops = List<Map<String, dynamic>>.from(data);
+          if (fetched.isNotEmpty) {
+            _liveDrops = fetched;
+          } else {
+            // Cartas de bienvenida iniciales para no dejar la pantalla vacía
+            _liveDrops = [
+              {
+                'id': 1,
+                'author': 'Yuki',
+                'location': '🇯🇵 Kioto, Japón',
+                'avatar': '🦊',
+                'topic': 'Videojuegos & Paz',
+                'content': 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?',
+              },
+              {
+                'id': 2,
+                'author': 'Mateo',
+                'location': '🇦🇷 Buenos Aires, Arg',
+                'avatar': '🦉',
+                'topic': 'Rutina en Solitario',
+                'content': 'Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba. ¿Prefieres entrenar a solas o con música?',
+              },
+              {
+                'id': 3,
+                'author': 'Elena',
+                'location': '🇪🇸 Madrid, España',
+                'avatar': '🌿',
+                'topic': 'Lectura Lofi',
+                'content': 'Encontré un libro antiguo en una tienda de segunda mano con notas escritas a mano en los márgenes. Me pregunto quién fue su dueño original.',
+              }
+            ];
+          }
           _isLoadingDrops = false;
         });
       }
@@ -178,6 +212,49 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             },
           )
           .subscribe();
+    } catch (_) {}
+  }
+
+
+  void _initPresenceTracker() {
+    try {
+      final userKey = '${_myUsername.isNotEmpty ? _myUsername : 'Viajero'}_${math.Random().nextInt(99999)}';
+      _presenceChannel = Supabase.instance.client.channel('gotas_online_room');
+
+      _presenceChannel!
+        .onPresenceSync((_) {
+          final state = _presenceChannel!.presenceState();
+          if (mounted) {
+            setState(() {
+              _onlineCount = math.max(1, state.length);
+            });
+          }
+        })
+        .onPresenceJoin((_) {
+          final state = _presenceChannel!.presenceState();
+          if (mounted) {
+            setState(() {
+              _onlineCount = math.max(1, state.length);
+            });
+          }
+        })
+        .onPresenceLeave((_) {
+          final state = _presenceChannel!.presenceState();
+          if (mounted) {
+            setState(() {
+              _onlineCount = math.max(1, state.length);
+            });
+          }
+        })
+        .subscribe((status, [error]) async {
+          if (status == RealtimeSubscribeStatus.subscribed) {
+            await _presenceChannel!.track({
+              'user': _myUsername,
+              'avatar': _myAvatar,
+              'online_at': DateTime.now().toIso8601String(),
+            });
+          }
+        });
     } catch (_) {}
   }
 
@@ -236,6 +313,25 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           ],
         ),
         actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0x2606D6A0),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0x6606D6A0)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('●', style: TextStyle(color: Color(0xFF06D6A0), fontSize: 9)),
+                  const SizedBox(width: 4),
+                  Text('$_onlineCount', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                ],
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.favorite, color: Color(0xFFFF5E5B)),
             tooltip: 'Apoyar el proyecto',
@@ -248,7 +344,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               side: const BorderSide(color: Color(0x3348CAE4)),
               label: Text(
                 _socialBattery,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF90E0EF)),
+                style: const TextStyle(fontSize: 11, color: Color(0xFF90E0EF)),
               ),
               onPressed: _showBatterySheet,
             ),

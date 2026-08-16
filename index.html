@@ -529,6 +529,10 @@
     </a>
 
     <div class="header-actions">
+      <div class="sound-widget" style="border-color: rgba(6,214,160,0.4);" title="Viajeros conectados en tiempo real">
+        <span style="color:#06d6a0; font-size:0.75rem;">●</span>
+        <span id="onlineTravelersCount" style="color:var(--text-main); font-weight:600;">1</span> <span style="color:var(--text-muted);">en calma</span>
+      </div>
       <div class="sound-widget" id="notifBtn" onclick="requestNotificationPermission()" title="Activar/Desactivar avisos en vivo">
         🔕 Avisos: Off
       </div>
@@ -1001,6 +1005,7 @@
         updateSavedDropsCount();
         updateNotificationUI();
         initRealtimeNotifications();
+        initPresenceTracker();
       }
     });
 
@@ -1106,6 +1111,7 @@
       updateSavedDropsCount();
       updateNotificationUI();
       initRealtimeNotifications();
+        initPresenceTracker();
     }
 
     // --- CARGA DE GOTAS Y FILTROS ---
@@ -1851,6 +1857,52 @@
       document.getElementById(tabId).classList.add('active-view');
       btn.classList.add('active');
     }
+
+    // --- PRESENCIA EN VIVO (VIAJEROS CONECTADOS) ---
+    let presenceChannel = null;
+
+    function initPresenceTracker() {
+      if (!supabaseClient) return;
+
+      const userIdentifier = (currentUsername || 'Viajero') + '_' + (deviceId || 'dev');
+      presenceChannel = supabaseClient.channel('gotas_online_room', {
+        config: {
+          presence: { key: userIdentifier }
+        }
+      });
+
+      presenceChannel
+        .on('presence', { event: 'sync' }, () => {
+          const state = presenceChannel.presenceState();
+          const userCount = Object.keys(state).length;
+          updateOnlineUsersUI(Math.max(1, userCount));
+        })
+        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+          const state = presenceChannel.presenceState();
+          updateOnlineUsersUI(Math.max(1, Object.keys(state).length));
+        })
+        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+          const state = presenceChannel.presenceState();
+          updateOnlineUsersUI(Math.max(1, Object.keys(state).length));
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await presenceChannel.track({
+              user: currentUsername || 'Viajero',
+              avatar: currentAvatar || '🐺',
+              online_at: new Date().toISOString()
+            });
+          }
+        });
+    }
+
+    function updateOnlineUsersUI(count) {
+      const el = document.getElementById('onlineTravelersCount');
+      if (el) {
+        el.innerText = count;
+      }
+    }
+
   </script>
 </body>
 </html>
