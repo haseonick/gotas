@@ -69,7 +69,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   String _onboardingAvatar = '🐺';
   final TextEditingController _onboardingNameController = TextEditingController();
   final TextEditingController _loginEmailController = TextEditingController();
-  final TextEditingController _loginCodeController = TextEditingController();
   bool _isAuthLoading = false;
 
   String _myUsername = '';
@@ -220,7 +219,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       _fetchDirectLetters();
     }
   }
-
 
   final List<Map<String, dynamic>> _starterCommunityDrops = [
     {
@@ -417,10 +415,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       content = _buildStep0Choice();
     } else if (_onboardingStep == 1) {
       content = _buildStep1Create();
-    } else if (_onboardingStep == 2) {
-      content = _buildStep2LoginEmail();
     } else {
-      content = _buildStep3LoginCode();
+      content = _buildStep2LoginEmailDirect(); // Nueva recuperación directa
     }
 
     return Scaffold(
@@ -628,7 +624,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  Widget _buildStep2LoginEmail() {
+  // --- LA NUEVA RECUPERACIÓN DIRECTA (Sin Código) ---
+  Widget _buildStep2LoginEmailDirect() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -638,8 +635,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ),
         const Text('🔄 Recuperar Cuenta', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
         const SizedBox(height: 8),
-        const Text('Ingresa el correo que vinculaste. Te enviaremos un código de seguridad para entrar.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.white60)),
-        const SizedBox(height: 20),
+        const Text('Ingresa el correo que vinculaste para recuperar a tu viajero y entrar al instante.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.white60, height: 1.5)),
+        const SizedBox(height: 24),
         TextField(
           controller: _loginEmailController,
           keyboardType: TextInputType.emailAddress,
@@ -658,78 +655,14 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             onPressed: _isAuthLoading ? null : () async {
               final email = _loginEmailController.text.trim();
               if (email.isEmpty || !email.contains('@')) return;
+              
               setState(() => _isAuthLoading = true);
+              
               try {
+                // Buscamos directamente en la tabla profiles
                 final data = await Supabase.instance.client.from('profiles').select().eq('email', email).maybeSingle();
-                if (data == null) {
-                  setState(() => _isAuthLoading = false);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ No encontramos ninguna cuenta vinculada a este correo.')));
-                  return;
-                }
                 
-                await Supabase.instance.client.auth.signInWithOtp(email: email);
-                
-                setState(() {
-                  _isAuthLoading = false;
-                  _onboardingStep = 3;
-                });
-              } catch (e) {
-                setState(() => _isAuthLoading = false);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error enviando el correo. Intenta de nuevo.')));
-              }
-            },
-            child: _isAuthLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Color(0xFF0B132B), strokeWidth: 2)) : const Text('Enviar Código al Correo', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget _buildStep3LoginCode() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Align(
-          alignment: Alignment.topLeft,
-          child: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white70), onPressed: () => setState(() => _onboardingStep = 2)),
-        ),
-        const Text('✉️ Revisa tu Bandeja', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-        const SizedBox(height: 8),
-        const Text('Ingresa el código de 6 dígitos que enviamos a tu correo electrónico.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.white60)),
-        const SizedBox(height: 20),
-        TextField(
-          controller: _loginCodeController,
-          keyboardType: TextInputType.number,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 24, letterSpacing: 4, fontWeight: FontWeight.bold),
-          maxLength: 6,
-          decoration: InputDecoration(
-            counterText: "",
-            hintText: '000000',
-            filled: true,
-            fillColor: const Color(0xFF0B132B),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          ),
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0077B6), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-            onPressed: _isAuthLoading ? null : () async {
-              final code = _loginCodeController.text.trim();
-              final email = _loginEmailController.text.trim();
-              if (code.length != 6) return;
-              setState(() => _isAuthLoading = true);
-              try {
-                final res = await Supabase.instance.client.auth.verifyOTP(
-                  type: OtpType.magiclink, 
-                  email: email,
-                  token: code,
-                );
-                
-                if (res.session != null) {
-                  final data = await Supabase.instance.client.from('profiles').select().eq('email', email).single();
+                if (data != null) {
                   final name = data['username'];
                   final av = data['avatar'] ?? '🐺';
                   
@@ -747,13 +680,19 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   
                   _fetchLiveDrops();
                   _fetchDirectLetters();
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✨ ¡Bienvenido de vuelta, $name!')));
+                } else {
+                  setState(() => _isAuthLoading = false);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ No encontramos ninguna cuenta vinculada a este correo.')));
                 }
               } catch (e) {
                 setState(() => _isAuthLoading = false);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ Código incorrecto o expirado.')));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ Error de conexión. Intenta de nuevo.')));
               }
             },
-            child: _isAuthLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Verificar y Entrar', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: _isAuthLoading 
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Color(0xFF0B132B), strokeWidth: 2)) 
+              : const Text('Recuperar Viajero', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         )
       ],
