@@ -1917,4 +1917,3 @@ class DropCard extends StatelessWidget {
     );
   }
 }
-
