@@ -10,7 +10,7 @@ const String supabaseUrl = 'https://cfkaqkeohyphdcnvcnsv.supabase.co';
 const String supabaseAnonKey = 'sb_publishable_E7NPno9DbRRJYuSVlOmwtA_bvVWxcWK';
 
 // --- VERSIÓN ACTUAL DE LA APP ---
-const String currentAppVersion = '1.0.0'; 
+const String currentAppVersion = '1.0.1'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
