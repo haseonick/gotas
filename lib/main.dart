@@ -69,9 +69,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   String? _dilemmaChoice2;
   String? _dilemmaChoice3;
 
+  // Filtros de las vistas
   String _currentDropsFilter = 'all';
-  List<dynamic> _savedDropIds = [];
+  String _currentAlmasFilter = 'friends';
+  String _currentBuzonFilter = 'sent';
 
+  List<dynamic> _savedDropIds = [];
   List<Map<String, dynamic>> _liveDrops = [];
   bool _isLoadingDrops = true;
 
@@ -154,6 +157,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     }
 
     _fetchLiveDrops();
+    if (_isRegistered) {
+      _fetchDirectLetters();
+    }
   }
 
 
@@ -211,10 +217,25 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     }
   }
 
+  Future<void> _fetchDirectLetters() async {
+    try {
+      final data = await Supabase.instance.client
+          .from('direct_letters')
+          .select()
+          .eq('recipient', _myUsername)
+          .order('created_at', ascending: false);
+      if (mounted) {
+        setState(() {
+          _directLetters = List<Map<String, dynamic>>.from(data);
+        });
+      }
+    } catch (_) {}
+  }
+
   void _subscribeToLiveChanges() {
     try {
       Supabase.instance.client
-          .channel('public:drops')
+          .channel('public:drops_and_letters')
           .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
@@ -223,10 +244,17 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               _fetchLiveDrops();
             },
           )
+          .onPostgresChanges(
+            event: PostgresChangeEvent.insert,
+            schema: 'public',
+            table: 'direct_letters',
+            callback: (payload) {
+              _fetchDirectLetters();
+            },
+          )
           .subscribe();
     } catch (_) {}
   }
-
 
   void _initPresenceTracker() {
     try {
@@ -631,6 +659,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                                       });
 
                                       _fetchLiveDrops();
+                                      _fetchDirectLetters();
                                     },
                                     child: const Text('Sí, confirmar 💧', style: TextStyle(color: Colors.white)),
                                   )
@@ -669,70 +698,149 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         const Text('Viajeros con los que sentiste afinidad. Tu lista es 100% privada.', style: TextStyle(fontSize: 12, color: Colors.white60)),
         const SizedBox(height: 16),
 
-        if (_myFriendsList.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C2541),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0x2648CAE4)),
+        // Filtros (ChoiceChips)
+        Row(
+          children: [
+            ChoiceChip(
+              label: const Text('🌱 Mis Almas Afines'),
+              selected: _currentAlmasFilter == 'friends',
+              onSelected: (s) => setState(() => _currentAlmasFilter = 'friends'),
             ),
-            child: const Column(
-              children: [
-                Text('🌱', style: TextStyle(fontSize: 32)),
-                SizedBox(height: 8),
-                Text('Aún no tienes Almas Afines guardadas.', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 4),
-                Text('Abre cualquier carta que te inspire y toca "🌱 Conectar" para guardar al autor aquí.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.white60)),
-              ],
+            const SizedBox(width: 8),
+            ChoiceChip(
+              label: Text('✉️ Cartas Directas (${_directLetters.length})'),
+              selected: _currentAlmasFilter == 'letters',
+              onSelected: (s) => setState(() => _currentAlmasFilter = 'letters'),
             ),
-          )
-        else
-          ..._myFriendsList.map((fr) => Card(
-                margin: const EdgeInsets.only(bottom: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Color(0x3348CAE4))),
-                child: Padding(
-                  padding: const EdgeInsets.all(14.0),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: const Color(0x3348CAE4),
-                        child: Text(fr['avatar'] ?? '🐺', style: const TextStyle(fontSize: 18)),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        if (_currentAlmasFilter == 'friends') ...[
+          if (_myFriendsList.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C2541),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0x2648CAE4)),
+              ),
+              child: const Column(
+                children: [
+                  Text('🌱', style: TextStyle(fontSize: 32)),
+                  SizedBox(height: 8),
+                  Text('Aún no tienes Almas Afines guardadas.', style: TextStyle(fontWeight: FontWeight.bold)),
+                  SizedBox(height: 4),
+                  Text('Abre cualquier carta que te inspire y toca "🌱 Conectar" para guardar al autor aquí.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.white60)),
+                ],
+              ),
+            )
+          else
+            ..._myFriendsList.map((fr) => Card(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Color(0x3348CAE4))),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14.0),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: const Color(0x3348CAE4),
+                          child: Text(fr['avatar'] ?? '🐺', style: const TextStyle(fontSize: 18)),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(fr['username'] ?? 'Viajero', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                              const Text('Alma Afín', style: TextStyle(fontSize: 11, color: Color(0xFF90E0EF))),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0077B6),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          onPressed: () => _openDirectLetterSheet(fr['username'] ?? '', fr['avatar'] ?? '🐺'),
+                          child: const Text('✉️ Carta', style: TextStyle(fontSize: 11, color: Colors.white)),
+                        ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 16, color: Colors.white38),
+                          onPressed: () async {
+                            setState(() {
+                              _myFriendsList.removeWhere((f) => f['username'] == fr['username']);
+                            });
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setString('gotas_friends', jsonEncode(_myFriendsList));
+                          },
+                        )
+                      ],
+                    ),
+                  ),
+                )),
+        ] else ...[
+          if (_directLetters.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C2541),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0x2648CAE4)),
+              ),
+              child: const Column(
+                children: [
+                  Text('📭', style: TextStyle(fontSize: 32)),
+                  SizedBox(height: 8),
+                  Text('No tienes cartas directas aún.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white60)),
+                ],
+              ),
+            )
+          else
+            ..._directLetters.map((letter) => Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Color(0x3348CAE4))),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Text(fr['username'] ?? 'Viajero', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                            const Text('Alma Afín', style: TextStyle(fontSize: 11, color: Color(0xFF90E0EF))),
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundColor: const Color(0x3348CAE4),
+                              child: Text(letter['sender_avatar'] ?? '🐺', style: const TextStyle(fontSize: 16)),
+                            ),
+                            const SizedBox(width: 8),
+                            Text('De: ${letter['sender']}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF48CAE4))),
                           ],
                         ),
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0077B6),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0B132B),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text('"${letter['content']}"', style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Colors.white)),
                         ),
-                        onPressed: () => _openDirectLetterSheet(fr['username'] ?? '', fr['avatar'] ?? '🐺'),
-                        child: const Text('✉️ Carta', style: TextStyle(fontSize: 11, color: Colors.white)),
-                      ),
-                      const SizedBox(width: 4),
-                      IconButton(
-                        icon: const Icon(Icons.close, size: 16, color: Colors.white38),
-                        onPressed: () async {
-                          setState(() {
-                            _myFriendsList.removeWhere((f) => f['username'] == fr['username']);
-                          });
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setString('gotas_friends', jsonEncode(_myFriendsList));
-                        },
-                      )
-                    ],
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            icon: const Icon(Icons.reply, size: 16, color: Color(0xFF90E0EF)),
+                            label: const Text('Responder Carta Lenta', style: TextStyle(fontSize: 11, color: Color(0xFF90E0EF))),
+                            onPressed: () => _openDirectLetterSheet(letter['sender'], letter['sender_avatar']),
+                          ),
+                        )
+                      ],
+                    ),
                   ),
-                ),
-              )),
+                )),
+        ]
       ],
     );
   }
@@ -801,8 +909,13 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   // --- 1. PÁGINA: GOTAS ---
   Widget _buildGotasPage() {
     List<Map<String, dynamic>> drops = _liveDrops;
+    
+    // Aplicar filtro de Almas Afines o Guardadas
     if (_currentDropsFilter == 'saved') {
       drops = drops.where((d) => _savedDropIds.contains(d['id'])).toList();
+    } else if (_currentDropsFilter == 'friends') {
+      final friendNames = _myFriendsList.map((f) => f['username']).toList();
+      drops = drops.where((d) => friendNames.contains(d['author'])).toList();
     }
 
     return RefreshIndicator(
@@ -834,20 +947,29 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           ),
           const SizedBox(height: 16),
 
-          Row(
-            children: [
-              ChoiceChip(
-                label: const Text('🌊 Todas las Gotas'),
-                selected: _currentDropsFilter == 'all',
-                onSelected: (s) => setState(() => _currentDropsFilter = 'all'),
-              ),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: Text('🔖 Guardadas (${_savedDropIds.length})'),
-                selected: _currentDropsFilter == 'saved',
-                onSelected: (s) => setState(() => _currentDropsFilter = 'saved'),
-              ),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                ChoiceChip(
+                  label: const Text('🌊 Todas'),
+                  selected: _currentDropsFilter == 'all',
+                  onSelected: (s) => setState(() => _currentDropsFilter = 'all'),
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('👥 Almas Afines'),
+                  selected: _currentDropsFilter == 'friends',
+                  onSelected: (s) => setState(() => _currentDropsFilter = 'friends'),
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: Text('🔖 Guardadas (${_savedDropIds.length})'),
+                  selected: _currentDropsFilter == 'saved',
+                  onSelected: (s) => setState(() => _currentDropsFilter = 'saved'),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -858,7 +980,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               padding: EdgeInsets.all(32.0),
               child: Center(
                 child: Text(
-                  'No hay cartas en este momento. ¡Sé el primero en enviar una!',
+                  'No hay cartas en esta sección. Ajusta tus filtros o añade Almas Afines.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white60, fontSize: 13),
                 ),
@@ -891,6 +1013,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   void _openReadAndReplyDialog(Map<String, dynamic> drop) {
     final replyController = TextEditingController();
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -898,172 +1021,220 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          left: 20,
-          right: 20,
-          top: 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      builder: (ctx) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setModalState) {
+          final author = drop['author']?.toString() ?? 'Viajero';
+          final isAlreadyFriend = _myFriendsList.any((f) => f['username'] == author);
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+              left: 20, right: 20, top: 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  backgroundColor: const Color(0x3348CAE4),
-                  child: Text(drop['avatar']?.toString() ?? '🐺'),
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
                   children: [
-                    Row(
+                    CircleAvatar(
+                      backgroundColor: const Color(0x3348CAE4),
+                      child: Text(drop['avatar']?.toString() ?? '🐺'),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(drop['author']?.toString() ?? 'Anónimo', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                        const SizedBox(width: 8),
-                        if ((drop['author']?.toString() ?? '') != _myUsername)
-                          InkWell(
-                            onTap: () async {
-                              final author = drop['author']?.toString() ?? 'Viajero';
-                              final av = drop['avatar']?.toString() ?? '🐺';
-                              final isAlr = _myFriendsList.any((f) => f['username'] == author);
-                              setState(() {
-                                if (isAlr) {
-                                  _myFriendsList.removeWhere((f) => f['username'] == author);
-                                } else {
-                                  _myFriendsList.add({'username': author, 'avatar': av});
-                                }
-                              });
-                              final prefs = await SharedPreferences.getInstance();
-                              await prefs.setString('gotas_friends', jsonEncode(_myFriendsList));
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(isAlr ? 'Retirado de Almas Afines.' : '🌱 ¡$author añadido a tus Almas Afines!')),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0x2606D6A0),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFF06D6A0)),
+                        Row(
+                          children: [
+                            Text(author, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            const SizedBox(width: 8),
+                            if (author != _myUsername)
+                              InkWell(
+                                onTap: () async {
+                                  final av = drop['avatar']?.toString() ?? '🐺';
+                                  setState(() {
+                                    if (isAlreadyFriend) {
+                                      _myFriendsList.removeWhere((f) => f['username'] == author);
+                                    } else {
+                                      _myFriendsList.add({'username': author, 'avatar': av});
+                                    }
+                                  });
+                                  setModalState(() {}); // Actualiza el botón dentro del modal
+                                  final prefs = await SharedPreferences.getInstance();
+                                  await prefs.setString('gotas_friends', jsonEncode(_myFriendsList));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(isAlreadyFriend ? 'Retirado de Almas Afines.' : '🌱 ¡$author añadido a tus Almas Afines!')),
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isAlreadyFriend ? const Color(0x3348CAE4) : const Color(0x2606D6A0),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: isAlreadyFriend ? const Color(0xFF48CAE4) : const Color(0xFF06D6A0)),
+                                  ),
+                                  child: Text(
+                                    isAlreadyFriend ? '✓ Alma Afín' : '🌱 Conectar',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: isAlreadyFriend ? const Color(0xFF48CAE4) : const Color(0xFF06D6A0),
+                                      fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                ),
                               ),
-                              child: Text(
-                                _myFriendsList.any((f) => f['username'] == (drop['author']?.toString() ?? '')) ? '✓ Alma Afín' : '🌱 Conectar',
-                                style: const TextStyle(fontSize: 10, color: Color(0xFF06D6A0), fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
+                          ],
+                        ),
+                        Text(drop['location']?.toString() ?? 'Mundo', style: const TextStyle(fontSize: 11, color: Colors.white60)),
                       ],
                     ),
-                    Text(drop['location']?.toString() ?? 'Mundo', style: const TextStyle(fontSize: 11, color: Colors.white60)),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0x2648CAE4),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(drop['topic']?.toString() ?? '', style: const TextStyle(color: Color(0xFF48CAE4), fontSize: 12)),
+                    )
                   ],
                 ),
-                const Spacer(),
+                const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.all(14),
+                  width: double.infinity,
                   decoration: BoxDecoration(
-                    color: const Color(0x2648CAE4),
-                    borderRadius: BorderRadius.circular(10),
+                    color: const Color(0xFF0B132B),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(drop['topic']?.toString() ?? '', style: const TextStyle(color: Color(0xFF48CAE4), fontSize: 12)),
-                )
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0B132B),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '"${drop['content'] ?? ''}"',
-                style: const TextStyle(fontSize: 14, height: 1.5, fontStyle: FontStyle.italic, color: Colors.white),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text('Tu respuesta como $_myAvatar $_myUsername (sin prisa):', style: const TextStyle(fontSize: 13, color: Color(0xFF90E0EF))),
-            const SizedBox(height: 8),
-            TextField(
-              controller: replyController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'Escribe tu reflexión con calma...',
-                hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-                filled: true,
-                fillColor: const Color(0xFF0B132B),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton.icon(
-                  icon: const Icon(Icons.bookmark_border, size: 16, color: Colors.white70),
-                  label: const Text('Guardar para después', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  onPressed: () async {
-                    final dropId = drop['id'];
-                    if (dropId != null && !_savedDropIds.contains(dropId)) {
-                      setState(() => _savedDropIds.add(dropId));
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setString('gotas_saved_drops', jsonEncode(_savedDropIds));
-                    }
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('🔖 Carta guardada en tu lista para responder más tarde.')),
-                    );
-                  },
+                  child: Text(
+                    '"${drop['content'] ?? ''}"',
+                    style: const TextStyle(fontSize: 14, height: 1.5, fontStyle: FontStyle.italic, color: Colors.white),
+                  ),
                 ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0077B6),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  ),
-                  onPressed: () async {
-                    final text = replyController.text.trim();
-                    if (text.isNotEmpty) {
-                      try {
-                        if (drop['id'] != null) {
-                          await Supabase.instance.client.from('drop_replies').insert({
-                            'drop_id': drop['id'],
-                            'content': text,
-                            'author': '$_myAvatar $_myUsername',
-                          });
-                        }
-                      } catch (_) {}
+                const SizedBox(height: 16),
 
-                      final replyObj = {
-                        'topic': drop['topic']?.toString() ?? 'Carta',
-                        'author': drop['author']?.toString() ?? 'Viajero',
-                        'text': text,
-                      };
-
-                      setState(() {
-                        _mySentReplies.insert(0, replyObj);
-                      });
-
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setString('gotas_sent_replies', jsonEncode(_mySentReplies));
-
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('✨ Tu respuesta ha sido enviada y registrada en tu Buzón.'),
-                          backgroundColor: Color(0xFF0077B6),
-                        ),
+                // ZONA DE RESPUESTAS LENTAS OBTENIDAS DE SUPABASE
+                const Text('💬 Respuestas Lentas Recibidas:', style: TextStyle(color: Color(0xFF90E0EF), fontSize: 13, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 150),
+                  child: FutureBuilder<List<dynamic>>(
+                    future: Supabase.instance.client
+                        .from('drop_replies')
+                        .select()
+                        .eq('drop_id', drop['id'])
+                        .order('created_at', ascending: true),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator()));
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Text('Aún no hay respuestas en esta gota. ¡Sé el primero en responder con calma!', style: TextStyle(color: Colors.white60, fontSize: 12));
+                      }
+                      return ListView(
+                        shrinkWrap: true,
+                        children: snapshot.data!.map((r) => Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0x330077B6),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0x3348CAE4))
+                            ),
+                            child: Text.rich(TextSpan(children: [
+                               TextSpan(text: '${r['author'] ?? 'Viajero'}: ', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF48CAE4), fontSize: 12)),
+                               TextSpan(text: r['content'], style: const TextStyle(color: Colors.white, fontSize: 12)),
+                            ])),
+                        )).toList(),
                       );
                     }
-                  },
-                  child: const Text('Enviar Gota', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                Text('Tu respuesta como $_myAvatar $_myUsername (sin prisa):', style: const TextStyle(fontSize: 13, color: Color(0xFF90E0EF))),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: replyController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Escribe tu reflexión con calma...',
+                    hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+                    filled: true,
+                    fillColor: const Color(0xFF0B132B),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton.icon(
+                      icon: const Icon(Icons.bookmark_border, size: 16, color: Colors.white70),
+                      label: const Text('Guardar para después', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      onPressed: () async {
+                        final dropId = drop['id'];
+                        if (dropId != null && !_savedDropIds.contains(dropId)) {
+                          setState(() => _savedDropIds.add(dropId));
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setString('gotas_saved_drops', jsonEncode(_savedDropIds));
+                        }
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('🔖 Carta guardada en tu lista para responder más tarde.')),
+                        );
+                      },
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0077B6),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      onPressed: () async {
+                        final text = replyController.text.trim();
+                        if (text.isNotEmpty) {
+                          try {
+                            if (drop['id'] != null) {
+                              await Supabase.instance.client.from('drop_replies').insert({
+                                'drop_id': drop['id'],
+                                'content': text,
+                                'author': '$_myAvatar $_myUsername',
+                              });
+                            }
+                          } catch (_) {}
+
+                          final replyObj = {
+                            'topic': drop['topic']?.toString() ?? 'Carta',
+                            'author': drop['author']?.toString() ?? 'Viajero',
+                            'text': text,
+                          };
+
+                          setState(() {
+                            _mySentReplies.insert(0, replyObj);
+                          });
+
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setString('gotas_sent_replies', jsonEncode(_mySentReplies));
+
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✨ Tu respuesta ha sido enviada y registrada en tu Buzón.'),
+                              backgroundColor: Color(0xFF0077B6),
+                            ),
+                          );
+                        }
+                      },
+                      child: const Text('Enviar Gota', style: TextStyle(color: Colors.white)),
+                    )
+                  ],
                 )
               ],
-            )
-          ],
-        ),
+            ),
+          );
+        }
       ),
     );
   }
@@ -1082,9 +1253,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          left: 20,
-          right: 20,
-          top: 20,
+          left: 20, right: 20, top: 20,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1175,47 +1344,102 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   // --- 2. PÁGINA: BUZÓN DE ECOS ---
   Widget _buildBuzonPage() {
+    List<Map<String, dynamic>> myPublishedDrops = _liveDrops.where((d) => d['author'] == _myUsername).toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         const Text('📬 Mi Buzón de Ecos', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        const Text('Historial de respuestas lentas que has enviado a otros viajeros.', style: TextStyle(fontSize: 12, color: Colors.white60)),
+        const Text('Historial de tus huellas y correspondencia.', style: TextStyle(fontSize: 12, color: Colors.white60)),
         const SizedBox(height: 16),
-        if (_mySentReplies.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C2541),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0x2648CAE4)),
+
+        Row(
+          children: [
+            ChoiceChip(
+              label: const Text('📨 Respuestas Enviadas'),
+              selected: _currentBuzonFilter == 'sent',
+              onSelected: (s) => setState(() => _currentBuzonFilter = 'sent'),
             ),
-            child: const Column(
-              children: [
-                Text('📨', style: TextStyle(fontSize: 32)),
-                SizedBox(height: 8),
-                Text('Aún no has enviado respuestas lentas.', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 4),
-                Text('Abre cualquier carta en "Gotas" y escribe una respuesta para verla registrada aquí.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.white60)),
-              ],
+            const SizedBox(width: 8),
+            ChoiceChip(
+              label: const Text('🌊 Mis Gotas'),
+              selected: _currentBuzonFilter == 'mydrops',
+              onSelected: (s) => setState(() => _currentBuzonFilter = 'mydrops'),
             ),
-          )
-        else
-          ..._mySentReplies.map((rep) => Card(
-                margin: const EdgeInsets.only(bottom: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0x3348CAE4))),
-                child: Padding(
-                  padding: const EdgeInsets.all(14.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Respondido a: ${rep['author']} · [${rep['topic']}]', style: const TextStyle(fontSize: 11, color: Color(0xFF48CAE4), fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 6),
-                      Text('"${rep['text']}"', style: const TextStyle(fontSize: 13, color: Colors.white, height: 1.4)),
-                    ],
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        if (_currentBuzonFilter == 'sent') ...[
+          if (_mySentReplies.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C2541),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0x2648CAE4)),
+              ),
+              child: const Column(
+                children: [
+                  Text('📨', style: TextStyle(fontSize: 32)),
+                  SizedBox(height: 8),
+                  Text('Aún no has enviado respuestas lentas.', style: TextStyle(fontWeight: FontWeight.bold)),
+                  SizedBox(height: 4),
+                  Text('Abre cualquier carta en "Gotas" y escribe una respuesta para verla registrada aquí.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.white60)),
+                ],
+              ),
+            )
+          else
+            ..._mySentReplies.map((rep) => Card(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0x3348CAE4))),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Respondido a: ${rep['author']} · [${rep['topic']}]', style: const TextStyle(fontSize: 11, color: Color(0xFF48CAE4), fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 6),
+                        Text('"${rep['text']}"', style: const TextStyle(fontSize: 13, color: Colors.white, height: 1.4)),
+                      ],
+                    ),
                   ),
+                )),
+        ] else ...[
+          if (myPublishedDrops.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C2541),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0x2648CAE4)),
+              ),
+              child: const Column(
+                children: [
+                  Text('🌊', style: TextStyle(fontSize: 32)),
+                  SizedBox(height: 8),
+                  Text('No has publicado gotas aún.', style: TextStyle(fontWeight: FontWeight.bold)),
+                  SizedBox(height: 4),
+                  Text('Pulsa el botón flotante "+ Enviar Gota" para escribir tu primera publicación.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.white60)),
+                ],
+              ),
+            )
+          else
+            ...myPublishedDrops.map((drop) => Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: GestureDetector(
+                onTap: () => _openReadAndReplyDialog(drop),
+                child: DropCard(
+                  author: 'Tú (${drop['avatar']})',
+                  location: drop['location']?.toString() ?? 'Mundo',
+                  avatar: drop['avatar']?.toString() ?? '🐺',
+                  topic: drop['topic']?.toString() ?? 'Pensamiento',
+                  snippet: drop['content']?.toString() ?? '',
                 ),
-              )),
+              ),
+            ))
+        ]
       ],
     );
   }
