@@ -10,7 +10,7 @@ const String supabaseUrl = 'https://cfkaqkeohyphdcnvcnsv.supabase.co';
 const String supabaseAnonKey = 'sb_publishable_E7NPno9DbRRJYuSVlOmwtA_bvVWxcWK';
 
 // --- VERSIÓN ACTUAL DE LA APP ---
-const String currentAppVersion = '1.0.1'; 
+const String currentAppVersion = '1.0.0'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -97,7 +97,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   void initState() {
     super.initState();
-    _checkForUpdates(); // <-- INICIA EL VERIFICADOR DE ACTUALIZACIONES
+    _checkForUpdates(); // INICIA EL VERIFICADOR DE ACTUALIZACIONES
     _loadSavedSession();
     _subscribeToLiveChanges();
     _initPresenceTracker();
@@ -132,9 +132,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   void _showUpdateDialog(String latestVersion, bool isMandatory) {
     showDialog(
       context: context,
-      barrierDismissible: !isMandatory, // Si es obligatoria, no se puede cerrar tocando fuera
+      barrierDismissible: !isMandatory,
       builder: (ctx) => WillPopScope(
-        onWillPop: () async => !isMandatory, // Evita cerrar con el botón atrás del móvil si es obligatorio
+        onWillPop: () async => !isMandatory,
         child: AlertDialog(
           backgroundColor: const Color(0xFF1C2541),
           shape: RoundedRectangleBorder(
@@ -771,7 +771,15 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                           },
                           child: const Text('Comenzar y Entrar al Océano 💧', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         ),
-                      )
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: () => _showRecoverAccountModal(),
+                        child: const Text(
+                          '¿Ya tenías una cuenta respaldada? Recuperar con correo',
+                          style: TextStyle(color: Color(0xFF48CAE4), fontSize: 12, decoration: TextDecoration.underline),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1890,6 +1898,46 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ),
         const SizedBox(height: 16),
 
+        // Tarjeta de Respaldo
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0x330077B6), Color(0x1A48CAE4)]),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0x3348CAE4)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Text('🛡️', style: TextStyle(fontSize: 20)),
+                  SizedBox(width: 8),
+                  Text('Respaldar mi Cuenta (Opcional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Vincula tu correo para recuperar tu viajero y tus cartas guardadas si reinstalas la app o cambias de teléfono.',
+                style: TextStyle(fontSize: 12, color: Colors.white70, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0077B6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () => _showBackupAccountModal(),
+                  child: const Text('Vincular Correo Electrónico', style: TextStyle(color: Colors.white)),
+                ),
+              )
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
         // Banner Apoyo
         Container(
           padding: const EdgeInsets.all(16),
@@ -2028,6 +2076,147 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showRecoverAccountModal() {
+    final emailController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1C2541),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF48CAE4)),
+        ),
+        title: const Text('🔄 Recuperar Cuenta', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Ingresa el correo que vinculaste a tu viajero.', style: TextStyle(color: Colors.white70, fontSize: 12)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                hintText: 'tu-correo@ejemplo.com',
+                hintStyle: const TextStyle(fontSize: 12, color: Colors.white38),
+                filled: true,
+                fillColor: const Color(0xFF0B132B),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0077B6)),
+            onPressed: () async {
+              final email = emailController.text.trim();
+              if (email.isNotEmpty) {
+                try {
+                  final data = await Supabase.instance.client
+                      .from('profiles')
+                      .select()
+                      .eq('email', email)
+                      .maybeSingle();
+
+                  if (data != null) {
+                    final name = data['username'];
+                    final av = data['avatar'] ?? '🐺';
+                    
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString('gotas_user_name', name);
+                    await prefs.setString('gotas_user_avatar', av);
+                    await prefs.setBool('gotas_user_registered', true);
+
+                    setState(() {
+                      _myUsername = name;
+                      _myAvatar = av;
+                      _isRegistered = true;
+                    });
+
+                    Navigator.pop(ctx);
+                    _fetchLiveDrops();
+                    _fetchDirectLetters();
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✨ ¡Bienvenido de vuelta, $name!')));
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ No se encontró ninguna cuenta vinculada a este correo.')));
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al conectar con la base de datos.')));
+                }
+              }
+            },
+            child: const Text('Recuperar', style: TextStyle(color: Colors.white)),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showBackupAccountModal() {
+    final emailController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1C2541),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF48CAE4)),
+        ),
+        title: const Text('🛡️ Respaldar Cuenta', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Ingresa tu correo. Esto no será público, solo se usará para recuperación.', style: TextStyle(color: Colors.white70, fontSize: 12)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                hintText: 'tu-correo@ejemplo.com',
+                hintStyle: const TextStyle(fontSize: 12, color: Colors.white38),
+                filled: true,
+                fillColor: const Color(0xFF0B132B),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF48CAE4)),
+            onPressed: () async {
+              final email = emailController.text.trim();
+              if (email.isNotEmpty && email.contains('@')) {
+                try {
+                  await Supabase.instance.client.from('profiles').upsert({
+                    'username': _myUsername,
+                    'avatar': _myAvatar,
+                    'email': email,
+                  }, onConflict: 'username');
+                  
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✨ Cuenta vinculada exitosamente a $email')));
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error: Este correo ya podría estar en uso.')));
+                }
+              }
+            },
+            child: const Text('Vincular', style: TextStyle(color: Color(0xFF0B132B), fontWeight: FontWeight.bold)),
+          )
+        ],
       ),
     );
   }
