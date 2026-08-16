@@ -1401,15 +1401,53 @@
               </div>
             </div>
           </div>
-          <button style="width:100%; margin-top:10px;" class="btn-secondary" onclick="alert('Próximamente: Escribir carta directa a ${friend.username}')">✉️ Escribir Carta Lenta</button>
+          <button style="width:100%; margin-top:10px;" class="btn-secondary" onclick="openDirectLetterModal('${friend.username}')">✉️ Escribir Carta Lenta</button>
         `;
         container.appendChild(card);
       });
     }
 
-    function loadDirectLetters() {
+    async function loadDirectLetters() {
       const container = document.getElementById('directLettersContainer');
-      container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted); background:rgba(11,19,43,0.5); border-radius:12px;">No tienes correspondencia directa nueva de tus almas afines.</div>';
+      container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted); background:rgba(11,19,43,0.5); border-radius:12px;">Cargando cartas privadas...</div>';
+      
+      if (supabaseClient) {
+        try {
+          const { data } = await supabaseClient.from('direct_letters')
+            .select('*')
+            .eq('recipient', currentUsername)
+            .order('created_at', { ascending: false });
+          
+          if (data && data.length > 0) {
+            container.innerHTML = '';
+            data.forEach(letter => {
+              const card = document.createElement('div');
+              card.style.background = 'rgba(11, 19, 43, 0.6)';
+              card.style.border = '1px solid var(--border-color)';
+              card.style.borderRadius = 'var(--radius-md)';
+              card.style.padding = '16px';
+              card.innerHTML = `
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                  <span style="font-size:1.5rem;">${letter.sender_avatar || '🐺'}</span>
+                  <span style="font-weight:bold; color:var(--accent-cyan);">De: ${letter.sender}</span>
+                </div>
+                <div style="background:#0b132b; border-radius:10px; padding:12px; font-style:italic; color:#fff; font-size:0.9rem;">
+                  "${letter.content}"
+                </div>
+                <div style="text-align:right; margin-top:10px;">
+                  <button class="btn-secondary" style="font-size:0.8rem; padding:6px 12px;" onclick="openDirectLetterModal('${letter.sender}')">Responder Carta Lenta</button>
+                </div>
+              `;
+              container.appendChild(card);
+            });
+            return;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      
+      container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted); background:rgba(11,19,43,0.5); border-radius:12px;">📭<br>No tienes correspondencia directa nueva de tus almas afines.</div>';
     }
 
     function updateFriendBtnUI(isFriend) {
@@ -2086,20 +2124,42 @@
         el.innerText = count;
       }
     }
+
+    // --- CARTAS DIRECTAS (ALMAS AFINES) ---
+    let currentDirectRecipient = '';
+
+    function openDirectLetterModal(recipient) {
+      currentDirectRecipient = recipient;
+      document.getElementById('directRecipientName').innerText = recipient;
+      document.getElementById('directLetterContent').value = '';
+      document.getElementById('directLetterModal').classList.add('show');
+    }
+
+    async function sendDirectLetter() {
+      const content = document.getElementById('directLetterContent').value.trim();
+      
+      if (!content) { 
+        alert('Por favor escribe tu carta.'); 
+        return; 
+      }
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('direct_letters').insert({
+            sender: currentUsername,
+            sender_avatar: currentAvatar,
+            recipient: currentDirectRecipient,
+            content: content
+          });
+        } catch (e) {
+          console.error("Error enviando carta directa:", e);
+        }
+      }
+
+      closeModal('directLetterModal');
+      alert(`✉️ Tu carta ha sido enviada con calma a ${currentDirectRecipient}.`);
+    }
   </script>
 
-  <!-- Modal: Enviar Carta Directa Lenta a un Amigo -->
-  <div class="modal-backdrop" id="directLetterModal">
-    <div class="modal-box">
-      <button class="modal-close" onclick="closeModal('directLetterModal')">&times;</button>
-      <h3 style="color:#fff; margin-bottom:4px;">✉️ Carta Lenta para <span id="directRecipientName" style="color:var(--accent-cyan);">Viajero</span></h3>
-      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:14px;">Correspondencia privada sin prisa. Tu amigo responderá cuando recargue su energía social.</p>
-      <textarea id="directLetterContent" rows="5" placeholder="Escribe tu carta con serenidad..." style="width:100%; background:#0b132b; border:1px solid var(--border-color); border-radius:10px; padding:12px; color:#fff; font-family:inherit; margin-bottom:14px; font-size:0.9rem;"></textarea>
-      <div style="display:flex; justify-content:flex-end; gap:8px;">
-        <button class="btn-secondary" onclick="closeModal('directLetterModal')">Cancelar</button>
-        <button class="btn-primary" onclick="sendDirectLetter()">Enviar Carta ✉️</button>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
