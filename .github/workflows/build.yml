@@ -87,9 +87,14 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
-      - name: Compilar APK
-        run: flutter build apk --release
+      - name: Decodificar Keystore secreto
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/gotas.jks
 
+      - name: Build APK (Release)
+        run: flutter build apk --release
+        env:
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       - name: Compilar AAB para Play Store
         run: flutter build appbundle --release
 
