@@ -97,15 +97,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   void initState() {
     super.initState();
-    _checkForUpdates(); // INICIA EL VERIFICADOR DE ACTUALIZACIONES
+    _checkForUpdates(); 
     _loadSavedSession();
     _subscribeToLiveChanges();
     _initPresenceTracker();
   }
 
-  // ==========================================
-  // VERIFICADOR DE ACTUALIZACIONES
-  // ==========================================
   Future<void> _checkForUpdates() async {
     try {
       final data = await Supabase.instance.client
@@ -152,10 +149,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'La versión $latestVersion de Gotas está lista.',
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-              ),
+              Text('La versión $latestVersion de Gotas está lista.', style: const TextStyle(color: Colors.white, fontSize: 14)),
               const SizedBox(height: 8),
               Text(
                 isMandatory 
@@ -177,10 +171,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           ),
           actions: [
             if (!isMandatory)
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Más tarde', style: TextStyle(color: Colors.white60)),
-              ),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Más tarde', style: TextStyle(color: Colors.white60))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0077B6),
@@ -198,8 +189,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       ),
     );
   }
-  // ==========================================
-
 
   Future<void> _loadSavedSession() async {
     try {
@@ -208,32 +197,27 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       final savedAvatar = prefs.getString('gotas_user_avatar');
       final savedReg = prefs.getBool('gotas_user_registered') ?? false;
 
-      // Cargar dilemas guardados
       _dilemmaChoice1 = prefs.getString('gotas_dilemma_1');
       _dilemmaChoice2 = prefs.getString('gotas_dilemma_2');
       _dilemmaChoice3 = prefs.getString('gotas_dilemma_3');
 
-      // Cargar diario guardado
       final journalStr = prefs.getString('gotas_journal');
       if (journalStr != null) {
         final List decoded = jsonDecode(journalStr);
         _privateJournal = decoded.map((e) => Map<String, String>.from(e)).toList();
       }
 
-      // Cargar respuestas enviadas
       final repliesStr = prefs.getString('gotas_sent_replies');
       if (repliesStr != null) {
         final List decoded = jsonDecode(repliesStr);
         _mySentReplies = decoded.map((e) => Map<String, String>.from(e)).toList();
       }
 
-      // Cargar guardados
       final savedDropsStr = prefs.getString('gotas_saved_drops');
       if (savedDropsStr != null) {
         _savedDropIds = jsonDecode(savedDropsStr);
       }
 
-      // Cargar amigos guardados
       final friendsStr = prefs.getString('gotas_friends');
       if (friendsStr != null) {
         final List decodedF = jsonDecode(friendsStr);
@@ -273,22 +257,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       'avatar': '🦊',
       'topic': 'Videojuegos & Paz',
       'content': 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?',
-    },
-    {
-      'id': 2,
-      'author': 'Mateo',
-      'location': '🇦🇷 Buenos Aires, Arg',
-      'avatar': '🦉',
-      'topic': 'Rutina en Solitario',
-      'content': 'Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba. ¿Prefieres entrenar a solas o con música?',
-    },
-    {
-      'id': 3,
-      'author': 'Elena',
-      'location': '🇪🇸 Madrid, España',
-      'avatar': '🌿',
-      'topic': 'Lectura Lofi',
-      'content': 'Encontré un libro antiguo en una tienda de segunda mano con notas escritas a mano en los márgenes. Me pregunto quién fue su dueño original.',
     }
   ];
 
@@ -307,12 +275,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         });
       }
     } catch (e) {
-      debugPrint("Error obteniendo gotas desde Supabase: $e");
       if (mounted) {
         setState(() {
-          if (_liveDrops.isEmpty) {
-            _liveDrops = _starterCommunityDrops;
-          }
+          if (_liveDrops.isEmpty) _liveDrops = _starterCommunityDrops;
           _isLoadingDrops = false;
         });
       }
@@ -321,10 +286,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   Future<void> _fetchDirectLetters() async {
     try {
+      // Obtenemos todos los mensajes donde soy remitente o destinatario (Para el Hilo)
       final data = await Supabase.instance.client
           .from('direct_letters')
           .select()
-          .eq('recipient', _myUsername)
+          .or('recipient.eq.$_myUsername,sender.eq.$_myUsername')
           .order('created_at', ascending: false);
       if (mounted) {
         setState(() {
@@ -342,17 +308,13 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             event: PostgresChangeEvent.all,
             schema: 'public',
             table: 'drops',
-            callback: (payload) {
-              _fetchLiveDrops();
-            },
+            callback: (payload) => _fetchLiveDrops(),
           )
           .onPostgresChanges(
             event: PostgresChangeEvent.insert,
             schema: 'public',
             table: 'direct_letters',
-            callback: (payload) {
-              _fetchDirectLetters();
-            },
+            callback: (payload) => _fetchDirectLetters(),
           )
           .subscribe();
     } catch (_) {}
@@ -366,27 +328,15 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       _presenceChannel!
         .onPresenceSync((_) {
           final state = _presenceChannel!.presenceState();
-          if (mounted) {
-            setState(() {
-              _onlineCount = math.max(1, state.length);
-            });
-          }
+          if (mounted) setState(() => _onlineCount = math.max(1, state.length));
         })
         .onPresenceJoin((_) {
           final state = _presenceChannel!.presenceState();
-          if (mounted) {
-            setState(() {
-              _onlineCount = math.max(1, state.length);
-            });
-          }
+          if (mounted) setState(() => _onlineCount = math.max(1, state.length));
         })
         .onPresenceLeave((_) {
           final state = _presenceChannel!.presenceState();
-          if (mounted) {
-            setState(() {
-              _onlineCount = math.max(1, state.length);
-            });
-          }
+          if (mounted) setState(() => _onlineCount = math.max(1, state.length));
         })
         .subscribe((status, [error]) async {
           if (status == RealtimeSubscribeStatus.subscribed) {
@@ -418,15 +368,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   Widget build(BuildContext context) {
     if (_isCheckingSession) {
       return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF48CAE4)),
-        ),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF48CAE4))),
       );
     }
 
-    if (!_isRegistered) {
-      return _buildOnboardingScreen();
-    }
+    if (!_isRegistered) return _buildOnboardingScreen();
 
     final List<Widget> pages = [
       _buildGotasPage(),
@@ -446,13 +392,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           children: [
             const WaterDropIcon(size: 28),
             const SizedBox(width: 10),
-            const Text(
-              'Gotas',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFCAF0F8),
-              ),
-            ),
+            const Text('Gotas', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
           ],
         ),
         actions: [
@@ -485,10 +425,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             child: ActionChip(
               backgroundColor: const Color(0xFF1C2541),
               side: const BorderSide(color: Color(0x3348CAE4)),
-              label: Text(
-                _socialBattery,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF90E0EF)),
-              ),
+              label: Text(_socialBattery, style: const TextStyle(fontSize: 11, color: Color(0xFF90E0EF))),
               onPressed: _showBatterySheet,
             ),
           )
@@ -556,16 +493,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     children: [
                       const WaterDropIcon(size: 48),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Bienvenido a Gotas',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
+                      const Text('Bienvenido a Gotas', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
                       const SizedBox(height: 6),
-                      const Text(
-                        'Crea tu identidad anónima de viajero antes de comenzar.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12, color: Colors.white60),
-                      ),
+                      const Text('Crea tu identidad anónima de viajero antes de comenzar.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.white60)),
                       const SizedBox(height: 16),
 
                       Container(
@@ -578,19 +508,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            CircleAvatar(
-                              radius: 20,
-                              backgroundColor: const Color(0x3348CAE4),
-                              child: Text(tempAvatar, style: const TextStyle(fontSize: 20)),
-                            ),
+                            CircleAvatar(radius: 20, backgroundColor: const Color(0x3348CAE4), child: Text(tempAvatar, style: const TextStyle(fontSize: 20))),
                             const SizedBox(width: 12),
                             Text(
                               nameController.text.isNotEmpty ? nameController.text : 'Escribe tu alias...',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: nameController.text.isNotEmpty ? Colors.white : Colors.white38,
-                              ),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: nameController.text.isNotEmpty ? Colors.white : Colors.white38),
                             ),
                           ],
                         ),
@@ -605,11 +527,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                       SizedBox(
                         height: 110,
                         child: GridView.builder(
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 6,
-                            crossAxisSpacing: 6,
-                            mainAxisSpacing: 6,
-                          ),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 6, crossAxisSpacing: 6, mainAxisSpacing: 6),
                           itemCount: _availableAvatars.length,
                           itemBuilder: (c, i) {
                             final av = _availableAvatars[i];
@@ -660,9 +578,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                             ),
                             onPressed: () {
                               final randName = _generateRandomName();
-                              setGateState(() {
-                                nameController.text = randName;
-                              });
+                              setGateState(() => nameController.text = randName);
                             },
                             child: const Text('🎲 Aleatorio', style: TextStyle(fontSize: 11, color: Colors.white)),
                           )
@@ -682,9 +598,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                           onPressed: () {
                             final name = nameController.text.trim();
                             if (name.length < 3) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('⚠️ Por favor escribe un nombre de al menos 3 letras.')),
-                              );
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Por favor escribe un nombre de al menos 3 letras.')));
                               return;
                             }
 
@@ -692,10 +606,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                               context: context,
                               builder: (c) => AlertDialog(
                                 backgroundColor: const Color(0xFF1C2541),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  side: const BorderSide(color: Color(0xFF48CAE4)),
-                                ),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF48CAE4))),
                                 title: Row(
                                   children: const [
                                     Text('🔒', style: TextStyle(fontSize: 22)),
@@ -730,15 +641,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                                   ],
                                 ),
                                 actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(c),
-                                    child: const Text('Revisar', style: TextStyle(color: Colors.white60)),
-                                  ),
+                                  TextButton(onPressed: () => Navigator.pop(c), child: const Text('Revisar', style: TextStyle(color: Colors.white60))),
                                   ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF0077B6),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    ),
+                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0077B6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                                     onPressed: () async {
                                       Navigator.pop(c);
                                       try {
@@ -748,7 +653,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                                         });
                                       } catch (_) {}
 
-                                      // Guardar de forma permanente en el teléfono
                                       final prefs = await SharedPreferences.getInstance();
                                       await prefs.setString('gotas_user_name', name);
                                       await prefs.setString('gotas_user_avatar', tempAvatar);
@@ -791,8 +695,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-
-  // --- PÁGINA: ALMAS AFINES (Amigos y Cartas Directas) ---
+  // --- PÁGINA: ALMAS AFINES (Agrupación e Hilo de Papel) ---
   Widget _buildAlmasPage() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -808,7 +711,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         const Text('Viajeros con los que sentiste afinidad. Tu lista es 100% privada.', style: TextStyle(fontSize: 12, color: Colors.white60)),
         const SizedBox(height: 16),
 
-        // Filtros (ChoiceChips)
         Row(
           children: [
             ChoiceChip(
@@ -818,7 +720,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             ),
             const SizedBox(width: 8),
             ChoiceChip(
-              label: Text('✉️ Cartas Directas (${_directLetters.length})'),
+              label: const Text('✉️ Hilo de Cartas Directas'),
               selected: _currentAlmasFilter == 'letters',
               onSelected: (s) => setState(() => _currentAlmasFilter = 'letters'),
             ),
@@ -873,16 +775,14 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
-                          onPressed: () => _openDirectLetterSheet(fr['username'] ?? '', fr['avatar'] ?? '🐺'),
-                          child: const Text('✉️ Carta', style: TextStyle(fontSize: 11, color: Colors.white)),
+                          onPressed: () => _openCorrespondenceSheet(fr['username'] ?? '', fr['avatar'] ?? '🐺'),
+                          child: const Text('Abrir Hilo de Papel', style: TextStyle(fontSize: 11, color: Colors.white)),
                         ),
                         const SizedBox(width: 4),
                         IconButton(
                           icon: const Icon(Icons.close, size: 16, color: Colors.white38),
                           onPressed: () async {
-                            setState(() {
-                              _myFriendsList.removeWhere((f) => f['username'] == fr['username']);
-                            });
+                            setState(() => _myFriendsList.removeWhere((f) => f['username'] == fr['username']));
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.setString('gotas_friends', jsonEncode(_myFriendsList));
                           },
@@ -892,24 +792,41 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   ),
                 )),
         ] else ...[
-          if (_directLetters.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C2541),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0x2648CAE4)),
-              ),
-              child: const Column(
-                children: [
-                  Text('📭', style: TextStyle(fontSize: 32)),
-                  SizedBox(height: 8),
-                  Text('No tienes cartas directas aún.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white60)),
-                ],
-              ),
-            )
-          else
-            ..._directLetters.map((letter) => Card(
+          Builder(
+            builder: (context) {
+              // Lógica de Agrupación de Cartas
+              final Map<String, Map<String, dynamic>> convos = {};
+              for (var letter in _directLetters) {
+                final isMine = letter['sender'] == _myUsername;
+                final otherUser = isMine ? letter['recipient'] : letter['sender'];
+                final otherAvatar = isMine ? '💧' : (letter['sender_avatar'] ?? '🐺');
+                
+                if (!convos.containsKey(otherUser)) {
+                  convos[otherUser] = {
+                    'username': otherUser,
+                    'avatar': otherAvatar,
+                    'lastMessage': letter['content'],
+                  };
+                }
+              }
+              final groupedList = convos.values.toList();
+
+              if (groupedList.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(color: const Color(0xFF1C2541), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0x2648CAE4))),
+                  child: const Column(
+                    children: [
+                      Text('📭', style: TextStyle(fontSize: 32)),
+                      SizedBox(height: 8),
+                      Text('No tienes correspondencia iniciada.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white60)),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: groupedList.map((convo) => Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Color(0x3348CAE4))),
                   child: Padding(
@@ -919,44 +836,43 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                       children: [
                         Row(
                           children: [
-                            CircleAvatar(
-                              radius: 16,
-                              backgroundColor: const Color(0x3348CAE4),
-                              child: Text(letter['sender_avatar'] ?? '🐺', style: const TextStyle(fontSize: 16)),
-                            ),
-                            const SizedBox(width: 8),
-                            Text('De: ${letter['sender']}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF48CAE4))),
+                            CircleAvatar(backgroundColor: const Color(0x3348CAE4), child: Text(convo['avatar'] ?? '🐺')),
+                            const SizedBox(width: 10),
+                            Text('Correspondencia con ${convo['username']}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF48CAE4))),
                           ],
                         ),
                         const SizedBox(height: 10),
                         Container(
+                          width: double.infinity,
                           padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0B132B),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text('"${letter['content']}"', style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Colors.white)),
+                          decoration: BoxDecoration(color: const Color(0xFF0B132B), borderRadius: BorderRadius.circular(10)),
+                          child: Text('Última carta: "${convo['lastMessage']}"', style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Colors.white70), maxLines: 2, overflow: TextOverflow.ellipsis),
                         ),
                         const SizedBox(height: 10),
                         Align(
                           alignment: Alignment.centerRight,
-                          child: TextButton.icon(
-                            icon: const Icon(Icons.reply, size: 16, color: Color(0xFF90E0EF)),
-                            label: const Text('Responder Carta Lenta', style: TextStyle(fontSize: 11, color: Color(0xFF90E0EF))),
-                            onPressed: () => _openDirectLetterSheet(letter['sender'], letter['sender_avatar']),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0077B6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                            onPressed: () => _openCorrespondenceSheet(convo['username'], convo['avatar']),
+                            child: const Text('Abrir Hilo de Papel', style: TextStyle(color: Colors.white, fontSize: 11)),
                           ),
                         )
                       ],
                     ),
                   ),
-                )),
+                )).toList(),
+              );
+            }
+          ),
         ]
       ],
     );
   }
 
-  void _openDirectLetterSheet(String recipient, String avatar) {
+  // --- MODAL DE CORRESPONDENCIA EN TIEMPO REAL ---
+  void _openCorrespondenceSheet(String recipient, String avatar) {
     final letterController = TextEditingController();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -964,53 +880,144 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom + 20, left: 20, right: 20, top: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('✉️ Carta Privada para $avatar $recipient', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFCAF0F8))),
-            const SizedBox(height: 4),
-            const Text('Correspondencia lenta sin prisa. Tu amigo responderá a su propio ritmo.', style: TextStyle(fontSize: 11, color: Colors.white60)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: letterController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Escribe tu carta con tranquilidad...',
-                hintStyle: const TextStyle(fontSize: 12, color: Colors.white38),
-                filled: true,
-                fillColor: const Color(0xFF0B132B),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        child: SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.75, // 75% de la pantalla
+          child: Column(
+            children: [
+              // Header
+              Row(
+                children: [
+                  Text(avatar, style: const TextStyle(fontSize: 32)),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(recipient, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                      const Text('Nuestra Correspondencia Lenta', style: TextStyle(fontSize: 12, color: Color(0xFF48CAE4))),
+                    ],
+                  ),
+                  const Spacer(),
+                  IconButton(icon: const Icon(Icons.close, color: Colors.white60), onPressed: () => Navigator.pop(ctx))
+                ],
               ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.white60))),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF48CAE4), foregroundColor: const Color(0xFF0B132B)),
-                  onPressed: () async {
-                    final text = letterController.text.trim();
-                    if (text.isNotEmpty) {
-                      try {
-                        await Supabase.instance.client.from('direct_letters').insert({
-                          'sender': _myUsername,
-                          'sender_avatar': _myAvatar,
-                          'recipient': recipient,
-                          'content': text,
-                        });
-                      } catch (_) {}
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✉️ Tu carta ha sido enviada con calma a $recipient.')));
+              const SizedBox(height: 16),
+              
+              // Hilo de Cartas (En Tiempo Real)
+              Expanded(
+                child: StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: Supabase.instance.client
+                      .from('direct_letters')
+                      .stream(primaryKey: ['id'])
+                      .order('created_at', ascending: true),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator(color: Color(0xFF48CAE4)));
                     }
+                    
+                    // Filtrar solo los mensajes entre Yo y Recipient
+                    final threadLetters = snapshot.data!.where((l) => 
+                      (l['sender'] == _myUsername && l['recipient'] == recipient) ||
+                      (l['sender'] == recipient && l['recipient'] == _myUsername)
+                    ).toList();
+
+                    if (threadLetters.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('🕊️', style: TextStyle(fontSize: 40)),
+                            const SizedBox(height: 10),
+                            Text('Este es el inicio de tu correspondencia con $recipient.\nAnímate a escribirle la primera carta.', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white60)),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: threadLetters.length,
+                      itemBuilder: (context, index) {
+                        final letter = threadLetters[index];
+                        final isMine = letter['sender'] == _myUsername;
+                        
+                        return Align(
+                          alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            constraints: BoxConstraints(maxWidth: MediaQuery.of(ctx).size.width * 0.8),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: isMine ? const Color(0x1A48CAE4) : const Color(0xCC0B132B),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: isMine ? const Color(0x4D48CAE4) : const Color(0x33FFFFFF)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                              children: [
+                                Text(isMine ? 'Tu carta' : 'Carta de ${letter['sender']}', style: const TextStyle(fontSize: 10, color: Colors.white54)),
+                                const SizedBox(height: 4),
+                                Text('"${letter['content']}"', style: const TextStyle(fontSize: 14, color: Colors.white, fontStyle: FontStyle.italic)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
                   },
-                  child: const Text('Enviar Carta ✉️', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              
+              // Caja de Envío
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0B132B),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    TextField(
+                      controller: letterController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        hintText: 'Escribe tu siguiente carta con serenidad...',
+                        hintStyle: TextStyle(fontSize: 12, color: Colors.white38),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0077B6),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        minimumSize: Size.zero,
+                      ),
+                      onPressed: () async {
+                        final text = letterController.text.trim();
+                        if (text.isNotEmpty) {
+                          try {
+                            await Supabase.instance.client.from('direct_letters').insert({
+                              'sender': _myUsername,
+                              'sender_avatar': _myAvatar,
+                              'recipient': recipient,
+                              'content': text,
+                            });
+                            letterController.clear();
+                          } catch (_) {}
+                        }
+                      },
+                      child: const Text('Enviar Carta ✉️', style: TextStyle(color: Colors.white, fontSize: 12)),
+                    )
+                  ],
                 )
-              ],
-            )
-          ],
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -1349,9 +1356,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
- void _openNewDropDialog() {
+  void _openNewDropDialog() {
+    final locationController = TextEditingController(); // NUEVO: Controlador de Ubicación
     final topicController = TextEditingController();
-    final locationController = TextEditingController(); // <-- NUEVO CONTROLADOR
     final contentController = TextEditingController();
 
     showModalBottomSheet(
@@ -1384,7 +1391,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               ],
             ),
             const SizedBox(height: 14),
-            // --- NUEVO CAMPO: UBICACIÓN ---
             TextField(
               controller: locationController,
               decoration: InputDecoration(
@@ -1396,7 +1402,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               ),
             ),
             const SizedBox(height: 12),
-            // ------------------------------
             TextField(
               controller: topicController,
               decoration: InputDecoration(
@@ -1434,14 +1439,14 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
                   onPressed: () async {
-                    final location = locationController.text.trim(); // <-- CAPTURAMOS LA UBICACIÓN
+                    final location = locationController.text.trim();
                     final topic = topicController.text.trim();
                     final content = contentController.text.trim();
                     if (content.isNotEmpty) {
                       try {
                         await Supabase.instance.client.from('drops').insert({
                           'author': _myUsername,
-                          'location': location.isNotEmpty ? location : 'Tu rincón seguro', // <-- SI ESTÁ VACÍO, PONE EL DEFAULT
+                          'location': location.isNotEmpty ? location : 'Tu rincón seguro',
                           'avatar': _myAvatar,
                           'topic': topic.isNotEmpty ? topic : 'Pensamiento libre',
                           'content': content,
@@ -1466,6 +1471,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       ),
     );
   }
+
   // --- 2. PÁGINA: BUZÓN DE ECOS ---
   Widget _buildBuzonPage() {
     List<Map<String, dynamic>> myPublishedDrops = _liveDrops.where((d) => d['author'] == _myUsername).toList();
