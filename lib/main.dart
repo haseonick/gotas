@@ -147,6 +147,34 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     _fetchLiveDrops();
   }
 
+
+  final List<Map<String, dynamic>> _starterCommunityDrops = [
+    {
+      'id': 1,
+      'author': 'Yuki',
+      'location': '🇯🇵 Kioto, Japón',
+      'avatar': '🦊',
+      'topic': 'Videojuegos & Paz',
+      'content': 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?',
+    },
+    {
+      'id': 2,
+      'author': 'Mateo',
+      'location': '🇦🇷 Buenos Aires, Arg',
+      'avatar': '🦉',
+      'topic': 'Rutina en Solitario',
+      'content': 'Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba. ¿Prefieres entrenar a solas o con música?',
+    },
+    {
+      'id': 3,
+      'author': 'Elena',
+      'location': '🇪🇸 Madrid, España',
+      'avatar': '🌿',
+      'topic': 'Lectura Lofi',
+      'content': 'Encontré un libro antiguo en una tienda de segunda mano con notas escritas a mano en los márgenes. Me pregunto quién fue su dueño original.',
+    }
+  ];
+
   Future<void> _fetchLiveDrops() async {
     setState(() => _isLoadingDrops = true);
     try {
@@ -157,44 +185,19 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       if (mounted) {
         final List<Map<String, dynamic>> fetched = List<Map<String, dynamic>>.from(data);
         setState(() {
-          if (fetched.isNotEmpty) {
-            _liveDrops = fetched;
-          } else {
-            // Cartas de bienvenida iniciales para no dejar la pantalla vacía
-            _liveDrops = [
-              {
-                'id': 1,
-                'author': 'Yuki',
-                'location': '🇯🇵 Kioto, Japón',
-                'avatar': '🦊',
-                'topic': 'Videojuegos & Paz',
-                'content': 'Me gusta construir granjas en Minecraft mientras escucho lluvia. ¿Tienes algún rincón donde te sientas en paz?',
-              },
-              {
-                'id': 2,
-                'author': 'Mateo',
-                'location': '🇦🇷 Buenos Aires, Arg',
-                'avatar': '🦉',
-                'topic': 'Rutina en Solitario',
-                'content': 'Empecé a entrenar en casa porque el gimnasio tradicional me sobreestimulaba. ¿Prefieres entrenar a solas o con música?',
-              },
-              {
-                'id': 3,
-                'author': 'Elena',
-                'location': '🇪🇸 Madrid, España',
-                'avatar': '🌿',
-                'topic': 'Lectura Lofi',
-                'content': 'Encontré un libro antiguo en una tienda de segunda mano con notas escritas a mano en los márgenes. Me pregunto quién fue su dueño original.',
-              }
-            ];
-          }
+          _liveDrops = fetched.isNotEmpty ? fetched : _starterCommunityDrops;
           _isLoadingDrops = false;
         });
       }
     } catch (e) {
-      debugPrint("Error obteniendo gotas: $e");
+      debugPrint("Error obteniendo gotas desde Supabase: $e");
       if (mounted) {
-        setState(() => _isLoadingDrops = false);
+        setState(() {
+          if (_liveDrops.isEmpty) {
+            _liveDrops = _starterCommunityDrops;
+          }
+          _isLoadingDrops = false;
+        });
       }
     }
   }
@@ -1719,3 +1722,4 @@ class DropCard extends StatelessWidget {
     );
   }
 }
+
