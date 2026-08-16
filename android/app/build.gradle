@@ -39,7 +39,14 @@ android {
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
-
+signingConfigs {
+        release {
+            storeFile file("gotas.jks")
+            storePassword System.getenv("KEY_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+        }
+    }
     defaultConfig {
         applicationId "com.gotas.app"
         minSdkVersion 21
