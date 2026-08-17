@@ -111,21 +111,23 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     _initPresenceTracker();
   }
 
-  Future<void> _checkForUpdates() async {
+Future<void> _checkForUpdates() async {
     try {
       final data = await Supabase.instance.client.from('app_config').select().limit(1).maybeSingle();
       if (data != null) {
         final latestVersion = data['latest_version']?.toString();
         final isMandatory = data['is_mandatory'] as bool? ?? false;
+        // NUEVO: Lee el link desde Supabase (si está vacío por error, usa GitHub como respaldo)
+        final updateUrl = data['update_url']?.toString() ?? 'https://haseonick.github.io/gotas/';
         
         if (latestVersion != null && latestVersion != currentAppVersion) {
-          if (mounted) _showUpdateDialog(latestVersion, isMandatory);
+          if (mounted) _showUpdateDialog(latestVersion, isMandatory, updateUrl);
         }
       }
     } catch (e) { debugPrint('Error comprobando actualizaciones: $e'); }
   }
 
-  void _showUpdateDialog(String latestVersion, bool isMandatory) {
+  void _showUpdateDialog(String latestVersion, bool isMandatory, String updateUrl) {
     showDialog(
       context: context,
       barrierDismissible: !isMandatory,
@@ -143,7 +145,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               const SizedBox(height: 8),
               Text(isMandatory ? 'Esta actualización es obligatoria para asegurar tu conexión al backend.' : 'Te recomendamos actualizar para disfrutar de más calma y nuevas funciones.', style: const TextStyle(color: Colors.white60, fontSize: 13, height: 1.4)),
               const SizedBox(height: 14),
-              Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF0B132B), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white12)), child: const Text('Link de descarga:\nhttps://haseonick.github.io/gotas/', style: TextStyle(fontSize: 12, color: Color(0xFF48CAE4))))
+              // NUEVO: Ahora muestra el link que venga de Supabase
+              Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF0B132B), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white12)), child: Text('Link de descarga:\n$updateUrl', style: const TextStyle(fontSize: 12, color: Color(0xFF48CAE4))))
             ],
           ),
           actions: [
@@ -151,7 +154,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0077B6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               onPressed: () {
-                Clipboard.setData(const ClipboardData(text: 'https://haseonick.github.io/gotas/'));
+                // NUEVO: Copia el link correcto al portapapeles
+                Clipboard.setData(ClipboardData(text: updateUrl));
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🔗 Enlace copiado en el portapapeles')));
                 if (!isMandatory) Navigator.pop(ctx);
               },
